@@ -1,0 +1,194 @@
+import { resolveModel, models } from './registry.js';
+import type { Model, NormalizedUsage, UsageLike, TokenBreakdown } from './types.js';
+import type { ModelId } from './registry.js';
+
+/**
+ * Return the raw context window caps for a model id (canonical or alias).
+ */
+export function getContextWindow(modelId: ModelId | string): { inputMax?: number; outputMax?: number; combinedMax?: number } {
+  const m = resolveModel(modelId);
+  return m?.context ?? {};
+}
+
+/**
+ * Normalize various provider usage shapes into a consistent `{ input, output, total }` object.
+ * Missing fields default to `0`. If a provider supplies a `total`, it is preserved.
+ */
+export function normalizeUsage(usage: UsageLike | undefined | null): NormalizedUsage {
+  if (!usage) return { input: 0, output: 0, total: 0 };
+  const inputCandidates = [
+    usage.input_tokens,
+    usage.prompt_tokens,
+    usage.promptTokens,
+    // Vercel AI SDK v2 (@ai-sdk/provider)
+    (usage as any).inputTokens,
+  ].filter((v): v is number => typeof v === 'number');
+  const outputCandidates = [
+    usage.output_tokens,
+    usage.completion_tokens,
+    usage.completionTokens,
+    // Vercel AI SDK v2 (@ai-sdk/provider)
+    (usage as any).outputTokens,
+  ].filter((v): v is number => typeof v === 'number');
+  const totalCandidates = [
+    usage.total_tokens,
+    usage.totalTokens,
+    // Vercel AI SDK v2 (@ai-sdk/provider)
+    (usage as any).totalTokens,
+  ].filter((v): v is number => typeof v === 'number');
+
+  const input = inputCandidates[0] ?? 0;
+  const output = outputCandidates[0] ?? 0;
+  const total = totalCandidates[0];
+
+  if (total !== undefined) {
+    // If total doesn't equal input+output due to provider semantics, keep both.
+    return { input, output, total };
+  }
+  return { input, output, total: input + output };
+}
+
+/**
+ * Attempts to extract granular token breakdown including cache read/write counts
+ * from various provider shapes. If fields are unavailable, cache fields remain undefined.
+ */
+export function breakdownTokens(usage: UsageLike | undefined | null): TokenBreakdown {
+  const base = normalizeUsage(usage);
+  if (!usage) return base;
+  const u: any = usage as any;
+
+  // Known/observed field names across providers (Anthropic/OpenAI) and SDKs
+  const cacheReadCandidates = [
+    u.cache_read_input_tokens,
+    u.cache_read_tokens,
+    u.prompt_cache_hit_tokens,
+    u.prompt_tokens_details?.cached_tokens,
+    u.promptTokensDetails?.cachedTokens,
+    // Vercel AI SDK v2 (@ai-sdk/provider)
+    u.cachedInputTokens,
+  ].filter((v: unknown): v is number => typeof v === 'number');
+
+  const cacheWriteCandidates = [
+    u.cache_creation_input_tokens,
+    u.cache_creation_tokens,
+    u.prompt_cache_write_tokens,
+    u.promptTokensDetails?.cacheCreationTokens,
+  ].filter((v: unknown): v is number => typeof v === 'number');
+
+  const cacheReads = cacheReadCandidates[0];
+  const cacheWrites = cacheWriteCandidates[0];
+
+  return { ...base, cacheReads, cacheWrites };
+}
+
+export type RemainingArgs = {
+  modelId: ModelId | string;
+  usage: UsageLike | NormalizedUsage | undefined;
+  reserveOutput?: number;
+  strategy?: 'combined' | 'provider-default' | 'input-only';
+};
+
+/**
+ * Compute remaining context for a model given usage so far.
+ * - `reserveOutput` protects future output budget (e.g. reserve 256 tokens for the reply).
+ * - `strategy` controls which cap is used when models expose both input and combined caps.
+ */
+export function remainingContext(args: RemainingArgs): {
+  remainingInput?: number;
+  remainingCombined?: number;
+  percentUsed: number; // 0..1 based on the chosen constraint
+  model?: Model;
+} {
+  const model = resolveModel(args.modelId);
+  const usage = 'input' in (args.usage ?? {}) ? (args.usage as NormalizedUsage) : normalizeUsage(args.usage as UsageLike);
+  const reserve = Math.max(0, args.reserveOutput ?? 0);
+  const strategy = args.strategy ?? 'provider-default';
+
+  if (!model) {
+    return { remainingCombined: undefined, remainingInput: undefined, percentUsed: 1 };
+  }
+
+  const { inputMax, outputMax, combinedMax } = model.context;
+  const usedInput = usage.input ?? 0;
+  const usedOutput = usage.output ?? 0;
+
+  if (strategy === 'input-only' || (!combinedMax && inputMax)) {
+    const cap = inputMax ?? Infinity;
+    const remainingInput = Math.max(0, cap - usedInput);
+    const percentUsed = cap === Infinity ? 0 : clamp01((usedInput + reserve) / cap);
+    return { remainingInput, remainingCombined: undefined, percentUsed, model };
+  }
+
+  // Combined or provider-default
+  const cap = strategy === 'combined' ? combinedMax ?? inputMax ?? Infinity : combinedMax ?? Infinity;
+  const used = usedInput + usedOutput;
+  const remainingCombined = Math.max(0, cap - used - reserve);
+  const percentUsed = cap === Infinity ? 0 : clamp01((used + reserve) / cap);
+  return { remainingCombined, remainingInput: inputMax ? Math.max(0, inputMax - usedInput) : undefined, percentUsed, model };
+}
+
+/**
+ * Quick check whether a token count fits within a model's context window,
+ * optionally reserving some budget for future output.
+ */
+export function fitsContext({ modelId, tokens, reserveOutput }: { modelId: ModelId | string; tokens: number; reserveOutput?: number }): boolean {
+  const m = resolveModel(modelId);
+  if (!m) return false;
+  const cap = m.context.combinedMax ?? m.context.inputMax ?? Infinity;
+  return tokens + Math.max(0, reserveOutput ?? 0) <= cap;
+}
+
+/**
+ * Pick the smallest-capacity model that can fit the given token count,
+ * with optional provider and minimum status filtering.
+ * `buffer` can be used to add a safety margin to the token count when searching.
+ */
+export function pickModelFor(
+  tokens: number,
+  opts?: { provider?: Model['provider']; minStatus?: Model['status']; buffer?: number }
+): Model | undefined {
+  const buffer = Math.max(0, opts?.buffer ?? 0);
+  const candidates = Object.values(models) as Model[];
+  const filtered = candidates.filter((m) => {
+    if (opts?.provider && m.provider !== opts.provider) return false;
+    if (opts?.minStatus) {
+      if (!statusMeets(m.status, opts.minStatus)) return false;
+    }
+    const cap = m.context.combinedMax ?? m.context.inputMax ?? 0;
+    return cap >= tokens + buffer;
+  });
+  // Smallest cap that fits
+  filtered.sort((a, b) => (a.context.combinedMax ?? a.context.inputMax ?? Infinity) - (b.context.combinedMax ?? b.context.inputMax ?? Infinity));
+  return filtered[0];
+}
+
+/**
+ * Estimate USD cost from usage based on the model's configured pricing hints.
+ * Returns partial values when only one direction (input/output) is available.
+ */
+export function estimateCost({ modelId, usage }: { modelId: string; usage: UsageLike | NormalizedUsage }): {
+  inputUSD?: number;
+  outputUSD?: number;
+  totalUSD?: number;
+} {
+  const model = resolveModel(modelId);
+  if (!model?.pricing) return {};
+  const u = 'input' in (usage as any) ? (usage as NormalizedUsage) : normalizeUsage(usage as UsageLike);
+  const inputUSD = model.pricing.inputPerMTokens !== undefined ? (u.input / 1_000_000) * model.pricing.inputPerMTokens : undefined;
+  const outputUSD = model.pricing.outputPerMTokens !== undefined ? (u.output / 1_000_000) * model.pricing.outputPerMTokens : undefined;
+  const totalUSD =
+    inputUSD !== undefined && outputUSD !== undefined ? inputUSD + outputUSD : inputUSD ?? outputUSD;
+  return { inputUSD, outputUSD, totalUSD };
+}
+
+// Helpers
+function clamp01(n: number) {
+  return Math.max(0, Math.min(1, n));
+}
+
+function statusMeets(actual: Model['status'], min: Model['status']): boolean {
+  const order: Record<Model['status'], number> = { retired: 0, deprecated: 1, preview: 2, stable: 3 };
+  return order[actual] >= order[min];
+}
+
+// no-op
