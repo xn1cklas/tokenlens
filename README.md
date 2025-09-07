@@ -1,38 +1,116 @@
-TokenLens Monorepo
-=================
+TokenLens
+========
 
-This repository houses tokenlens and related examples/tools for building AI apps with reliable, strongly-typed model metadata.
+[![npm version](https://img.shields.io/npm/v/tokenlens.svg)](https://www.npmjs.com/package/tokenlens)
+[![npm downloads](https://img.shields.io/npm/dm/tokenlens.svg)](https://www.npmjs.com/package/tokenlens)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 
-Packages
-- packages/tokenlens — Typed registry of model metadata (context windows, pricing, aliases) + utilities to normalize usage and estimate costs.
-- packages/provider-tests — Small verification harness and fixtures (optional/local).
-- apps/web-demo — Minimal example app wiring tokenlens into a UI.
+Typed model metadata and context/cost utilities that help AI apps answer: Does this fit? What will it cost? Should we compact now? How much budget is left for the next turn?
 
-Why this repo exists
-- One source of truth for canonical model IDs across providers and gateways.
-- A consistent way to answer “Does this request fit?” and “What will it cost?”
-- Strong TypeScript types (autocomplete for model IDs, safe helpers).
-- Practical, up-to-date defaults aligned with Vercel AI Gateway and official model pages.
+Works great with the Vercel AI SDK out of the box, and remains SDK‑agnostic.
+
+
+https://github.com/user-attachments/assets/a75392ea-ae11-4c6b-9fe3-3994be3178c6
+
+Highlights
+- Canonical model registry with alias resolution and minimal metadata you can trust.
+- Strong TypeScript surface: `ModelId` autocomplete and safe helpers.
+- Usage normalization across providers and SDKs (incl. Vercel AI SDK fields).
+- Context budgeting: remaining tokens, percent used, and next-turn budget.
+- Compaction helpers: when to compact and how many tokens to remove.
+- Cost estimation: fast, rough USD costs using source‑linked pricing when available.
+- Conversation utilities: sum usage, estimate conversation cost, measure context rot.
+
+Install
+- npm: `npm i tokenlens`
+- pnpm: `pnpm add tokenlens`
+- yarn: `yarn add tokenlens`
 
 Quick Start
-- Install dependencies: `pnpm i`
-- Build all: `pnpm -w build`
-- Focus on tokenlens only: `pnpm -w -F tokenlens build`
+```ts
+import {
+  type ModelId,
+  modelMeta,
+  percentOfContextUsed,
+  tokensRemaining,
+  costFromUsage,
+} from 'tokenlens';
 
-What tokenlens gives you
-- Model registry: resolve canonical IDs or aliases (e.g. `openai:gpt-4.1` or `openai/gpt-4.1`).
-- Autocomplete: `MODEL_IDS` and `type ModelId` for safer code.
-- Context math: normalize usage, compute remaining tokens, check if a prompt fits, pick the smallest fitting model.
-- Cost estimates: rough USD costs from usage with provider/gateway-aligned pricing where available.
+const id: ModelId = 'openai:gpt-4.1';
+// Works with provider usage or Vercel AI SDK usage
+const usage = { prompt_tokens: 3200, completion_tokens: 400 };
 
-Verification
-- Primary source: Vercel AI Gateway model pages (no markup) at https://vercel.com/ai-gateway/models
-- Secondary: Official provider docs (OpenAI, Anthropic, Google, Mistral, Cohere, xAI, Meta Llama).
-- If a value isn’t explicit, we leave it undefined rather than guess and always include a `source` link.
+const meta = modelMeta(id);
+const used = percentOfContextUsed({ id, usage, reserveOutput: 256 });
+const remaining = tokensRemaining({ id, usage, reserveOutput: 256 });
+const costUSD = costFromUsage({ id, usage });
 
-Contributing
-- Open a PR with focused changes. Keep numbers verifiable (link a source).
-- Prefer provider/Vercel sources; leave fields undefined rather than guess.
+console.log({ meta, used, remaining, costUSD });
+```
+
+Core Helpers
+- Registry: `resolveModel`, `listModels`, `MODEL_IDS`, `isModelId`, `assertModelId`
+- Usage: `normalizeUsage`, `breakdownTokens`, `consumedTokens`
+- Context: `getContextWindow`, `remainingContext`, `percentRemaining`, `fitsContext`, `pickModelFor`
+- Cost: `estimateCost`
+- Compaction: `shouldCompact`, `contextHealth`, `tokensToCompact`
+- Conversation: `sumUsage`, `estimateConversationCost`, `computeContextRot`, `nextTurnBudget`
+- Sugar: `modelMeta`, `percentOfContextUsed`, `tokensRemaining`, `costFromUsage`
+
+Provider‑Agnostic Usage
+```ts
+import { normalizeUsage, breakdownTokens } from 'tokenlens';
+
+// Works with many shapes, including Vercel AI SDK fields
+const u1 = normalizeUsage({ prompt_tokens: 1000, completion_tokens: 150 });
+const u2 = normalizeUsage({ inputTokens: 900, outputTokens: 200, totalTokens: 1100 });
+const b = breakdownTokens({ inputTokens: 900, cachedInputTokens: 300 });
+```
+
+Context Budgeting & Compaction
+```ts
+import { remainingContext, shouldCompact, tokensToCompact, contextHealth } from 'tokenlens';
+
+const rc = remainingContext({ modelId: 'anthropic:claude-3-5-sonnet-20240620', usage: u1, reserveOutput: 256 });
+if (shouldCompact({ modelId: 'anthropic:claude-3-5-sonnet-20240620', usage: u1 })) {
+  const n = tokensToCompact({ modelId: 'anthropic:claude-3-5-sonnet-20240620', usage: u1 });
+  // summarize oldest messages by ~n tokens
+}
+const badge = contextHealth({ modelId: 'openai:gpt-4.1', usage: u2 }); // { status: 'ok'|'warn'|'compact' }
+```
+
+Advanced
+- Caps strategy: `remainingContext` supports `strategy: 'provider-default' | 'combined' | 'input-only'`.
+  - `provider-default` (default): prefers `combinedMax` when available; otherwise uses `inputMax`.
+  - `combined`: always uses `combinedMax` (falls back to `inputMax` if missing).
+  - `input-only`: uses only `inputMax` for remaining/percent calculations.
+- Defaults: `shouldCompact` defaults to `threshold: 0.85`; `contextHealth` defaults to `warnAt: 0.75`, `compactAt: 0.85`.
+
+Conversation Utilities
+```ts
+import { sumUsage, estimateConversationCost, computeContextRot, nextTurnBudget } from 'tokenlens';
+
+const totals = sumUsage([turn1.usage, turn2.usage, turn3.usage]);
+const cost = estimateConversationCost({ modelId: 'openai:gpt-4.1', usages: [turn1.usage, turn2.usage] });
+const rot = computeContextRot({ messageTokens: [800, 600, 400, 300, 200], keepRecentTurns: 2, modelId: 'openai:gpt-4.1' });
+const nextBudget = nextTurnBudget({ modelId: 'openai:gpt-4.1', usage: totals, reserveOutput: 256 });
+```
+
+Listing Models
+```ts
+import { listModels } from 'tokenlens';
+
+const stableOpenAI = listModels({ provider: 'openai', status: 'stable' });
+```
+
+Data Source & Sync
+- Primary source: models.dev (https://github.com/sst/models.dev). We periodically sync our registry from their dataset.
+- Official provider pages are used where applicable; if numbers aren’t explicit, fields remain undefined.
+- Sync locally: `pnpm -C packages/tokenlens sync:models`
+
+Acknowlegements
+- Big thanks to the sst/models.dev maintainers and community for keeping model information current: https://github.com/sst/models.dev
 
 License
 MIT
