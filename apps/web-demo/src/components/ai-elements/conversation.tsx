@@ -23,12 +23,20 @@ export type ConversationContentProps = ComponentProps<
   typeof StickToBottom.Content
 >;
 
-export const ConversationContent = ({
-  className,
-  ...props
-}: ConversationContentProps) => (
-  <StickToBottom.Content className={cn('p-4', className)} {...props} />
-);
+export const ConversationContent = ({ className, ...props }: ConversationContentProps) => {
+  const { scrollRef } = useStickToBottomContext();
+  return (
+    <div
+      ref={scrollRef}
+      className={cn(
+        // make the inner scroll container own the scrolling and show pretty scrollbars
+        'h-full w-full overflow-auto pretty-scroll',
+      )}
+    >
+      <StickToBottom.Content className={cn('p-4', className)} {...props} />
+    </div>
+  );
+};
 
 export type ConversationScrollButtonProps = ComponentProps<typeof Button>;
 

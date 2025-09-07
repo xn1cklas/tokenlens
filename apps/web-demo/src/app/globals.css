@@ -120,3 +120,23 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Pretty native scrollbar styling for chat viewport */
+.pretty-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+.pretty-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.pretty-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.pretty-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 9999px;
+}
+.pretty-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklab, var(--color-foreground) 40%, transparent);
+}
