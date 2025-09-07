@@ -17,7 +17,8 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
-    "ai": "^5.0.34",
+    "ai": "^5.0.34", 
+    "ai-meta": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "embla-carousel-react": "^8.6.0",
@@ -29,6 +30,7 @@
     "streamdown": "^1.2.0",
     "tailwind-merge": "^3.3.1",
     "use-stick-to-bottom": "^1.1.1"
+   
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
