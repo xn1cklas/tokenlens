@@ -67,7 +67,18 @@ const formatPercent = (value: number) => {
 
 const formatUSD = (value?: number) => {
     if (value === undefined || !Number.isFinite(value)) return undefined;
-    return `$${value.toFixed(value < 10 ? 2 : 1)}`; // 2dp for small amounts
+    const abs = Math.abs(value);
+    // Finer precision for very small amounts common in LLM pricing
+    let decimals = 2;
+    if (abs < 0.001) decimals = 5;
+    else if (abs < 0.01) decimals = 4;
+    else if (abs < 0.1) decimals = 3;
+    else if (abs < 10) decimals = 2;
+    else decimals = 1;
+    const text = value.toFixed(decimals);
+    // Trim trailing zeros/decimal if not needed (e.g., 1.2300 -> 1.23, 2.0 -> 2)
+    const trimmed = text.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+    return `$${trimmed}`;
 };
 
 type ContextIconProps = {
