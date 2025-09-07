@@ -1,4 +1,4 @@
-tokenlens
+TokenLens
 ========
 
 [![npm version](https://img.shields.io/npm/v/tokenlens.svg)](https://www.npmjs.com/package/tokenlens)
@@ -9,6 +9,9 @@ tokenlens
 Typed model metadata and context/cost utilities that help AI apps answer: Does this fit? What will it cost? Should we compact now? How much budget is left for the next turn?
 
 Works great with the Vercel AI SDK out of the box, and remains SDK‑agnostic.
+
+
+https://github.com/user-attachments/assets/a75392ea-ae11-4c6b-9fe3-3994be3178c6
 
 Highlights
 - Canonical model registry with alias resolution and minimal metadata you can trust.
