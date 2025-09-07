@@ -1,0 +1,11 @@
+{
+    "name": "ai-meta-monorepo",
+    "private": true,
+    "workspaces": ["packages/*", "apps/*"],
+    "scripts": {
+      "build": "pnpm -r --filter=!provider-tests build",
+      "test": "pnpm -r test",
+      "test:live": "pnpm -w --filter provider-tests test:live"
+    },
+    "packageManager": "pnpm@9.0.0"
+  }
