@@ -1,5 +1,5 @@
 {
-  "name": "ai-meta",
+  "name": "tokenlens",
   "version": "1.0.0",
   "description": "A lightweight registry of LLM model information, like name and context sizes, for building AI-powered apps.",
   "files": [
@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/xn1cklas/ai-meta.git"
+    "url": "git+https://github.com/xn1cklas/tokenlens.git"
   },
   "keywords": [
     "ai",
@@ -32,9 +32,9 @@
   "author": "Nicklas Scharpff <hi@n1cklas.com> (https://n1cklas.com)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/xn1cklas/ai-meta/issues"
+    "url": "https://github.com/xn1cklas/tokenlens/issues"
   },
-  "homepage": "https://github.com/xn1cklas/ai-meta#readme",
+  "homepage": "https://github.com/xn1cklas/tokenlens#readme",
   "devDependencies": {
     "typescript": "^5.9.2"
   }

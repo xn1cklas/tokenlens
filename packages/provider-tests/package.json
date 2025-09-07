@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "pretest": "pnpm -w --filter ai-meta build",
+    "pretest": "pnpm -w --filter tokenlens build",
     "test": "vitest",
     "test:run": "vitest run",
     "test:live": "vitest run -t smoke",
@@ -17,6 +17,6 @@
     "vitest": "^1.6.0"
   },
   "dependencies": {
-    "ai-meta": "workspace:*"
+    "tokenlens": "workspace:*"
   }
 }

@@ -9,7 +9,7 @@ import {
     percentOfContextUsed,
     tokensRemaining,
     estimateCost,
-} from 'ai-meta';
+} from 'tokenlens';
 
 type Scenario = {
     name: string;
@@ -78,7 +78,7 @@ async function main() {
 
     const outDir = resolve(process.cwd(), 'benchmarks');
     await mkdir(outDir, { recursive: true });
-    const outFile = resolve(outDir, 'ai-meta-benchmark.json');
+    const outFile = resolve(outDir, 'tokenlens-benchmark.json');
     await writeFile(outFile, JSON.stringify({ generatedAt: new Date().toISOString(), models: results }, null, 2) + '\n', 'utf8');
     console.log(`Benchmark written: ${outFile}`);
 }

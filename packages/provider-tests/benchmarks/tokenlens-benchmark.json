@@ -1,0 +1,4828 @@
+{
+  "generatedAt": "2025-09-07T12:09:28.945Z",
+  "models": [
+    {
+      "id": "alibaba:qwen3-coder",
+      "provider": "alibaba",
+      "status": "stable",
+      "maxTokens": 131000,
+      "pricePerTokenIn": 4.0000000000000003e-7,
+      "pricePerTokenOut": 0.0000016000000000000001,
+      "source": "https://vercel.com/ai-gateway/models/qwen3-coder",
+      "contextWindow": {
+        "combinedMax": 131000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 130744,
+            "percentUsed": 0.001954
+          },
+          "tokensRemaining": 130744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 130144,
+            "percentUsed": 0.006534
+          },
+          "tokensRemaining": 130144,
+          "estimateCost": {
+            "inputUSD": 0.0002,
+            "outputUSD": 0.00016,
+            "totalUSD": 0.00036
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 124744,
+            "percentUsed": 0.047756
+          },
+          "tokensRemaining": 124744,
+          "estimateCost": {
+            "inputUSD": 0.002,
+            "outputUSD": 0.0016,
+            "totalUSD": 0.0036
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 104390,
+            "output": 26097
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998038
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.041756,
+            "outputUSD": 0.0417552,
+            "totalUSD": 0.08351120000000001
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 131000,
+            "output": 1000,
+            "total": 132000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.0524,
+            "outputUSD": 0.0016,
+            "totalUSD": 0.054
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "anthropic:claude-3.7-sonnet",
+      "provider": "anthropic",
+      "status": "stable",
+      "maxTokens": 200000,
+      "pricePerTokenIn": 0.000003,
+      "pricePerTokenOut": 0.000015,
+      "source": "https://vercel.com/ai-gateway/models/claude-3.7-sonnet",
+      "contextWindow": {
+        "combinedMax": 200000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 199744,
+            "percentUsed": 0.00128
+          },
+          "tokensRemaining": 199744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 199144,
+            "percentUsed": 0.00428
+          },
+          "tokensRemaining": 199144,
+          "estimateCost": {
+            "inputUSD": 0.0015,
+            "outputUSD": 0.0015,
+            "totalUSD": 0.003
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 193744,
+            "percentUsed": 0.03128
+          },
+          "tokensRemaining": 193744,
+          "estimateCost": {
+            "inputUSD": 0.015,
+            "outputUSD": 0.015,
+            "totalUSD": 0.03
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 159590,
+            "output": 39897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998715
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.47877000000000003,
+            "outputUSD": 0.5984550000000001,
+            "totalUSD": 1.077225
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 200000,
+            "output": 1000,
+            "total": 201000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.6000000000000001,
+            "outputUSD": 0.015,
+            "totalUSD": 0.6150000000000001
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "anthropic:claude-opus-4.1",
+      "provider": "anthropic",
+      "status": "stable",
+      "maxTokens": 200000,
+      "pricePerTokenIn": 0.000015,
+      "pricePerTokenOut": 0.000075,
+      "source": "https://vercel.com/ai-gateway/models/claude-opus-4.1",
+      "contextWindow": {
+        "combinedMax": 200000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 199744,
+            "percentUsed": 0.00128
+          },
+          "tokensRemaining": 199744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 199144,
+            "percentUsed": 0.00428
+          },
+          "tokensRemaining": 199144,
+          "estimateCost": {
+            "inputUSD": 0.0075,
+            "outputUSD": 0.007500000000000001,
+            "totalUSD": 0.015
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 193744,
+            "percentUsed": 0.03128
+          },
+          "tokensRemaining": 193744,
+          "estimateCost": {
+            "inputUSD": 0.075,
+            "outputUSD": 0.075,
+            "totalUSD": 0.15
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 159590,
+            "output": 39897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998715
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 2.39385,
+            "outputUSD": 2.9922750000000002,
+            "totalUSD": 5.386125
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 200000,
+            "output": 1000,
+            "total": 201000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 3,
+            "outputUSD": 0.075,
+            "totalUSD": 3.075
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "anthropic:claude-sonnet-4",
+      "provider": "anthropic",
+      "status": "stable",
+      "maxTokens": 200000,
+      "pricePerTokenIn": 0.000003,
+      "pricePerTokenOut": 0.000015,
+      "source": "https://vercel.com/ai-gateway/models/claude-sonnet-4",
+      "contextWindow": {
+        "combinedMax": 200000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 199744,
+            "percentUsed": 0.00128
+          },
+          "tokensRemaining": 199744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 199144,
+            "percentUsed": 0.00428
+          },
+          "tokensRemaining": 199144,
+          "estimateCost": {
+            "inputUSD": 0.0015,
+            "outputUSD": 0.0015,
+            "totalUSD": 0.003
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 193744,
+            "percentUsed": 0.03128
+          },
+          "tokensRemaining": 193744,
+          "estimateCost": {
+            "inputUSD": 0.015,
+            "outputUSD": 0.015,
+            "totalUSD": 0.03
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 159590,
+            "output": 39897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998715
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.47877000000000003,
+            "outputUSD": 0.5984550000000001,
+            "totalUSD": 1.077225
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 200000,
+            "output": 1000,
+            "total": 201000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.6000000000000001,
+            "outputUSD": 0.015,
+            "totalUSD": 0.6150000000000001
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "cohere:command-a",
+      "provider": "cohere",
+      "status": "stable",
+      "maxTokens": 256000,
+      "pricePerTokenIn": 0.0000025,
+      "pricePerTokenOut": 0.00001,
+      "source": "https://vercel.com/ai-gateway/models/command-a",
+      "contextWindow": {
+        "combinedMax": 256000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 255744,
+            "percentUsed": 0.001
+          },
+          "tokensRemaining": 255744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 255144,
+            "percentUsed": 0.003344
+          },
+          "tokensRemaining": 255144,
+          "estimateCost": {
+            "inputUSD": 0.00125,
+            "outputUSD": 0.001,
+            "totalUSD": 0.0022500000000000003
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 249744,
+            "percentUsed": 0.024438
+          },
+          "tokensRemaining": 249744,
+          "estimateCost": {
+            "inputUSD": 0.0125,
+            "outputUSD": 0.01,
+            "totalUSD": 0.0225
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 204390,
+            "output": 51097
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998996
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.510975,
+            "outputUSD": 0.5109699999999999,
+            "totalUSD": 1.0219449999999999
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 256000,
+            "output": 1000,
+            "total": 257000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.64,
+            "outputUSD": 0.01,
+            "totalUSD": 0.65
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "cohere:command-r",
+      "provider": "cohere",
+      "status": "stable",
+      "maxTokens": 128000,
+      "pricePerTokenIn": 1.5e-7,
+      "pricePerTokenOut": 6e-7,
+      "source": "https://vercel.com/ai-gateway/models/command-r",
+      "contextWindow": {
+        "combinedMax": 128000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127744,
+            "percentUsed": 0.002
+          },
+          "tokensRemaining": 127744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127144,
+            "percentUsed": 0.006687
+          },
+          "tokensRemaining": 127144,
+          "estimateCost": {
+            "inputUSD": 0.000075,
+            "outputUSD": 0.00006,
+            "totalUSD": 0.000135
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 121744,
+            "percentUsed": 0.048875
+          },
+          "tokensRemaining": 121744,
+          "estimateCost": {
+            "inputUSD": 0.00075,
+            "outputUSD": 0.0006,
+            "totalUSD": 0.00135
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 101990,
+            "output": 25497
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.997992
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.0152985,
+            "outputUSD": 0.015298199999999998,
+            "totalUSD": 0.030596699999999998
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 128000,
+            "output": 1000,
+            "total": 129000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.0192,
+            "outputUSD": 0.0006,
+            "totalUSD": 0.019799999999999998
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "cohere:command-r-plus",
+      "provider": "cohere",
+      "status": "stable",
+      "maxTokens": 128000,
+      "pricePerTokenIn": 0.0000025,
+      "pricePerTokenOut": 0.00001,
+      "source": "https://vercel.com/ai-gateway/models/command-r-plus",
+      "contextWindow": {
+        "combinedMax": 128000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127744,
+            "percentUsed": 0.002
+          },
+          "tokensRemaining": 127744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127144,
+            "percentUsed": 0.006687
+          },
+          "tokensRemaining": 127144,
+          "estimateCost": {
+            "inputUSD": 0.00125,
+            "outputUSD": 0.001,
+            "totalUSD": 0.0022500000000000003
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 121744,
+            "percentUsed": 0.048875
+          },
+          "tokensRemaining": 121744,
+          "estimateCost": {
+            "inputUSD": 0.0125,
+            "outputUSD": 0.01,
+            "totalUSD": 0.0225
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 101990,
+            "output": 25497
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.997992
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.254975,
+            "outputUSD": 0.25497,
+            "totalUSD": 0.509945
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 128000,
+            "output": 1000,
+            "total": 129000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.32,
+            "outputUSD": 0.01,
+            "totalUSD": 0.33
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "cohere:embed-v4.0",
+      "provider": "cohere",
+      "status": "stable",
+      "pricePerTokenIn": 1.2e-7,
+      "source": "https://vercel.com/ai-gateway/models/embed-v4.0",
+      "contextWindow": {},
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.00006,
+            "totalUSD": 0.00006
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.0006,
+            "totalUSD": 0.0006
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 79590,
+            "output": 19897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.009550799999999998,
+            "totalUSD": 0.009550799999999998
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 100000,
+            "output": 1000,
+            "total": 101000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.012,
+            "totalUSD": 0.012
+          },
+          "fitsContext": true
+        }
+      ]
+    },
+    {
+      "id": "deepseek:deepseek-v3",
+      "provider": "deepseek",
+      "status": "stable",
+      "maxTokens": 164000,
+      "pricePerTokenIn": 7.7e-7,
+      "pricePerTokenOut": 7.7e-7,
+      "source": "https://vercel.com/ai-gateway/models/deepseek-v3",
+      "contextWindow": {
+        "combinedMax": 164000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 163744,
+            "percentUsed": 0.001561
+          },
+          "tokensRemaining": 163744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 163144,
+            "percentUsed": 0.00522
+          },
+          "tokensRemaining": 163144,
+          "estimateCost": {
+            "inputUSD": 0.00038500000000000003,
+            "outputUSD": 0.000077,
+            "totalUSD": 0.00046200000000000006
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 157744,
+            "percentUsed": 0.038146
+          },
+          "tokensRemaining": 157744,
+          "estimateCost": {
+            "inputUSD": 0.00385,
+            "outputUSD": 0.0007700000000000001,
+            "totalUSD": 0.00462
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 130790,
+            "output": 32697
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998433
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.1007083,
+            "outputUSD": 0.025176689999999998,
+            "totalUSD": 0.12588499
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 164000,
+            "output": 1000,
+            "total": 165000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.12628,
+            "outputUSD": 0.0007700000000000001,
+            "totalUSD": 0.12705
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "deepseek:deepseek-v3.1",
+      "provider": "deepseek",
+      "status": "stable",
+      "maxTokens": 164000,
+      "pricePerTokenIn": 2.0000000000000002e-7,
+      "pricePerTokenOut": 8.000000000000001e-7,
+      "source": "https://vercel.com/ai-gateway/models/deepseek-v3.1",
+      "contextWindow": {
+        "combinedMax": 164000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 163744,
+            "percentUsed": 0.001561
+          },
+          "tokensRemaining": 163744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 163144,
+            "percentUsed": 0.00522
+          },
+          "tokensRemaining": 163144,
+          "estimateCost": {
+            "inputUSD": 0.0001,
+            "outputUSD": 0.00008,
+            "totalUSD": 0.00018
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 157744,
+            "percentUsed": 0.038146
+          },
+          "tokensRemaining": 157744,
+          "estimateCost": {
+            "inputUSD": 0.001,
+            "outputUSD": 0.0008,
+            "totalUSD": 0.0018
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 130790,
+            "output": 32697
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998433
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.026158,
+            "outputUSD": 0.0261576,
+            "totalUSD": 0.052315600000000004
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 164000,
+            "output": 1000,
+            "total": 165000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.0328,
+            "outputUSD": 0.0008,
+            "totalUSD": 0.033600000000000005
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "google:gemini-2.0-flash",
+      "provider": "google",
+      "status": "stable",
+      "maxTokens": 1000000,
+      "pricePerTokenIn": 1.5e-7,
+      "pricePerTokenOut": 6e-7,
+      "source": "https://vercel.com/ai-gateway/models/gemini-2.0-flash",
+      "contextWindow": {
+        "combinedMax": 1000000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 999744,
+            "percentUsed": 0.000256
+          },
+          "tokensRemaining": 999744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 999144,
+            "percentUsed": 0.000856
+          },
+          "tokensRemaining": 999144,
+          "estimateCost": {
+            "inputUSD": 0.000075,
+            "outputUSD": 0.00006,
+            "totalUSD": 0.000135
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 993744,
+            "percentUsed": 0.006256
+          },
+          "tokensRemaining": 993744,
+          "estimateCost": {
+            "inputUSD": 0.00075,
+            "outputUSD": 0.0006,
+            "totalUSD": 0.00135
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 799590,
+            "output": 199897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.999743
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.1199385,
+            "outputUSD": 0.1199382,
+            "totalUSD": 0.2398767
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 1000000,
+            "output": 1000,
+            "total": 1001000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.15,
+            "outputUSD": 0.0006,
+            "totalUSD": 0.15059999999999998
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "google:gemini-2.5-flash",
+      "provider": "google",
+      "status": "stable",
+      "maxTokens": 1000000,
+      "pricePerTokenIn": 3e-7,
+      "pricePerTokenOut": 0.0000025,
+      "source": "https://vercel.com/ai-gateway/models/gemini-2.5-flash",
+      "contextWindow": {
+        "combinedMax": 1000000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 999744,
+            "percentUsed": 0.000256
+          },
+          "tokensRemaining": 999744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 999144,
+            "percentUsed": 0.000856
+          },
+          "tokensRemaining": 999144,
+          "estimateCost": {
+            "inputUSD": 0.00015,
+            "outputUSD": 0.00025,
+            "totalUSD": 0.00039999999999999996
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 993744,
+            "percentUsed": 0.006256
+          },
+          "tokensRemaining": 993744,
+          "estimateCost": {
+            "inputUSD": 0.0015,
+            "outputUSD": 0.0025,
+            "totalUSD": 0.004
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 799590,
+            "output": 199897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.999743
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.239877,
+            "outputUSD": 0.4997425,
+            "totalUSD": 0.7396195
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 1000000,
+            "output": 1000,
+            "total": 1001000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.3,
+            "outputUSD": 0.0025,
+            "totalUSD": 0.3025
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "google:gemini-2.5-flash-lite",
+      "provider": "google",
+      "status": "stable",
+      "maxTokens": 1000000,
+      "pricePerTokenIn": 1.0000000000000001e-7,
+      "pricePerTokenOut": 4.0000000000000003e-7,
+      "source": "https://vercel.com/ai-gateway/models/gemini-2.5-flash-lite",
+      "contextWindow": {
+        "combinedMax": 1000000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 999744,
+            "percentUsed": 0.000256
+          },
+          "tokensRemaining": 999744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 999144,
+            "percentUsed": 0.000856
+          },
+          "tokensRemaining": 999144,
+          "estimateCost": {
+            "inputUSD": 0.00005,
+            "outputUSD": 0.00004,
+            "totalUSD": 0.00009
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 993744,
+            "percentUsed": 0.006256
+          },
+          "tokensRemaining": 993744,
+          "estimateCost": {
+            "inputUSD": 0.0005,
+            "outputUSD": 0.0004,
+            "totalUSD": 0.0009
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 799590,
+            "output": 199897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.999743
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.079959,
+            "outputUSD": 0.0799588,
+            "totalUSD": 0.1599178
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 1000000,
+            "output": 1000,
+            "total": 1001000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.1,
+            "outputUSD": 0.0004,
+            "totalUSD": 0.1004
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "google:gemini-2.5-pro",
+      "provider": "google",
+      "status": "stable",
+      "maxTokens": 1000000,
+      "pricePerTokenIn": 0.0000025,
+      "pricePerTokenOut": 0.00001,
+      "source": "https://vercel.com/ai-gateway/models/gemini-2.5-pro",
+      "contextWindow": {
+        "combinedMax": 1000000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 999744,
+            "percentUsed": 0.000256
+          },
+          "tokensRemaining": 999744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 999144,
+            "percentUsed": 0.000856
+          },
+          "tokensRemaining": 999144,
+          "estimateCost": {
+            "inputUSD": 0.00125,
+            "outputUSD": 0.001,
+            "totalUSD": 0.0022500000000000003
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 993744,
+            "percentUsed": 0.006256
+          },
+          "tokensRemaining": 993744,
+          "estimateCost": {
+            "inputUSD": 0.0125,
+            "outputUSD": 0.01,
+            "totalUSD": 0.0225
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 799590,
+            "output": 199897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.999743
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 1.9989750000000002,
+            "outputUSD": 1.99897,
+            "totalUSD": 3.997945
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 1000000,
+            "output": 1000,
+            "total": 1001000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 2.5,
+            "outputUSD": 0.01,
+            "totalUSD": 2.51
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "mistral:codestral",
+      "provider": "mistral",
+      "status": "stable",
+      "maxTokens": 256000,
+      "pricePerTokenIn": 3e-7,
+      "pricePerTokenOut": 9.000000000000001e-7,
+      "source": "https://vercel.com/ai-gateway/models/codestral",
+      "contextWindow": {
+        "combinedMax": 256000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 255744,
+            "percentUsed": 0.001
+          },
+          "tokensRemaining": 255744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 255144,
+            "percentUsed": 0.003344
+          },
+          "tokensRemaining": 255144,
+          "estimateCost": {
+            "inputUSD": 0.00015,
+            "outputUSD": 0.00009,
+            "totalUSD": 0.00023999999999999998
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 249744,
+            "percentUsed": 0.024438
+          },
+          "tokensRemaining": 249744,
+          "estimateCost": {
+            "inputUSD": 0.0015,
+            "outputUSD": 0.0009000000000000001,
+            "totalUSD": 0.0024000000000000002
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 204390,
+            "output": 51097
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998996
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.061316999999999997,
+            "outputUSD": 0.045987299999999995,
+            "totalUSD": 0.10730429999999999
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 256000,
+            "output": 1000,
+            "total": 257000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.0768,
+            "outputUSD": 0.0009000000000000001,
+            "totalUSD": 0.07769999999999999
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "mistral:codestral-embed",
+      "provider": "mistral",
+      "status": "stable",
+      "pricePerTokenIn": 1.5e-7,
+      "source": "https://vercel.com/ai-gateway/models/codestral-embed",
+      "contextWindow": {},
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.000075,
+            "totalUSD": 0.000075
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.00075,
+            "totalUSD": 0.00075
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 79590,
+            "output": 19897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.0119385,
+            "totalUSD": 0.0119385
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 100000,
+            "output": 1000,
+            "total": 101000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.015,
+            "totalUSD": 0.015
+          },
+          "fitsContext": true
+        }
+      ]
+    },
+    {
+      "id": "mistral:devstral-small",
+      "provider": "mistral",
+      "status": "stable",
+      "maxTokens": 128000,
+      "pricePerTokenIn": 7e-8,
+      "pricePerTokenOut": 2.8e-7,
+      "source": "https://vercel.com/ai-gateway/models/devstral-small",
+      "contextWindow": {
+        "combinedMax": 128000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127744,
+            "percentUsed": 0.002
+          },
+          "tokensRemaining": 127744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127144,
+            "percentUsed": 0.006687
+          },
+          "tokensRemaining": 127144,
+          "estimateCost": {
+            "inputUSD": 0.000035000000000000004,
+            "outputUSD": 0.000028000000000000003,
+            "totalUSD": 0.00006300000000000001
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 121744,
+            "percentUsed": 0.048875
+          },
+          "tokensRemaining": 121744,
+          "estimateCost": {
+            "inputUSD": 0.00035000000000000005,
+            "outputUSD": 0.00028000000000000003,
+            "totalUSD": 0.0006300000000000001
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 101990,
+            "output": 25497
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.997992
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.0071393,
+            "outputUSD": 0.00713916,
+            "totalUSD": 0.01427846
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 128000,
+            "output": 1000,
+            "total": 129000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.008960000000000001,
+            "outputUSD": 0.00028000000000000003,
+            "totalUSD": 0.009240000000000002
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "mistral:ministral-3b",
+      "provider": "mistral",
+      "status": "stable",
+      "maxTokens": 128000,
+      "pricePerTokenIn": 4e-8,
+      "pricePerTokenOut": 4e-8,
+      "source": "https://vercel.com/ai-gateway/models/ministral-3b",
+      "contextWindow": {
+        "combinedMax": 128000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127744,
+            "percentUsed": 0.002
+          },
+          "tokensRemaining": 127744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127144,
+            "percentUsed": 0.006687
+          },
+          "tokensRemaining": 127144,
+          "estimateCost": {
+            "inputUSD": 0.00002,
+            "outputUSD": 0.000004000000000000001,
+            "totalUSD": 0.000024
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 121744,
+            "percentUsed": 0.048875
+          },
+          "tokensRemaining": 121744,
+          "estimateCost": {
+            "inputUSD": 0.0002,
+            "outputUSD": 0.00004,
+            "totalUSD": 0.00024
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 101990,
+            "output": 25497
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.997992
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.0040796,
+            "outputUSD": 0.00101988,
+            "totalUSD": 0.00509948
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 128000,
+            "output": 1000,
+            "total": 129000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.00512,
+            "outputUSD": 0.00004,
+            "totalUSD": 0.0051600000000000005
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "mistral:ministral-8b",
+      "provider": "mistral",
+      "status": "stable",
+      "maxTokens": 128000,
+      "pricePerTokenIn": 1.0000000000000001e-7,
+      "pricePerTokenOut": 1.0000000000000001e-7,
+      "source": "https://vercel.com/ai-gateway/models/ministral-8b",
+      "contextWindow": {
+        "combinedMax": 128000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127744,
+            "percentUsed": 0.002
+          },
+          "tokensRemaining": 127744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127144,
+            "percentUsed": 0.006687
+          },
+          "tokensRemaining": 127144,
+          "estimateCost": {
+            "inputUSD": 0.00005,
+            "outputUSD": 0.00001,
+            "totalUSD": 0.00006
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 121744,
+            "percentUsed": 0.048875
+          },
+          "tokensRemaining": 121744,
+          "estimateCost": {
+            "inputUSD": 0.0005,
+            "outputUSD": 0.0001,
+            "totalUSD": 0.0006000000000000001
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 101990,
+            "output": 25497
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.997992
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.010199,
+            "outputUSD": 0.0025497000000000002,
+            "totalUSD": 0.0127487
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 128000,
+            "output": 1000,
+            "total": 129000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.0128,
+            "outputUSD": 0.0001,
+            "totalUSD": 0.0129
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "mistral:mistral-embed",
+      "provider": "mistral",
+      "status": "stable",
+      "pricePerTokenIn": 1.0000000000000001e-7,
+      "source": "https://vercel.com/ai-gateway/models/mistral-embed",
+      "contextWindow": {},
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.00005,
+            "totalUSD": 0.00005
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.0005,
+            "totalUSD": 0.0005
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 79590,
+            "output": 19897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.007958999999999999,
+            "totalUSD": 0.007958999999999999
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 100000,
+            "output": 1000,
+            "total": 101000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.010000000000000002,
+            "totalUSD": 0.010000000000000002
+          },
+          "fitsContext": true
+        }
+      ]
+    },
+    {
+      "id": "mistral:mistral-large",
+      "provider": "mistral",
+      "status": "stable",
+      "maxTokens": 32000,
+      "pricePerTokenIn": 0.000002,
+      "pricePerTokenOut": 0.000006,
+      "source": "https://vercel.com/ai-gateway/models/mistral-large",
+      "contextWindow": {
+        "combinedMax": 32000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 31744,
+            "percentUsed": 0.008
+          },
+          "tokensRemaining": 31744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 31144,
+            "percentUsed": 0.02675
+          },
+          "tokensRemaining": 31144,
+          "estimateCost": {
+            "inputUSD": 0.001,
+            "outputUSD": 0.0006000000000000001,
+            "totalUSD": 0.0016
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 25744,
+            "percentUsed": 0.1955
+          },
+          "tokensRemaining": 25744,
+          "estimateCost": {
+            "inputUSD": 0.01,
+            "outputUSD": 0.006,
+            "totalUSD": 0.016
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 25190,
+            "output": 6297
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.991969
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.05038,
+            "outputUSD": 0.037781999999999996,
+            "totalUSD": 0.08816199999999999
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 32000,
+            "output": 1000,
+            "total": 33000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.064,
+            "outputUSD": 0.006,
+            "totalUSD": 0.07
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "mistral:mistral-medium",
+      "provider": "mistral",
+      "status": "stable",
+      "maxTokens": 128000,
+      "pricePerTokenIn": 4.0000000000000003e-7,
+      "pricePerTokenOut": 0.000002,
+      "source": "https://vercel.com/ai-gateway/models/mistral-medium",
+      "contextWindow": {
+        "combinedMax": 128000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127744,
+            "percentUsed": 0.002
+          },
+          "tokensRemaining": 127744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127144,
+            "percentUsed": 0.006687
+          },
+          "tokensRemaining": 127144,
+          "estimateCost": {
+            "inputUSD": 0.0002,
+            "outputUSD": 0.0002,
+            "totalUSD": 0.0004
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 121744,
+            "percentUsed": 0.048875
+          },
+          "tokensRemaining": 121744,
+          "estimateCost": {
+            "inputUSD": 0.002,
+            "outputUSD": 0.002,
+            "totalUSD": 0.004
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 101990,
+            "output": 25497
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.997992
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.040796,
+            "outputUSD": 0.050994,
+            "totalUSD": 0.09179
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 128000,
+            "output": 1000,
+            "total": 129000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.0512,
+            "outputUSD": 0.002,
+            "totalUSD": 0.053200000000000004
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "mistral:mistral-small",
+      "provider": "mistral",
+      "status": "stable",
+      "maxTokens": 32000,
+      "pricePerTokenIn": 1.0000000000000001e-7,
+      "pricePerTokenOut": 3e-7,
+      "source": "https://vercel.com/ai-gateway/models/mistral-small",
+      "contextWindow": {
+        "combinedMax": 32000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 31744,
+            "percentUsed": 0.008
+          },
+          "tokensRemaining": 31744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 31144,
+            "percentUsed": 0.02675
+          },
+          "tokensRemaining": 31144,
+          "estimateCost": {
+            "inputUSD": 0.00005,
+            "outputUSD": 0.00003,
+            "totalUSD": 0.00008
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 25744,
+            "percentUsed": 0.1955
+          },
+          "tokensRemaining": 25744,
+          "estimateCost": {
+            "inputUSD": 0.0005,
+            "outputUSD": 0.0003,
+            "totalUSD": 0.0007999999999999999
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 25190,
+            "output": 6297
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.991969
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.0025190000000000004,
+            "outputUSD": 0.0018891,
+            "totalUSD": 0.0044081
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 32000,
+            "output": 1000,
+            "total": 33000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.0032,
+            "outputUSD": 0.0003,
+            "totalUSD": 0.0035
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "mistral:pixtral-12b",
+      "provider": "mistral",
+      "status": "stable",
+      "maxTokens": 128000,
+      "pricePerTokenIn": 1.5e-7,
+      "pricePerTokenOut": 1.5e-7,
+      "source": "https://vercel.com/ai-gateway/models/pixtral-12b",
+      "contextWindow": {
+        "combinedMax": 128000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127744,
+            "percentUsed": 0.002
+          },
+          "tokensRemaining": 127744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127144,
+            "percentUsed": 0.006687
+          },
+          "tokensRemaining": 127144,
+          "estimateCost": {
+            "inputUSD": 0.000075,
+            "outputUSD": 0.000015,
+            "totalUSD": 0.00008999999999999999
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 121744,
+            "percentUsed": 0.048875
+          },
+          "tokensRemaining": 121744,
+          "estimateCost": {
+            "inputUSD": 0.00075,
+            "outputUSD": 0.00015,
+            "totalUSD": 0.0009
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 101990,
+            "output": 25497
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.997992
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.0152985,
+            "outputUSD": 0.0038245499999999995,
+            "totalUSD": 0.01912305
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 128000,
+            "output": 1000,
+            "total": 129000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.0192,
+            "outputUSD": 0.00015,
+            "totalUSD": 0.01935
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "mistral:pixtral-large",
+      "provider": "mistral",
+      "status": "stable",
+      "maxTokens": 128000,
+      "pricePerTokenIn": 0.000002,
+      "pricePerTokenOut": 0.000006,
+      "source": "https://vercel.com/ai-gateway/models/pixtral-large",
+      "contextWindow": {
+        "combinedMax": 128000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127744,
+            "percentUsed": 0.002
+          },
+          "tokensRemaining": 127744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127144,
+            "percentUsed": 0.006687
+          },
+          "tokensRemaining": 127144,
+          "estimateCost": {
+            "inputUSD": 0.001,
+            "outputUSD": 0.0006000000000000001,
+            "totalUSD": 0.0016
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 121744,
+            "percentUsed": 0.048875
+          },
+          "tokensRemaining": 121744,
+          "estimateCost": {
+            "inputUSD": 0.01,
+            "outputUSD": 0.006,
+            "totalUSD": 0.016
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 101990,
+            "output": 25497
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.997992
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.20398,
+            "outputUSD": 0.152982,
+            "totalUSD": 0.356962
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 128000,
+            "output": 1000,
+            "total": 129000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.256,
+            "outputUSD": 0.006,
+            "totalUSD": 0.262
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "moonshotai:kimi-k2",
+      "provider": "moonshotai",
+      "status": "stable",
+      "maxTokens": 131000,
+      "pricePerTokenIn": 5e-7,
+      "pricePerTokenOut": 0.000002,
+      "source": "https://vercel.com/ai-gateway/models/kimi-k2",
+      "contextWindow": {
+        "combinedMax": 131000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 130744,
+            "percentUsed": 0.001954
+          },
+          "tokensRemaining": 130744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 130144,
+            "percentUsed": 0.006534
+          },
+          "tokensRemaining": 130144,
+          "estimateCost": {
+            "inputUSD": 0.00025,
+            "outputUSD": 0.0002,
+            "totalUSD": 0.00045
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 124744,
+            "percentUsed": 0.047756
+          },
+          "tokensRemaining": 124744,
+          "estimateCost": {
+            "inputUSD": 0.0025,
+            "outputUSD": 0.002,
+            "totalUSD": 0.0045000000000000005
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 104390,
+            "output": 26097
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998038
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.052195,
+            "outputUSD": 0.052194,
+            "totalUSD": 0.104389
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 131000,
+            "output": 1000,
+            "total": 132000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.0655,
+            "outputUSD": 0.002,
+            "totalUSD": 0.0675
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "moonshotai:kimi-k2-0905",
+      "provider": "moonshotai",
+      "status": "stable",
+      "maxTokens": 256000,
+      "pricePerTokenIn": 6e-7,
+      "pricePerTokenOut": 0.0000012,
+      "source": "https://vercel.com/ai-gateway/models/kimi-k2-0905",
+      "contextWindow": {
+        "combinedMax": 256000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 255744,
+            "percentUsed": 0.001
+          },
+          "tokensRemaining": 255744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 255144,
+            "percentUsed": 0.003344
+          },
+          "tokensRemaining": 255144,
+          "estimateCost": {
+            "inputUSD": 0.0003,
+            "outputUSD": 0.00012,
+            "totalUSD": 0.00041999999999999996
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 249744,
+            "percentUsed": 0.024438
+          },
+          "tokensRemaining": 249744,
+          "estimateCost": {
+            "inputUSD": 0.003,
+            "outputUSD": 0.0012,
+            "totalUSD": 0.0042
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 204390,
+            "output": 51097
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998996
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.12263399999999999,
+            "outputUSD": 0.06131639999999999,
+            "totalUSD": 0.1839504
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 256000,
+            "output": 1000,
+            "total": 257000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.1536,
+            "outputUSD": 0.0012,
+            "totalUSD": 0.1548
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "openai:gpt-4.1",
+      "provider": "openai",
+      "status": "stable",
+      "maxTokens": 1000000,
+      "pricePerTokenIn": 0.000002,
+      "pricePerTokenOut": 0.000008,
+      "source": "https://vercel.com/ai-gateway/models/gpt-4.1",
+      "contextWindow": {
+        "combinedMax": 1000000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 999744,
+            "percentUsed": 0.000256
+          },
+          "tokensRemaining": 999744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 999144,
+            "percentUsed": 0.000856
+          },
+          "tokensRemaining": 999144,
+          "estimateCost": {
+            "inputUSD": 0.001,
+            "outputUSD": 0.0008,
+            "totalUSD": 0.0018
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 993744,
+            "percentUsed": 0.006256
+          },
+          "tokensRemaining": 993744,
+          "estimateCost": {
+            "inputUSD": 0.01,
+            "outputUSD": 0.008,
+            "totalUSD": 0.018000000000000002
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 799590,
+            "output": 199897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.999743
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 1.59918,
+            "outputUSD": 1.599176,
+            "totalUSD": 3.198356
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 1000000,
+            "output": 1000,
+            "total": 1001000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 2,
+            "outputUSD": 0.008,
+            "totalUSD": 2.008
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "openai:gpt-4.1-mini",
+      "provider": "openai",
+      "status": "stable",
+      "maxTokens": 1000000,
+      "pricePerTokenIn": 4.0000000000000003e-7,
+      "pricePerTokenOut": 0.0000016000000000000001,
+      "source": "https://vercel.com/ai-gateway/models/gpt-4.1-mini",
+      "contextWindow": {
+        "combinedMax": 1000000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 999744,
+            "percentUsed": 0.000256
+          },
+          "tokensRemaining": 999744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 999144,
+            "percentUsed": 0.000856
+          },
+          "tokensRemaining": 999144,
+          "estimateCost": {
+            "inputUSD": 0.0002,
+            "outputUSD": 0.00016,
+            "totalUSD": 0.00036
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 993744,
+            "percentUsed": 0.006256
+          },
+          "tokensRemaining": 993744,
+          "estimateCost": {
+            "inputUSD": 0.002,
+            "outputUSD": 0.0016,
+            "totalUSD": 0.0036
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 799590,
+            "output": 199897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.999743
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.319836,
+            "outputUSD": 0.3198352,
+            "totalUSD": 0.6396712
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 1000000,
+            "output": 1000,
+            "total": 1001000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.4,
+            "outputUSD": 0.0016,
+            "totalUSD": 0.4016
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "openai:gpt-4.1-nano",
+      "provider": "openai",
+      "status": "stable",
+      "maxTokens": 1000000,
+      "pricePerTokenIn": 1.0000000000000001e-7,
+      "pricePerTokenOut": 4.0000000000000003e-7,
+      "source": "https://vercel.com/ai-gateway/models/gpt-4.1-nano",
+      "contextWindow": {
+        "combinedMax": 1000000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 999744,
+            "percentUsed": 0.000256
+          },
+          "tokensRemaining": 999744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 999144,
+            "percentUsed": 0.000856
+          },
+          "tokensRemaining": 999144,
+          "estimateCost": {
+            "inputUSD": 0.00005,
+            "outputUSD": 0.00004,
+            "totalUSD": 0.00009
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 993744,
+            "percentUsed": 0.006256
+          },
+          "tokensRemaining": 993744,
+          "estimateCost": {
+            "inputUSD": 0.0005,
+            "outputUSD": 0.0004,
+            "totalUSD": 0.0009
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 799590,
+            "output": 199897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.999743
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.079959,
+            "outputUSD": 0.0799588,
+            "totalUSD": 0.1599178
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 1000000,
+            "output": 1000,
+            "total": 1001000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.1,
+            "outputUSD": 0.0004,
+            "totalUSD": 0.1004
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "openai:gpt-4o",
+      "provider": "openai",
+      "status": "stable",
+      "maxTokens": 128000,
+      "pricePerTokenIn": 0.0000025,
+      "pricePerTokenOut": 0.00001,
+      "source": "https://vercel.com/ai-gateway/models/gpt-4o",
+      "contextWindow": {
+        "combinedMax": 128000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127744,
+            "percentUsed": 0.002
+          },
+          "tokensRemaining": 127744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 127144,
+            "percentUsed": 0.006687
+          },
+          "tokensRemaining": 127144,
+          "estimateCost": {
+            "inputUSD": 0.00125,
+            "outputUSD": 0.001,
+            "totalUSD": 0.0022500000000000003
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 121744,
+            "percentUsed": 0.048875
+          },
+          "tokensRemaining": 121744,
+          "estimateCost": {
+            "inputUSD": 0.0125,
+            "outputUSD": 0.01,
+            "totalUSD": 0.0225
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 101990,
+            "output": 25497
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.997992
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.254975,
+            "outputUSD": 0.25497,
+            "totalUSD": 0.509945
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 128000,
+            "output": 1000,
+            "total": 129000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.32,
+            "outputUSD": 0.01,
+            "totalUSD": 0.33
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "openai:gpt-5",
+      "provider": "openai",
+      "status": "stable",
+      "maxTokens": 400000,
+      "pricePerTokenIn": 0.00000125,
+      "pricePerTokenOut": 0.00001,
+      "source": "https://vercel.com/ai-gateway/models/gpt-5",
+      "contextWindow": {
+        "combinedMax": 400000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 399744,
+            "percentUsed": 0.00064
+          },
+          "tokensRemaining": 399744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 399144,
+            "percentUsed": 0.00214
+          },
+          "tokensRemaining": 399144,
+          "estimateCost": {
+            "inputUSD": 0.000625,
+            "outputUSD": 0.001,
+            "totalUSD": 0.0016250000000000001
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 393744,
+            "percentUsed": 0.01564
+          },
+          "tokensRemaining": 393744,
+          "estimateCost": {
+            "inputUSD": 0.00625,
+            "outputUSD": 0.01,
+            "totalUSD": 0.01625
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 319590,
+            "output": 79897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.999358
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.3994875,
+            "outputUSD": 0.79897,
+            "totalUSD": 1.1984575
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 400000,
+            "output": 1000,
+            "total": 401000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.5,
+            "outputUSD": 0.01,
+            "totalUSD": 0.51
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "openai:gpt-5-mini",
+      "provider": "openai",
+      "status": "stable",
+      "maxTokens": 400000,
+      "pricePerTokenIn": 2.5e-7,
+      "pricePerTokenOut": 0.000002,
+      "source": "https://vercel.com/ai-gateway/models/gpt-5-mini",
+      "contextWindow": {
+        "combinedMax": 400000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 399744,
+            "percentUsed": 0.00064
+          },
+          "tokensRemaining": 399744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 399144,
+            "percentUsed": 0.00214
+          },
+          "tokensRemaining": 399144,
+          "estimateCost": {
+            "inputUSD": 0.000125,
+            "outputUSD": 0.0002,
+            "totalUSD": 0.000325
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 393744,
+            "percentUsed": 0.01564
+          },
+          "tokensRemaining": 393744,
+          "estimateCost": {
+            "inputUSD": 0.00125,
+            "outputUSD": 0.002,
+            "totalUSD": 0.0032500000000000003
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 319590,
+            "output": 79897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.999358
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.0798975,
+            "outputUSD": 0.159794,
+            "totalUSD": 0.2396915
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 400000,
+            "output": 1000,
+            "total": 401000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.1,
+            "outputUSD": 0.002,
+            "totalUSD": 0.10200000000000001
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "openai:gpt-5-nano",
+      "provider": "openai",
+      "status": "stable",
+      "maxTokens": 400000,
+      "pricePerTokenIn": 5.0000000000000004e-8,
+      "pricePerTokenOut": 4.0000000000000003e-7,
+      "source": "https://vercel.com/ai-gateway/models/gpt-5-nano",
+      "contextWindow": {
+        "combinedMax": 400000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 399744,
+            "percentUsed": 0.00064
+          },
+          "tokensRemaining": 399744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 399144,
+            "percentUsed": 0.00214
+          },
+          "tokensRemaining": 399144,
+          "estimateCost": {
+            "inputUSD": 0.000025,
+            "outputUSD": 0.00004,
+            "totalUSD": 0.00006500000000000001
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 393744,
+            "percentUsed": 0.01564
+          },
+          "tokensRemaining": 393744,
+          "estimateCost": {
+            "inputUSD": 0.00025,
+            "outputUSD": 0.0004,
+            "totalUSD": 0.00065
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 319590,
+            "output": 79897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.999358
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.0159795,
+            "outputUSD": 0.0319588,
+            "totalUSD": 0.0479383
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 400000,
+            "output": 1000,
+            "total": 401000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.020000000000000004,
+            "outputUSD": 0.0004,
+            "totalUSD": 0.020400000000000005
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "openai:text-embedding-3-small",
+      "provider": "openai",
+      "status": "stable",
+      "pricePerTokenIn": 2e-8,
+      "source": "https://vercel.com/ai-gateway/models/text-embedding-3-small",
+      "contextWindow": {},
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.00001,
+            "totalUSD": 0.00001
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.0001,
+            "totalUSD": 0.0001
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 79590,
+            "output": 19897
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.0015918,
+            "totalUSD": 0.0015918
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 100000,
+            "output": 1000,
+            "total": 101000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": null,
+            "percentUsed": 0
+          },
+          "tokensRemaining": null,
+          "estimateCost": {
+            "inputUSD": 0.002,
+            "totalUSD": 0.002
+          },
+          "fitsContext": true
+        }
+      ]
+    },
+    {
+      "id": "xai:grok-2",
+      "provider": "xai",
+      "status": "stable",
+      "maxTokens": 131000,
+      "pricePerTokenIn": 0.000002,
+      "pricePerTokenOut": 0.00001,
+      "source": "https://vercel.com/ai-gateway/models/grok-2",
+      "contextWindow": {
+        "combinedMax": 131000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 130744,
+            "percentUsed": 0.001954
+          },
+          "tokensRemaining": 130744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 130144,
+            "percentUsed": 0.006534
+          },
+          "tokensRemaining": 130144,
+          "estimateCost": {
+            "inputUSD": 0.001,
+            "outputUSD": 0.001,
+            "totalUSD": 0.002
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 124744,
+            "percentUsed": 0.047756
+          },
+          "tokensRemaining": 124744,
+          "estimateCost": {
+            "inputUSD": 0.01,
+            "outputUSD": 0.01,
+            "totalUSD": 0.02
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 104390,
+            "output": 26097
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998038
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.20878,
+            "outputUSD": 0.26097,
+            "totalUSD": 0.46975
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 131000,
+            "output": 1000,
+            "total": 132000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.262,
+            "outputUSD": 0.01,
+            "totalUSD": 0.272
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "xai:grok-2-vision",
+      "provider": "xai",
+      "status": "stable",
+      "maxTokens": 33000,
+      "pricePerTokenIn": 0.000002,
+      "pricePerTokenOut": 0.00001,
+      "source": "https://vercel.com/ai-gateway/models/grok-2-vision",
+      "contextWindow": {
+        "combinedMax": 33000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 32744,
+            "percentUsed": 0.007758
+          },
+          "tokensRemaining": 32744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 32144,
+            "percentUsed": 0.025939
+          },
+          "tokensRemaining": 32144,
+          "estimateCost": {
+            "inputUSD": 0.001,
+            "outputUSD": 0.001,
+            "totalUSD": 0.002
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 26744,
+            "percentUsed": 0.189576
+          },
+          "tokensRemaining": 26744,
+          "estimateCost": {
+            "inputUSD": 0.01,
+            "outputUSD": 0.01,
+            "totalUSD": 0.02
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 25990,
+            "output": 6497
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.992212
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.05198,
+            "outputUSD": 0.06497,
+            "totalUSD": 0.11695
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 33000,
+            "output": 1000,
+            "total": 34000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.066,
+            "outputUSD": 0.01,
+            "totalUSD": 0.076
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "xai:grok-3",
+      "provider": "xai",
+      "status": "stable",
+      "maxTokens": 131000,
+      "pricePerTokenIn": 0.000003,
+      "pricePerTokenOut": 0.000015,
+      "source": "https://vercel.com/ai-gateway/models/grok-3",
+      "contextWindow": {
+        "combinedMax": 131000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 130744,
+            "percentUsed": 0.001954
+          },
+          "tokensRemaining": 130744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 130144,
+            "percentUsed": 0.006534
+          },
+          "tokensRemaining": 130144,
+          "estimateCost": {
+            "inputUSD": 0.0015,
+            "outputUSD": 0.0015,
+            "totalUSD": 0.003
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 124744,
+            "percentUsed": 0.047756
+          },
+          "tokensRemaining": 124744,
+          "estimateCost": {
+            "inputUSD": 0.015,
+            "outputUSD": 0.015,
+            "totalUSD": 0.03
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 104390,
+            "output": 26097
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998038
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.31317,
+            "outputUSD": 0.391455,
+            "totalUSD": 0.7046250000000001
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 131000,
+            "output": 1000,
+            "total": 132000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.393,
+            "outputUSD": 0.015,
+            "totalUSD": 0.40800000000000003
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "xai:grok-3-fast",
+      "provider": "xai",
+      "status": "stable",
+      "maxTokens": 131000,
+      "pricePerTokenIn": 0.000005,
+      "pricePerTokenOut": 0.000025,
+      "source": "https://vercel.com/ai-gateway/models/grok-3-fast",
+      "contextWindow": {
+        "combinedMax": 131000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 130744,
+            "percentUsed": 0.001954
+          },
+          "tokensRemaining": 130744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 130144,
+            "percentUsed": 0.006534
+          },
+          "tokensRemaining": 130144,
+          "estimateCost": {
+            "inputUSD": 0.0025,
+            "outputUSD": 0.0025,
+            "totalUSD": 0.005
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 124744,
+            "percentUsed": 0.047756
+          },
+          "tokensRemaining": 124744,
+          "estimateCost": {
+            "inputUSD": 0.025,
+            "outputUSD": 0.025,
+            "totalUSD": 0.05
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 104390,
+            "output": 26097
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998038
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.52195,
+            "outputUSD": 0.6524249999999999,
+            "totalUSD": 1.174375
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 131000,
+            "output": 1000,
+            "total": 132000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.655,
+            "outputUSD": 0.025,
+            "totalUSD": 0.68
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "xai:grok-3-mini",
+      "provider": "xai",
+      "status": "stable",
+      "maxTokens": 131000,
+      "pricePerTokenIn": 3e-7,
+      "pricePerTokenOut": 5e-7,
+      "source": "https://vercel.com/ai-gateway/models/grok-3-mini",
+      "contextWindow": {
+        "combinedMax": 131000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 130744,
+            "percentUsed": 0.001954
+          },
+          "tokensRemaining": 130744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 130144,
+            "percentUsed": 0.006534
+          },
+          "tokensRemaining": 130144,
+          "estimateCost": {
+            "inputUSD": 0.00015,
+            "outputUSD": 0.00005,
+            "totalUSD": 0.00019999999999999998
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 124744,
+            "percentUsed": 0.047756
+          },
+          "tokensRemaining": 124744,
+          "estimateCost": {
+            "inputUSD": 0.0015,
+            "outputUSD": 0.0005,
+            "totalUSD": 0.002
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 104390,
+            "output": 26097
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998038
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.031317,
+            "outputUSD": 0.0130485,
+            "totalUSD": 0.044365499999999995
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 131000,
+            "output": 1000,
+            "total": 132000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.0393,
+            "outputUSD": 0.0005,
+            "totalUSD": 0.0398
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "xai:grok-3-mini-fast",
+      "provider": "xai",
+      "status": "stable",
+      "maxTokens": 131000,
+      "pricePerTokenIn": 6e-7,
+      "pricePerTokenOut": 0.000004,
+      "source": "https://vercel.com/ai-gateway/models/grok-3-mini-fast",
+      "contextWindow": {
+        "combinedMax": 131000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 130744,
+            "percentUsed": 0.001954
+          },
+          "tokensRemaining": 130744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 130144,
+            "percentUsed": 0.006534
+          },
+          "tokensRemaining": 130144,
+          "estimateCost": {
+            "inputUSD": 0.0003,
+            "outputUSD": 0.0004,
+            "totalUSD": 0.0007
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 124744,
+            "percentUsed": 0.047756
+          },
+          "tokensRemaining": 124744,
+          "estimateCost": {
+            "inputUSD": 0.003,
+            "outputUSD": 0.004,
+            "totalUSD": 0.007
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 104390,
+            "output": 26097
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998038
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.062634,
+            "outputUSD": 0.104388,
+            "totalUSD": 0.167022
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 131000,
+            "output": 1000,
+            "total": 132000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.0786,
+            "outputUSD": 0.004,
+            "totalUSD": 0.0826
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "xai:grok-4",
+      "provider": "xai",
+      "status": "stable",
+      "maxTokens": 256000,
+      "pricePerTokenIn": 0.000003,
+      "pricePerTokenOut": 0.000015,
+      "source": "https://vercel.com/ai-gateway/models/grok-4",
+      "contextWindow": {
+        "combinedMax": 256000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 255744,
+            "percentUsed": 0.001
+          },
+          "tokensRemaining": 255744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 255144,
+            "percentUsed": 0.003344
+          },
+          "tokensRemaining": 255144,
+          "estimateCost": {
+            "inputUSD": 0.0015,
+            "outputUSD": 0.0015,
+            "totalUSD": 0.003
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 249744,
+            "percentUsed": 0.024438
+          },
+          "tokensRemaining": 249744,
+          "estimateCost": {
+            "inputUSD": 0.015,
+            "outputUSD": 0.015,
+            "totalUSD": 0.03
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 204390,
+            "output": 51097
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998996
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.61317,
+            "outputUSD": 0.766455,
+            "totalUSD": 1.3796249999999999
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 256000,
+            "output": 1000,
+            "total": 257000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.768,
+            "outputUSD": 0.015,
+            "totalUSD": 0.783
+          },
+          "fitsContext": false
+        }
+      ]
+    },
+    {
+      "id": "xai:grok-code-fast-1",
+      "provider": "xai",
+      "status": "stable",
+      "maxTokens": 256000,
+      "pricePerTokenIn": 2.0000000000000002e-7,
+      "pricePerTokenOut": 0.0000015,
+      "source": "https://vercel.com/ai-gateway/models/grok-code-fast-1",
+      "contextWindow": {
+        "combinedMax": 256000
+      },
+      "scenarios": [
+        {
+          "name": "zero",
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "total": 0
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 255744,
+            "percentUsed": 0.001
+          },
+          "tokensRemaining": 255744,
+          "estimateCost": {
+            "inputUSD": 0,
+            "outputUSD": 0,
+            "totalUSD": 0
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "small",
+          "usage": {
+            "input": 500,
+            "output": 100,
+            "total": 600
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 255144,
+            "percentUsed": 0.003344
+          },
+          "tokensRemaining": 255144,
+          "estimateCost": {
+            "inputUSD": 0.0001,
+            "outputUSD": 0.00015000000000000001,
+            "totalUSD": 0.00025
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "medium",
+          "usage": {
+            "input": 5000,
+            "output": 1000,
+            "total": 6000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 249744,
+            "percentUsed": 0.024438
+          },
+          "tokensRemaining": 249744,
+          "estimateCost": {
+            "inputUSD": 0.001,
+            "outputUSD": 0.0015,
+            "totalUSD": 0.0025
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "near-limit",
+          "usage": {
+            "input": 204390,
+            "output": 51097
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 257,
+            "percentUsed": 0.998996
+          },
+          "tokensRemaining": 257,
+          "estimateCost": {
+            "inputUSD": 0.040878,
+            "outputUSD": 0.07664549999999999,
+            "totalUSD": 0.11752349999999999
+          },
+          "fitsContext": true
+        },
+        {
+          "name": "over-limit",
+          "usage": {
+            "input": 256000,
+            "output": 1000,
+            "total": 257000
+          },
+          "reserveOutput": 256,
+          "remainingContext": {
+            "remainingCombined": 0,
+            "percentUsed": 1
+          },
+          "tokensRemaining": 0,
+          "estimateCost": {
+            "inputUSD": 0.0512,
+            "outputUSD": 0.0015,
+            "totalUSD": 0.052700000000000004
+          },
+          "fitsContext": false
+        }
+      ]
+    }
+  ]
+}

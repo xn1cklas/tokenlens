@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeUsage, breakdownTokens, remainingContext, getContextWindow, fitsContext, estimateCost, modelMeta, percentOfContextUsed, tokensRemaining } from 'ai-meta';
+import { normalizeUsage, breakdownTokens, remainingContext, getContextWindow, fitsContext, estimateCost, modelMeta, percentOfContextUsed, tokensRemaining } from 'tokenlens';
 import type { LanguageModelV2Usage as VercelUsage } from '@ai-sdk/provider';
 
 // The AI SDK's LanguageModelV2Usage shape as used by generateText/stream APIs.

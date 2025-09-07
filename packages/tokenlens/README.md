@@ -1,9 +1,9 @@
-ai-meta
+tokenlens
 ========
 
 Typed model metadata and context/cost utilities for AI apps.
 
-Stop copying model IDs, context sizes, and prices into your app. ai-meta gives you a single, strongly-typed registry plus tiny helpers to answer: “Does this fit?” and “What will it cost?”
+Stop copying model IDs, context sizes, and prices into your app. tokenlens gives you a single, strongly-typed registry plus tiny helpers to answer: “Does this fit?” and “What will it cost?”
 
 Highlights
 - Canonical registry across providers and gateways (with aliases and short ids).
@@ -14,9 +14,9 @@ Highlights
 - Pragmatic data policy: values are verified; fields are left undefined rather than guessed.
 
 Install
-- npm: `npm i ai-meta`
-- pnpm: `pnpm add ai-meta`
-- yarn: `yarn add ai-meta`
+- npm: `npm i tokenlens`
+- pnpm: `pnpm add tokenlens`
+- yarn: `yarn add tokenlens`
 
 Quick Start
 ```ts
@@ -27,7 +27,7 @@ import {
   percentOfContextUsed,
   tokensRemaining,
   costFromUsage,
-} from 'ai-meta';
+} from 'tokenlens';
 
 const modelId: ModelId = 'openai:gpt-4.1';
 const usage = { prompt_tokens: 3200, completion_tokens: 400 };
@@ -47,7 +47,7 @@ import {
   normalizeUsage,
   remainingContext,
   estimateCost,
-} from 'ai-meta';
+} from 'tokenlens';
 
 const m = resolveModel('openai/gpt-4.1'); // alias resolution works
 const u = normalizeUsage(apiResponse.usage);
@@ -107,16 +107,16 @@ Verification Policy
 
 Model Snapshot (selected examples)
 
-| Canonical ID | Context | Pricing (per 1M) | Source |
-| --- | --- | --- | --- |
-| `openai:gpt-4.1` | 1M | in $2.00 / out $8.00 | https://vercel.com/ai-gateway/models/gpt-4.1 |
-| `anthropic:claude-sonnet-4` | 200K | in $3.00 / out $15.00 | https://vercel.com/ai-gateway/models/claude-sonnet-4 |
-| `google:gemini-2.5-pro` | 1M | in $2.50 / out $10.00 | https://vercel.com/ai-gateway/models/gemini-2.5-pro |
-| `mistral:mistral-large` | 32K | in $2.00 / out $6.00 | https://vercel.com/ai-gateway/models/mistral-large |
-| `cohere:command-r-plus` | 128K | in $2.50 / out $10.00 | https://vercel.com/ai-gateway/models/command-r-plus |
-| `xai:grok-4` | 256K | in $3.00 / out $15.00 | https://vercel.com/ai-gateway/models/grok-4 |
-| `deepseek:deepseek-v3` | 164K | in $0.77 / out $0.77 | https://vercel.com/ai-gateway/models/deepseek-v3 |
-| `meta:llama-4-scout` | – | – | https://www.llama.com/ |
+| Canonical ID                | Context | Pricing (per 1M)      | Source                                               |
+| --------------------------- | ------- | --------------------- | ---------------------------------------------------- |
+| `openai:gpt-4.1`            | 1M      | in $2.00 / out $8.00  | https://vercel.com/ai-gateway/models/gpt-4.1         |
+| `anthropic:claude-sonnet-4` | 200K    | in $3.00 / out $15.00 | https://vercel.com/ai-gateway/models/claude-sonnet-4 |
+| `google:gemini-2.5-pro`     | 1M      | in $2.50 / out $10.00 | https://vercel.com/ai-gateway/models/gemini-2.5-pro  |
+| `mistral:mistral-large`     | 32K     | in $2.00 / out $6.00  | https://vercel.com/ai-gateway/models/mistral-large   |
+| `cohere:command-r-plus`     | 128K    | in $2.50 / out $10.00 | https://vercel.com/ai-gateway/models/command-r-plus  |
+| `xai:grok-4`                | 256K    | in $3.00 / out $15.00 | https://vercel.com/ai-gateway/models/grok-4          |
+| `deepseek:deepseek-v3`      | 164K    | in $0.77 / out $0.77  | https://vercel.com/ai-gateway/models/deepseek-v3     |
+| `meta:llama-4-scout`        | –       | –                     | https://www.llama.com/                               |
 
 Notes
 - `reserveOutput` protects future output budget when computing remaining context.
@@ -124,7 +124,7 @@ Notes
 
 Conversation Helpers
 ```ts
-import { sumUsage, estimateConversationCost, computeContextRot, nextTurnBudget } from 'ai-meta';
+import { sumUsage, estimateConversationCost, computeContextRot, nextTurnBudget } from 'tokenlens';
 
 // Aggregate costs across turns (using provider usage objects)
 const turns = [t1.usage, t2.usage, t3.usage];

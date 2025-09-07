@@ -1,6 +1,6 @@
 import { COMPACT_THRESHOLD, compactListeners, onCompactThreshold, type CompactEvent } from '@/lib/utils';
 import { streamText, UIMessage, convertToModelMessages } from 'ai';
-import { remainingContext } from 'ai-meta';
+import { remainingContext } from 'tokenlens';
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const { model, messages }: { messages: UIMessage[]; model: string } =
         await req.json();
 
-    const result = streamText({
+    const result = await streamText({
         model: model,
         messages: convertToModelMessages(messages),
     });
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     }
 
     if (shouldCompact(percentUsed)) {
-        console.log('[ai-meta demo] Compact threshold reached', {
+        console.log('[tokenlens demo] Compact threshold reached', {
             modelId: model,
             percentUsed: Number(percentUsed.toFixed(3)),
             remainingTokens: remainingCombined,

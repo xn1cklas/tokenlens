@@ -1,5 +1,5 @@
 {
-  "extends": "../ai-meta/tsconfig.json",
+  "extends": "../tokenlens/tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": ".",
