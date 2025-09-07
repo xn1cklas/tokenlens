@@ -29,6 +29,7 @@ import { getContextWindow, normalizeUsage } from 'tokenlens';
 
 const models = [
     { id: 'gpt-4o', name: 'GPT-4o' },
+    { id: 'gpt-5', name: 'GPT-5' },
     { id: 'claude-opus-4-20250514', name: 'Claude 4 Opus' },
 ];
 
