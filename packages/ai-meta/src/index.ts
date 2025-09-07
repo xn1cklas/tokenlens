@@ -34,3 +34,9 @@ export {
   tokensRemaining,
   costFromUsage,
 } from "./simple.js";
+export {
+  sumUsage,
+  estimateConversationCost,
+  computeContextRot,
+  nextTurnBudget,
+} from "./conversation.js";

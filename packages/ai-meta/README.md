@@ -1,151 +1,147 @@
 ai-meta
 ========
 
-A tiny, typed registry of LLM model metadata (context windows, status, pricing hints), plus helpers to compute remaining tokens and cost — starting with OpenAI and Anthropic.
+Typed model metadata and context/cost utilities for AI apps.
 
-Why
-- One source of truth for model IDs and context sizes.
-- Normalize usage objects across providers.
-- Compute “tokens left” and rough cost in 1–2 lines.
-- Strong typing with autocomplete for supported model IDs.
+Stop copying model IDs, context sizes, and prices into your app. ai-meta gives you a single, strongly-typed registry plus tiny helpers to answer: “Does this fit?” and “What will it cost?”
+
+Highlights
+- Canonical registry across providers and gateways (with aliases and short ids).
+- Strong TypeScript types (ModelId autocomplete, safe helpers).
+- Context window math: normalize usage, compute remaining tokens, pick a fitting model.
+- Cost estimates: rough USD costs with pricing aligned to Vercel AI Gateway where available.
+- Conversation helpers: aggregate per-turn usage, estimate conversation cost, measure context rot.
+- Pragmatic data policy: values are verified; fields are left undefined rather than guessed.
 
 Install
 - npm: `npm i ai-meta`
 - pnpm: `pnpm add ai-meta`
 - yarn: `yarn add ai-meta`
 
-Quick Start (Sugar API)
-- import { MODEL_IDS, type ModelId, modelMeta, percentOfContextUsed, tokensRemaining, costFromUsage } from 'ai-meta'
-- const modelId: ModelId = 'openai:gpt-4o-mini'
-- const usage = { prompt_tokens: 3200, completion_tokens: 400 }
-- const { maxTokens, source } = modelMeta(modelId)
-- const percent = percentOfContextUsed({ id: modelId, usage, reserveOutput: 256 })
-- const remaining = tokensRemaining({ id: modelId, usage, reserveOutput: 256 })
-- const cost = costFromUsage({ id: modelId, usage })
-- console.log({ maxTokens, percent, remaining, cost, source })
+Quick Start
+```ts
+import {
+  MODEL_IDS,
+  type ModelId,
+  modelMeta,
+  percentOfContextUsed,
+  tokensRemaining,
+  costFromUsage,
+} from 'ai-meta';
 
-- Granular Helpers
-- import { resolveModel, normalizeUsage, remainingContext, estimateCost, getModelRaw } from 'ai-meta'
-- const model = resolveModel('gpt-4o') // alias resolution works
-- const u = normalizeUsage(response.usage)
-- const ctx = remainingContext({ modelId: model!.id, usage: u, reserveOutput: 256 })
-- const cost = estimateCost({ modelId: model!.id, usage: u })
-- console.log({ ctx, cost })
+const modelId: ModelId = 'openai:gpt-4.1';
+const usage = { prompt_tokens: 3200, completion_tokens: 400 };
+
+const meta = modelMeta(modelId); // id, provider, status, maxTokens?, pricePerTokenIn?, ...
+const percent = percentOfContextUsed({ id: modelId, usage, reserveOutput: 256 });
+const remaining = tokensRemaining({ id: modelId, usage, reserveOutput: 256 });
+const costUSD = costFromUsage({ id: modelId, usage });
+
+console.log({ meta, percent, remaining, costUSD });
+```
+
+Granular Helpers
+```ts
+import {
+  resolveModel,
+  normalizeUsage,
+  remainingContext,
+  estimateCost,
+} from 'ai-meta';
+
+const m = resolveModel('openai/gpt-4.1'); // alias resolution works
+const u = normalizeUsage(apiResponse.usage);
+const ctx = remainingContext({ modelId: m!.id, usage: u, reserveOutput: 256 });
+const { totalUSD } = estimateCost({ modelId: m!.id, usage: u });
+```
 
 API Overview
 - ids
-  - `MODEL_IDS`: readonly array of supported canonical IDs
+  - `MODEL_IDS` — readonly array of supported ids
   - `type ModelId = typeof MODEL_IDS[number]`
-  - `isModelId(value: string): value is ModelId`
-  - `assertModelId(value: string): asserts value is ModelId`
+  - `isModelId(value)` and `assertModelId(value)`
 - registry
-  - `models`: record of all models (canonical id → model)
-  - `aliases`: alias → canonical id
-  - `getModel(id)`, `resolveModel(idOrAlias)`, `listModels({ provider?, status? })`
+  - `models` — canonical id → metadata
+  - `aliases` — alias → canonical id (includes `openai/gpt-4.1`-style ids)
+  - `getModelRaw(id)`, `resolveModel(idOrAlias)`, `listModels({ provider?, status? })`
 - context & cost
-  - `getContextWindow(modelId)`
+  - `getContextWindow(id)` → `{ combinedMax?, inputMax?, outputMax? }`
   - `normalizeUsage(usage)` → `{ input, output, total }`
   - `breakdownTokens(usage)` → `{ input, output, total?, cacheReads?, cacheWrites? }`
   - `remainingContext({ modelId, usage, reserveOutput?, strategy? })`
   - `fitsContext({ modelId, tokens, reserveOutput? })`
   - `estimateCost({ modelId, usage })`
+  - `sumUsage(usages[])` and `estimateConversationCost({ modelId, usages })`
+  - `computeContextRot({ messageTokens, keepRecentTurns?, modelId?, targetStaleShareOfUsed? })`
+  - `nextTurnBudget({ modelId, usage, reserveOutput? })`
 - sugar
-  - `getModel(id)` → `{ id, displayName?, provider, status, maxTokens?, pricePerTokenIn?, pricePerTokenOut?, source }`
-  - `percentOfContextUsed({ id, usage, reserveOutput? })`
-  - `tokensRemaining({ id, usage, reserveOutput? })`
-  - `costFromUsage({ id, usage })`
+  - `modelMeta(id)` → `{ id, displayName?, provider, status, maxTokens?, pricePerTokenIn?, pricePerTokenOut?, source }`
+  - `percentOfContextUsed`, `tokensRemaining`, `costFromUsage`
 
-Model Data
-- Each model object includes
-  - `id`, `provider`, `status`, `context` (`combinedMax` or `inputMax/outputMax`), `modalities`, `pricing` (approx per 1M tokens), `aliases`, `source`
-- Providers covered: OpenAI (GPT-4o family, 4.1, 3.5-turbo), Anthropic (Claude 3/3.5), Google (Gemini 2.5; Gemini 2.0 Flash long context), Meta (Llama 3.1 Instruct), Mistral (Mistral Large/Small, Codestral), Cohere (Command R/R+), xAI (Grok-2)
+Providers Covered
+- OpenAI (GPT‑5 family, GPT‑4.1 family, GPT‑4o, embeddings)
+- Anthropic (Claude Sonnet 4, Claude 3.7 Sonnet, Opus 4.1)
+- Google (Gemini 2.5 Pro/Flash/Flash‑Lite, Gemini 2.0 Flash)
+- Mistral (Mistral Small/Medium/Large, Pixtral, Codestral, Devstral, embeddings)
+- Cohere (Command R, Command R+, Command A, embed‑v4.0)
+- DeepSeek (DeepSeek‑V3 / V3.1)
+- xAI (Grok‑4/3, Grok code/vision variants, Grok mini)
+- Meta Llama (Llama 4 Scout/Maverick, Llama 3.1 Instruct) — open weights; pricing varies by host
+
+Data Sources & Policy
+- Prices and context caps are aligned with Vercel AI Gateway model pages when available.
+- Official provider pages are used where applicable (e.g., Llama site) — when numbers aren’t explicit, fields remain undefined.
+- We never guess. If you see a value that needs updating, please open a PR with a link to the source.
+
+Verification Policy
+- Primary: Vercel AI Gateway model pages for pricing and context (no markup): https://vercel.com/ai-gateway/models
+- Official docs when Vercel doesn’t cover it:
+  - OpenAI: https://platform.openai.com/docs/models
+  - Anthropic: https://docs.anthropic.com/en/docs/models-overview
+  - Google Gemini: https://ai.google.dev/gemini-api/docs/models and long context: https://ai.google.dev/gemini-api/docs/long-context
+  - Meta Llama: https://www.llama.com/
+  - Mistral: https://docs.mistral.ai/platform/models/
+  - Cohere: https://docs.cohere.com/docs/models
+  - xAI: https://docs.x.ai/docs/models
+- Policy: Prefer exact numbers from these sources. If unclear, leave fields unset. Always include a `source` URL.
+
+Model Snapshot (selected examples)
+
+| Canonical ID | Context | Pricing (per 1M) | Source |
+| --- | --- | --- | --- |
+| `openai:gpt-4.1` | 1M | in $2.00 / out $8.00 | https://vercel.com/ai-gateway/models/gpt-4.1 |
+| `anthropic:claude-sonnet-4` | 200K | in $3.00 / out $15.00 | https://vercel.com/ai-gateway/models/claude-sonnet-4 |
+| `google:gemini-2.5-pro` | 1M | in $2.50 / out $10.00 | https://vercel.com/ai-gateway/models/gemini-2.5-pro |
+| `mistral:mistral-large` | 32K | in $2.00 / out $6.00 | https://vercel.com/ai-gateway/models/mistral-large |
+| `cohere:command-r-plus` | 128K | in $2.50 / out $10.00 | https://vercel.com/ai-gateway/models/command-r-plus |
+| `xai:grok-4` | 256K | in $3.00 / out $15.00 | https://vercel.com/ai-gateway/models/grok-4 |
+| `deepseek:deepseek-v3` | 164K | in $0.77 / out $0.77 | https://vercel.com/ai-gateway/models/deepseek-v3 |
+| `meta:llama-4-scout` | – | – | https://www.llama.com/ |
 
 Notes
-- Pricing is omitted unless verified in provider docs; check `model.source` for details.
-- `reserveOutput` helps protect future output budget when computing remaining context.
-- This package does not include tokenizers; pass usage from your SDK responses.
+- `reserveOutput` protects future output budget when computing remaining context.
+- Token counts are usage‑based; this package does not include tokenizers.
+
+Conversation Helpers
+```ts
+import { sumUsage, estimateConversationCost, computeContextRot, nextTurnBudget } from 'ai-meta';
+
+// Aggregate costs across turns (using provider usage objects)
+const turns = [t1.usage, t2.usage, t3.usage];
+const totals = sumUsage(turns);
+const cost = estimateConversationCost({ modelId: 'openai:gpt-4.1', usages: turns });
+
+// Compute a simple context-rot metric given per-message token counts
+const rot = computeContextRot({ messageTokens: [800, 600, 400, 300, 200], keepRecentTurns: 2, modelId: 'openai:gpt-4.1' });
+// rot.staleShareOfUsed indicates how much of the used context is stale (0..1)
+
+// Budget for the next user turn after reserving 256 tokens for output
+const nextBudget = nextTurnBudget({ modelId: 'openai:gpt-4.1', usage: totals, reserveOutput: 256 });
+```
 
 Roadmap
-- Expand model list coverage and keep it fresh.
-- Optional runtime updater and small CLI.
+- Continue expanding provider coverage and keeping values fresh.
+- Optional runtime sync util (opt‑in) to refresh pricing/caps.
 
-Real-World Example: show tokens left after a request
-
-Using the Vercel AI SDK `generateText` (returns usage as `{ promptTokens, completionTokens, totalTokens }`).
-
-```ts
-import { generateText } from 'ai';
-import { openai } from '@ai-sdk/openai';
-import { type ModelId, modelMeta, percentOfContextUsed, tokensRemaining, costFromUsage, breakdownTokens } from 'ai-meta';
-
-const modelId: ModelId = 'openai:gpt-4o-mini';
-
-const result = await generateText({
-  model: openai('gpt-4o-mini'),
-  prompt: 'Summarize my document…',
-});
-
-// result.usage -> { promptTokens, completionTokens, totalTokens }
-const usage = result.usage;
-
-const { displayName, id, source, maxTokens } = modelMeta(modelId);
-const percentUsed = percentOfContextUsed({ id: modelId, usage, reserveOutput: 256 });
-const remaining = tokensRemaining({ id: modelId, usage, reserveOutput: 256 });
-const costUSD = costFromUsage({ id: modelId, usage });
-const { input, output, cacheReads, cacheWrites } = breakdownTokens(usage);
-
-```
-
-OpenAI Node SDK example
-
-```ts
-import OpenAI from 'openai';
-import { remainingContext, estimateCost } from 'ai-meta';
-
-const client = new OpenAI();
-
-const chat = await client.chat.completions.create({
-  model: 'gpt-4o-mini',
-  messages: [
-    { role: 'user', content: 'Draft a product description for…' },
-  ],
-});
-
-const usage = chat.usage; // { prompt_tokens, completion_tokens, total_tokens, ...maybe cache fields }
-
-const { remainingCombined, percentUsed } = remainingContext({
-  modelId: 'openai:gpt-4o-mini',
-  usage,
-  reserveOutput: 256,
-});
-
-const { totalUSD } = estimateCost({ modelId: 'openai:gpt-4o-mini', usage });
-
-console.log({ remainingCombined, percentUsed, totalUSD });
-```
-
-Anthropic SDK example
-
-```ts
-import Anthropic from '@anthropic-ai/sdk';
-import { remainingContext } from 'ai-meta';
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-
-const msg = await anthropic.messages.create({
-  model: 'claude-3-5-sonnet',
-  max_tokens: 1024,
-  messages: [
-    { role: 'user', content: 'Make a plan for…' },
-  ],
-});
-
-// msg.usage -> { input_tokens, output_tokens, cache_creation_input_tokens?, cache_read_input_tokens? }
-const { remainingCombined, percentUsed } = remainingContext({
-  modelId: 'anthropic:claude-3.5-sonnet',
-  usage: msg.usage,
-  reserveOutput: 256,
-});
-
-console.log({ remainingCombined, percentUsed });
-```
+License
+MIT
