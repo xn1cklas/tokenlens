@@ -77,6 +77,13 @@ if (shouldCompact({ modelId: 'anthropic:claude-3-5-sonnet-20240620', usage: u1 }
 const badge = contextHealth({ modelId: 'openai:gpt-4.1', usage: u2 }); // { status: 'ok'|'warn'|'compact' }
 ```
 
+Advanced
+- Caps strategy: `remainingContext` supports `strategy: 'provider-default' | 'combined' | 'input-only'`.
+  - `provider-default` (default): prefers `combinedMax` when available; otherwise uses `inputMax`.
+  - `combined`: always uses `combinedMax` (falls back to `inputMax` if missing).
+  - `input-only`: uses only `inputMax` for remaining/percent calculations.
+- Defaults: `shouldCompact` defaults to `threshold: 0.85`; `contextHealth` defaults to `warnAt: 0.75`, `compactAt: 0.85`.
+
 Conversation Utilities
 ```ts
 import { sumUsage, estimateConversationCost, computeContextRot, nextTurnBudget } from 'tokenlens';
