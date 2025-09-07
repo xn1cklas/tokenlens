@@ -1,27 +1,12 @@
-import { anthropicModels } from './models/anthropic.js';
-import { openAIModels } from './models/openai.js';
-import { googleModels } from './models/google.js';
-import { mistralModels } from './models/mistral.js';
-import { cohereModels } from './models/cohere.js';
-import { xaiModels } from './models/xai.js';
-import { deepseekModels } from './models/deepseek.js';
-import { moonshotaiModels } from './models/moonshotai.js';
-import { alibabaModels } from './models/alibaba.js';
+import { modelsDev } from './models/models_dev.js';
 import type { Model, Provider, Status } from './types.js';
 
 /**
  * Canonical registry backing array ordered by declaration.
  */
 const all = [
-  ...openAIModels,
-  ...anthropicModels,
-  ...googleModels,
-  ...mistralModels,
-  ...cohereModels,
-  ...xaiModels,
-  ...deepseekModels,
-  ...moonshotaiModels,
-  ...alibabaModels,
+  // Sourced from models.dev
+  ...modelsDev,
 ] as const;
 
 export type ModelId = (typeof all)[number]['id'];

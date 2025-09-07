@@ -27,6 +27,11 @@ export {
   fitsContext,
   pickModelFor,
   estimateCost,
+  consumedTokens,
+  percentRemaining,
+  shouldCompact,
+  contextHealth,
+  tokensToCompact,
 } from "./context.js";
 export {
   modelMeta,

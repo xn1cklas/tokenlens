@@ -10,6 +10,13 @@ Typed model metadata and context/cost utilities for AI apps.
 
 Stop copying model IDs, context sizes, and prices into your app. tokenlens gives you a single, strongly-typed registry plus tiny helpers to answer: “Does this fit?” and “What will it cost?”
 
+Why tokenlens
+- **The problem**: Context caps, and pricing vary by provider and change over time. Hardcoded values drift, causing context overflows and wrong cost displays.
+- **The fix**: A single, typed registry plus helpers to normalize usage, check context fit (with reserved output), and estimate costs in USD.
+- **SDK‑agnostic**: Accepts common usage shapes across providers/SDKs; no tokenizers or provider SDKs required.
+- **Safe data policy**: Every value links to a source and is verified; unknowns stay undefined instead of guessed.
+- **Lightweight**: ESM‑only, tree‑shakeable, zero runtime dependencies.
+
 Highlights
 - Canonical registry across providers and gateways (with aliases and short ids).
 - Strong TypeScript types (ModelId autocomplete, safe helpers).

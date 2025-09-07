@@ -219,6 +219,75 @@ export function estimateCost({ modelId, usage }: { modelId: string; usage: Usage
   return { inputUSD, outputUSD, totalUSD };
 }
 
+/**
+ * Convenience: total consumed tokens from a usage object.
+ */
+export function consumedTokens(usage: UsageLike | NormalizedUsage | undefined | null): number {
+  const u = normalizeUsage(usage as any);
+  return u.total ?? (u.input + u.output);
+}
+
+/**
+ * Proportion of remaining context (0..1), complement to percent used.
+ */
+export function percentRemaining(args: { modelId: ModelId | string; usage: UsageLike | NormalizedUsage; reserveOutput?: number }): number {
+  const rc = remainingContext({ modelId: args.modelId, usage: args.usage, reserveOutput: args.reserveOutput });
+  return 1 - rc.percentUsed;
+}
+
+/**
+ * Returns whether compaction is recommended based on a threshold of percent used.
+ */
+export function shouldCompact(args: {
+  modelId: ModelId | string;
+  usage: UsageLike | NormalizedUsage;
+  reserveOutput?: number;
+  threshold?: number; // default 0.85
+}): boolean {
+  const threshold = Math.max(0, Math.min(1, args.threshold ?? 0.85));
+  const rc = remainingContext({ modelId: args.modelId, usage: args.usage, reserveOutput: args.reserveOutput });
+  return rc.percentUsed >= threshold;
+}
+
+/**
+ * Returns a simple health summary for UI badges/meters.
+ */
+export function contextHealth(args: {
+  modelId: ModelId | string;
+  usage: UsageLike | NormalizedUsage;
+  reserveOutput?: number;
+  warnAt?: number; // default 0.75
+  compactAt?: number; // default 0.85
+}): { percentUsed: number; remaining?: number; status: 'ok' | 'warn' | 'compact' } {
+  const warnAt = Math.max(0, Math.min(1, args.warnAt ?? 0.75));
+  const compactAt = Math.max(0, Math.min(1, args.compactAt ?? 0.85));
+  const rc = remainingContext({ modelId: args.modelId, usage: args.usage, reserveOutput: args.reserveOutput });
+  const remaining = rc.remainingCombined ?? rc.remainingInput;
+  const status: 'ok' | 'warn' | 'compact' = rc.percentUsed >= compactAt ? 'compact' : rc.percentUsed >= warnAt ? 'warn' : 'ok';
+  return { percentUsed: rc.percentUsed, remaining, status };
+}
+
+/**
+ * Rough guidance: how many tokens to remove/summarize to reach a target percent used.
+ */
+export function tokensToCompact(args: {
+  modelId: ModelId | string;
+  usage: UsageLike | NormalizedUsage;
+  reserveOutput?: number;
+  targetPercent?: number; // default 0.6
+}): number {
+  const model = resolveModel(args.modelId);
+  if (!model) return 0;
+  const u = normalizeUsage(args.usage as any);
+  const used = u.input + u.output;
+  const cap = model.context.combinedMax ?? model.context.inputMax;
+  if (!cap || !Number.isFinite(cap)) return 0;
+  const reserve = Math.max(0, args.reserveOutput ?? 0);
+  const targetPercent = Math.max(0, Math.min(1, args.targetPercent ?? 0.6));
+  const targetUsedBudget = Math.max(0, cap * targetPercent - reserve);
+  return Math.max(0, used - targetUsedBudget);
+}
+
 // Helpers
 function clamp01(n: number) {
   return Math.max(0, Math.min(1, n));
