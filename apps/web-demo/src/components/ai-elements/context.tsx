@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import type { ComponentProps } from 'react';
 import type { LanguageModelUsage } from 'ai';
 import { breakdownTokens, estimateCost, normalizeUsage } from 'tokenlens';
+import { Separator } from '@/components/ui/separator';
 
 export type ContextProps = ComponentProps<'button'> & {
     /** Total context window size in tokens */
@@ -137,17 +138,18 @@ export const Context = ({
     const used = formatTokens(safeUsed);
     const total = formatTokens(safeMax);
 
-    const uNorm = usage ? normalizeUsage(usage as any) : undefined;
-    const uBreakdown = usage ? breakdownTokens(usage as any) : undefined;
-    const costUSD = modelId && usage ? estimateCost({ modelId, usage: usage as any }).totalUSD : undefined;
+    const uNorm = normalizeUsage(usage as any);
+    const uBreakdown = breakdownTokens(usage as any);
+    const costUSD = modelId ? estimateCost({ modelId, usage: uNorm }).totalUSD : undefined;
     const costText = formatUSD(costUSD);
 
-    const segInput = Math.max(0, uNorm?.input ?? 0);
-    const segOutput = Math.max(0, uNorm?.output ?? 0);
-    const segCacheR = Math.max(0, uBreakdown?.cacheReads ?? 0);
-    const segCacheW = Math.max(0, uBreakdown?.cacheWrites ?? 0);
+    const segInput = Math.max(0, uNorm.input ?? 0);
+    const segOutput = Math.max(0, uNorm.output ?? 0);
+    const segCacheR = Math.max(0, uBreakdown.cacheReads ?? 0);
+    const segCacheW = Math.max(0, uBreakdown.cacheWrites ?? 0);
     const denom = safeMax > 0 ? safeMax : 1;
     const w = (n: number) => `${Math.min(100, Math.max(0, (n / denom) * 100)).toFixed(2)}%`;
+    const fmtOrUnknown = (n?: number) => (n === undefined ? '—' : formatTokens(n));
     return (
         <HoverCard closeDelay={100} openDelay={100}>
             <HoverCardTrigger asChild>
@@ -172,7 +174,9 @@ export const Context = ({
                         {displayPct} • {used} / {total} tokens
                         {costText ? <span className="ml-1 text-muted-foreground">• {costText}</span> : null}
                     </p>
-                    {uBreakdown && (
+                    {(
+                        true
+                    ) && (
                         <div className="space-y-2">
                             <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                                 <div className="h-full" style={{ width: w(segCacheR), background: 'var(--chart-2)', opacity: 0.9 }} />
@@ -186,55 +190,58 @@ export const Context = ({
                                         <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-2)' }} />
                                         Cache Hits
                                     </span>
-                                    <span>{formatTokens(uBreakdown.cacheReads)}</span>
+                                    <span>{fmtOrUnknown(uBreakdown.cacheReads)}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="flex items-center gap-2 text-muted-foreground">
                                         <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-4)' }} />
                                         Cache Writes
                                     </span>
-                                    <span>{formatTokens(uBreakdown.cacheWrites)}</span>
+                                    <span>{fmtOrUnknown(uBreakdown.cacheWrites)}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="flex items-center gap-2 text-muted-foreground">
                                         <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-1)' }} />
                                         Input
                                     </span>
-                                    <span>{formatTokens(uNorm?.input)}</span>
+                                    <span>{formatTokens(uNorm.input)}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="flex items-center gap-2 text-muted-foreground">
                                         <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-3)' }} />
                                         Output
                                     </span>
-                                    <span>{formatTokens(uNorm?.output)}</span>
+                                    <span>{formatTokens(uNorm.output)}</span>
                                 </div>
                             </div>
                         </div>
                     )}
-                    {showBreakdown && uBreakdown && (
+                    {showBreakdown && (
                         <div className="mt-1 space-y-1">
                             <div className="flex items-center justify-between text-xs">
                                 <span className="text-muted-foreground">Cache Hits</span>
-                                <span>{formatTokens(uBreakdown.cacheReads)}</span>
+                                <span>{fmtOrUnknown(uBreakdown.cacheReads)}</span>
                             </div>
                             <div className="flex items-center justify-between text-xs">
                                 <span className="text-muted-foreground">Cache Writes</span>
-                                <span>{formatTokens(uBreakdown.cacheWrites)}</span>
+                                <span>{fmtOrUnknown(uBreakdown.cacheWrites)}</span>
                             </div>
                             <div className="flex items-center justify-between text-xs">
                                 <span className="text-muted-foreground">Input</span>
-                                <span>{formatTokens(uNorm?.input)}</span>
+                                <span>{formatTokens(uNorm.input)}</span>
                             </div>
                             <div className="flex items-center justify-between text-xs">
                                 <span className="text-muted-foreground">Output</span>
-                                <span>{formatTokens(uNorm?.output)}</span>
+                                <span>{formatTokens(uNorm.output)}</span>
                             </div>
                             {costText && (
-                                <div className="flex items-center justify-between pt-1 text-xs">
-                                    <span className="text-muted-foreground">Total cost</span>
-                                    <span>{costText}</span>
-                                </div>
+                                <>
+                                    <Separator className="mt-1" />
+                                    <div className="flex items-center justify-between pt-1 text-xs">
+                                        <span className="text-muted-foreground">Total cost</span>
+                                        <span>{costText}</span>
+                                    </div>
+                                </>
                             )}
                         </div>
                     )}
