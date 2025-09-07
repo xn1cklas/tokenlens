@@ -1,10 +1,4 @@
-import { COMPACT_THRESHOLD, compactListeners, onCompactThreshold, type CompactEvent } from '@/lib/utils';
-import {
-    streamText,
-    convertToModelMessages,
-    createUIMessageStream,
-    createUIMessageStreamResponse,
-} from 'ai';
+import { streamText, convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse } from 'ai';
 import type { UIMessage, LanguageModelUsage } from 'ai';
 import { getContextWindow } from 'tokenlens';
 // Allow streaming responses up to 30 seconds
@@ -20,7 +14,6 @@ export async function POST(req: Request) {
         messages: convertToModelMessages(messages),
         onFinish: ({ usage }) => {
             finalUsage = usage;
-            // eslint-disable-next-line no-console
             console.log('[api/chat] onFinish usage', usage);
         },
     });
@@ -29,19 +22,11 @@ export async function POST(req: Request) {
     const context = getContextWindow(model);
 
     // Base message stream with context metadata
-    type AppMessageMetadata = {
-        modelId: string;
-        context: { combinedMax?: number; inputMax?: number; outputMax?: number };
-    };
-    type AppDataTypes = { usage: LanguageModelUsage };
-    type AppUIMessage = UIMessage<AppMessageMetadata, AppDataTypes>;
-
-    const baseStream = result.toUIMessageStream<AppUIMessage>({
-        messageMetadata: () => ({ modelId: model, context }),
-    });
+    type ServerUIMessage = UIMessage<unknown, { usage: LanguageModelUsage }>;
+    const baseStream = result.toUIMessageStream<ServerUIMessage>({});
 
     // Merge usage as an explicit data part at the end so the client can pick it up via onData.
-    const merged = createUIMessageStream<AppUIMessage>({
+    const merged = createUIMessageStream<ServerUIMessage>({
         execute: async ({ writer }) => {
             writer.merge(baseStream);
             // Prefer onFinish-captured usage; fall back to totalUsage
