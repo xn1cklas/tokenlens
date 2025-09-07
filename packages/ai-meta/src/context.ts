@@ -14,27 +14,44 @@ export function getContextWindow(modelId: ModelId | string): { inputMax?: number
  * Normalize various provider usage shapes into a consistent `{ input, output, total }` object.
  * Missing fields default to `0`. If a provider supplies a `total`, it is preserved.
  */
-export function normalizeUsage(usage: UsageLike | undefined | null): NormalizedUsage {
-  if (!usage) return { input: 0, output: 0, total: 0 };
+type AIV2Usage = {
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  cachedInputTokens?: number;
+};
+
+const TOKENS_PER_MILLION = 1_000_000;
+
+export function normalizeUsage(usage: UsageLike | NormalizedUsage | undefined | null): NormalizedUsage {
+  if (!usage) {
+    return { input: 0, output: 0, total: 0 };
+  }
+  // Pass-through when already normalized
+  if (typeof (usage as NormalizedUsage).input === 'number' && typeof (usage as NormalizedUsage).output === 'number') {
+    const u = usage as NormalizedUsage;
+    return { input: u.input, output: u.output, total: u.total ?? u.input + u.output };
+  }
+  const ul = usage as UsageLike;
   const inputCandidates = [
-    usage.input_tokens,
-    usage.prompt_tokens,
-    usage.promptTokens,
+    ul.input_tokens,
+    ul.prompt_tokens,
+    ul.promptTokens,
     // Vercel AI SDK v2 (@ai-sdk/provider)
-    (usage as any).inputTokens,
+    (ul as unknown as AIV2Usage).inputTokens,
   ].filter((v): v is number => typeof v === 'number');
   const outputCandidates = [
-    usage.output_tokens,
-    usage.completion_tokens,
-    usage.completionTokens,
+    ul.output_tokens,
+    ul.completion_tokens,
+    ul.completionTokens,
     // Vercel AI SDK v2 (@ai-sdk/provider)
-    (usage as any).outputTokens,
+    (ul as unknown as AIV2Usage).outputTokens,
   ].filter((v): v is number => typeof v === 'number');
   const totalCandidates = [
-    usage.total_tokens,
-    usage.totalTokens,
+    ul.total_tokens,
+    ul.totalTokens,
     // Vercel AI SDK v2 (@ai-sdk/provider)
-    (usage as any).totalTokens,
+    (ul as unknown as AIV2Usage).totalTokens,
   ].filter((v): v is number => typeof v === 'number');
 
   const input = inputCandidates[0] ?? 0;
@@ -52,10 +69,31 @@ export function normalizeUsage(usage: UsageLike | undefined | null): NormalizedU
  * Attempts to extract granular token breakdown including cache read/write counts
  * from various provider shapes. If fields are unavailable, cache fields remain undefined.
  */
-export function breakdownTokens(usage: UsageLike | undefined | null): TokenBreakdown {
-  const base = normalizeUsage(usage);
-  if (!usage) return base;
-  const u: any = usage as any;
+export function breakdownTokens(usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined | null): TokenBreakdown {
+  if (!usage) {
+    return { input: 0, output: 0, total: 0 };
+  }
+  // Pass-through when already a breakdown
+  if (
+    typeof (usage as TokenBreakdown).input === 'number' &&
+    typeof (usage as TokenBreakdown).output === 'number' &&
+    // cache fields optional
+    ('cacheReads' in (usage as TokenBreakdown) || 'cacheWrites' in (usage as TokenBreakdown) || 'total' in (usage as TokenBreakdown))
+  ) {
+    const u0 = usage as TokenBreakdown;
+    return { input: u0.input, output: u0.output, total: u0.total ?? u0.input + u0.output, cacheReads: u0.cacheReads, cacheWrites: u0.cacheWrites };
+  }
+  const base = normalizeUsage(usage as UsageLike | NormalizedUsage);
+  const u = usage as unknown as Record<string, unknown> & {
+    cache_read_input_tokens?: number;
+    cache_read_tokens?: number;
+    prompt_cache_hit_tokens?: number;
+    prompt_tokens_details?: { cached_tokens?: number };
+    promptTokensDetails?: { cachedTokens?: number; cacheCreationTokens?: number };
+    cache_creation_input_tokens?: number;
+    cache_creation_tokens?: number;
+    cachedInputTokens?: number;
+  };
 
   // Known/observed field names across providers (Anthropic/OpenAI) and SDKs
   const cacheReadCandidates = [
@@ -108,22 +146,22 @@ export function remainingContext(args: RemainingArgs): {
     return { remainingCombined: undefined, remainingInput: undefined, percentUsed: 1 };
   }
 
-  const { inputMax, outputMax, combinedMax } = model.context;
+  const { inputMax, combinedMax } = model.context;
   const usedInput = usage.input ?? 0;
   const usedOutput = usage.output ?? 0;
 
   if (strategy === 'input-only' || (!combinedMax && inputMax)) {
-    const cap = inputMax ?? Infinity;
+    const cap = inputMax ?? Number.POSITIVE_INFINITY;
     const remainingInput = Math.max(0, cap - usedInput);
-    const percentUsed = cap === Infinity ? 0 : clamp01((usedInput + reserve) / cap);
+    const percentUsed = cap === Number.POSITIVE_INFINITY ? 0 : clamp01((usedInput + reserve) / cap);
     return { remainingInput, remainingCombined: undefined, percentUsed, model };
   }
 
   // Combined or provider-default
-  const cap = strategy === 'combined' ? combinedMax ?? inputMax ?? Infinity : combinedMax ?? Infinity;
+  const cap = strategy === 'combined' ? combinedMax ?? inputMax ?? Number.POSITIVE_INFINITY : combinedMax ?? Number.POSITIVE_INFINITY;
   const used = usedInput + usedOutput;
   const remainingCombined = Math.max(0, cap - used - reserve);
-  const percentUsed = cap === Infinity ? 0 : clamp01((used + reserve) / cap);
+  const percentUsed = cap === Number.POSITIVE_INFINITY ? 0 : clamp01((used + reserve) / cap);
   return { remainingCombined, remainingInput: inputMax ? Math.max(0, inputMax - usedInput) : undefined, percentUsed, model };
 }
 
@@ -134,7 +172,7 @@ export function remainingContext(args: RemainingArgs): {
 export function fitsContext({ modelId, tokens, reserveOutput }: { modelId: ModelId | string; tokens: number; reserveOutput?: number }): boolean {
   const m = resolveModel(modelId);
   if (!m) return false;
-  const cap = m.context.combinedMax ?? m.context.inputMax ?? Infinity;
+  const cap = m.context.combinedMax ?? m.context.inputMax ?? Number.POSITIVE_INFINITY;
   return tokens + Math.max(0, reserveOutput ?? 0) <= cap;
 }
 
@@ -158,7 +196,7 @@ export function pickModelFor(
     return cap >= tokens + buffer;
   });
   // Smallest cap that fits
-  filtered.sort((a, b) => (a.context.combinedMax ?? a.context.inputMax ?? Infinity) - (b.context.combinedMax ?? b.context.inputMax ?? Infinity));
+  filtered.sort((a, b) => (a.context.combinedMax ?? a.context.inputMax ?? Number.POSITIVE_INFINITY) - (b.context.combinedMax ?? b.context.inputMax ?? Number.POSITIVE_INFINITY));
   return filtered[0];
 }
 
@@ -174,8 +212,8 @@ export function estimateCost({ modelId, usage }: { modelId: string; usage: Usage
   const model = resolveModel(modelId);
   if (!model?.pricing) return {};
   const u = 'input' in (usage as any) ? (usage as NormalizedUsage) : normalizeUsage(usage as UsageLike);
-  const inputUSD = model.pricing.inputPerMTokens !== undefined ? (u.input / 1_000_000) * model.pricing.inputPerMTokens : undefined;
-  const outputUSD = model.pricing.outputPerMTokens !== undefined ? (u.output / 1_000_000) * model.pricing.outputPerMTokens : undefined;
+  const inputUSD = model.pricing.inputPerMTokens !== undefined ? (u.input / TOKENS_PER_MILLION) * model.pricing.inputPerMTokens : undefined;
+  const outputUSD = model.pricing.outputPerMTokens !== undefined ? (u.output / TOKENS_PER_MILLION) * model.pricing.outputPerMTokens : undefined;
   const totalUSD =
     inputUSD !== undefined && outputUSD !== undefined ? inputUSD + outputUSD : inputUSD ?? outputUSD;
   return { inputUSD, outputUSD, totalUSD };

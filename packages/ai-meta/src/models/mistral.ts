@@ -1,43 +1,18 @@
 import type { Model } from '../types.js';
 
 /**
- * Mistral AI popular endpoints.
+ * Mistral models aligned with Vercel AI Gateway directory.
  */
 export const mistralModels = [
-  {
-    id: 'mistral:mistral-large-latest',
-    provider: 'mistral',
-    vendorId: 'mistral-large-latest',
-    displayName: 'Mistral Large (latest)',
-    family: 'mistral-large',
-    status: 'stable',
-    context: {},
-    modalities: { textIn: true, textOut: true },
-    source: 'https://docs.mistral.ai/platform/models/',
-    aliases: ['mistral-large'],
-  },
-  {
-    id: 'mistral:mistral-small-latest',
-    provider: 'mistral',
-    vendorId: 'mistral-small-latest',
-    displayName: 'Mistral Small (latest)',
-    family: 'mistral-small',
-    status: 'stable',
-    context: {},
-    modalities: { textIn: true, textOut: true },
-    source: 'https://docs.mistral.ai/platform/models/',
-    aliases: ['mistral-small'],
-  },
-  {
-    id: 'mistral:codestral-latest',
-    provider: 'mistral',
-    vendorId: 'codestral-latest',
-    displayName: 'Codestral (latest)',
-    family: 'codestral',
-    status: 'stable',
-    context: {},
-    modalities: { textIn: true, textOut: true },
-    source: 'https://docs.mistral.ai/platform/models/',
-    aliases: ['codestral'],
-  },
+  { id: 'mistral:pixtral-12b', provider: 'mistral', vendorId: 'pixtral-12b', displayName: 'Pixtral 12B', family: 'pixtral-12b', status: 'stable', context: { combinedMax: 128_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/pixtral-12b', pricing: { inputPerMTokens: 0.15, outputPerMTokens: 0.15 }, aliases: ['mistral/pixtral-12b'] },
+  { id: 'mistral:codestral-embed', provider: 'mistral', vendorId: 'codestral-embed', displayName: 'Codestral Embed', family: 'codestral-embed', status: 'stable', context: {}, modalities: { textIn: true, textOut: false }, source: 'https://vercel.com/ai-gateway/models/codestral-embed', pricing: { inputPerMTokens: 0.15 }, aliases: ['mistral/codestral-embed'] },
+  { id: 'mistral:ministral-3b', provider: 'mistral', vendorId: 'ministral-3b', displayName: 'Ministral 3B', family: 'ministral-3b', status: 'stable', context: { combinedMax: 128_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/ministral-3b', pricing: { inputPerMTokens: 0.04, outputPerMTokens: 0.04 }, aliases: ['mistral/ministral-3b'] },
+  { id: 'mistral:ministral-8b', provider: 'mistral', vendorId: 'ministral-8b', displayName: 'Ministral 8B', family: 'ministral-8b', status: 'stable', context: { combinedMax: 128_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/ministral-8b', pricing: { inputPerMTokens: 0.10, outputPerMTokens: 0.10 }, aliases: ['mistral/ministral-8b'] },
+  { id: 'mistral:devstral-small', provider: 'mistral', vendorId: 'devstral-small', displayName: 'Devstral Small', family: 'devstral-small', status: 'stable', context: { combinedMax: 128_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/devstral-small', pricing: { inputPerMTokens: 0.07, outputPerMTokens: 0.28 }, aliases: ['mistral/devstral-small'] },
+  { id: 'mistral:mistral-small', provider: 'mistral', vendorId: 'mistral-small', displayName: 'Mistral Small', family: 'mistral-small', status: 'stable', context: { combinedMax: 32_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/mistral-small', pricing: { inputPerMTokens: 0.10, outputPerMTokens: 0.30 }, aliases: ['mistral/mistral-small'] },
+  { id: 'mistral:codestral', provider: 'mistral', vendorId: 'codestral', displayName: 'Codestral', family: 'codestral', status: 'stable', context: { combinedMax: 256_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/codestral', pricing: { inputPerMTokens: 0.30, outputPerMTokens: 0.90 }, aliases: ['mistral/codestral'] },
+  { id: 'mistral:pixtral-large', provider: 'mistral', vendorId: 'pixtral-large', displayName: 'Pixtral Large', family: 'pixtral-large', status: 'stable', context: { combinedMax: 128_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/pixtral-large', pricing: { inputPerMTokens: 2.00, outputPerMTokens: 6.00 }, aliases: ['mistral/pixtral-large'] },
+  { id: 'mistral:mistral-medium', provider: 'mistral', vendorId: 'mistral-medium', displayName: 'Mistral Medium', family: 'mistral-medium', status: 'stable', context: { combinedMax: 128_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/mistral-medium', pricing: { inputPerMTokens: 0.40, outputPerMTokens: 2.00 }, aliases: ['mistral/mistral-medium'] },
+  { id: 'mistral:mistral-large', provider: 'mistral', vendorId: 'mistral-large', displayName: 'Mistral Large', family: 'mistral-large', status: 'stable', context: { combinedMax: 32_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/mistral-large', pricing: { inputPerMTokens: 2.00, outputPerMTokens: 6.00 }, aliases: ['mistral/mistral-large'] },
+  { id: 'mistral:mistral-embed', provider: 'mistral', vendorId: 'mistral-embed', displayName: 'Mistral Embed', family: 'mistral-embed', status: 'stable', context: {}, modalities: { textIn: true, textOut: false }, source: 'https://vercel.com/ai-gateway/models/mistral-embed', pricing: { inputPerMTokens: 0.10 }, aliases: ['mistral/mistral-embed'] },
 ] as const satisfies readonly Model[];

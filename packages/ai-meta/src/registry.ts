@@ -1,10 +1,12 @@
 import { anthropicModels } from './models/anthropic.js';
 import { openAIModels } from './models/openai.js';
 import { googleModels } from './models/google.js';
-import { metaModels } from './models/meta.js';
 import { mistralModels } from './models/mistral.js';
 import { cohereModels } from './models/cohere.js';
 import { xaiModels } from './models/xai.js';
+import { deepseekModels } from './models/deepseek.js';
+import { moonshotaiModels } from './models/moonshotai.js';
+import { alibabaModels } from './models/alibaba.js';
 import type { Model, Provider, Status } from './types.js';
 
 /**
@@ -14,10 +16,12 @@ const all = [
   ...openAIModels,
   ...anthropicModels,
   ...googleModels,
-  ...metaModels,
   ...mistralModels,
   ...cohereModels,
   ...xaiModels,
+  ...deepseekModels,
+  ...moonshotaiModels,
+  ...alibabaModels,
 ] as const;
 
 export type ModelId = (typeof all)[number]['id'];

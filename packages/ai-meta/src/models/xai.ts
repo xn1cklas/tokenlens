@@ -1,31 +1,15 @@
 import type { Model } from '../types.js';
 
 /**
- * xAI Grok models.
+ * xAI models aligned with Vercel AI Gateway directory.
  */
 export const xaiModels = [
-  {
-    id: 'xai:grok-2',
-    provider: 'xai',
-    vendorId: 'grok-2',
-    displayName: 'Grok-2',
-    family: 'grok-2',
-    status: 'stable',
-    context: {},
-    modalities: { textIn: true, textOut: true },
-    source: 'https://docs.x.ai/docs/models',
-    aliases: ['grok2'],
-  },
-  {
-    id: 'xai:grok-2-mini',
-    provider: 'xai',
-    vendorId: 'grok-2-mini',
-    displayName: 'Grok-2 mini',
-    family: 'grok-2-mini',
-    status: 'stable',
-    context: {},
-    modalities: { textIn: true, textOut: true },
-    source: 'https://docs.x.ai/docs/models',
-    aliases: ['grok2-mini'],
-  },
+  { id: 'xai:grok-4', provider: 'xai', vendorId: 'grok-4', displayName: 'Grok-4', family: 'grok-4', status: 'stable', context: { combinedMax: 256_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/grok-4', pricing: { inputPerMTokens: 3.00, outputPerMTokens: 15.00 }, aliases: ['xai/grok-4'] },
+  { id: 'xai:grok-3', provider: 'xai', vendorId: 'grok-3', displayName: 'Grok-3', family: 'grok-3', status: 'stable', context: { combinedMax: 131_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/grok-3', pricing: { inputPerMTokens: 3.00, outputPerMTokens: 15.00 }, aliases: ['xai/grok-3'] },
+  { id: 'xai:grok-3-fast', provider: 'xai', vendorId: 'grok-3-fast', displayName: 'Grok-3 Fast', family: 'grok-3-fast', status: 'stable', context: { combinedMax: 131_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/grok-3-fast', pricing: { inputPerMTokens: 5.00, outputPerMTokens: 25.00 }, aliases: ['xai/grok-3-fast'] },
+  { id: 'xai:grok-3-mini', provider: 'xai', vendorId: 'grok-3-mini', displayName: 'Grok-3 Mini', family: 'grok-3-mini', status: 'stable', context: { combinedMax: 131_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/grok-3-mini', pricing: { inputPerMTokens: 0.30, outputPerMTokens: 0.50 }, aliases: ['xai/grok-3-mini'] },
+  { id: 'xai:grok-3-mini-fast', provider: 'xai', vendorId: 'grok-3-mini-fast', displayName: 'Grok-3 Mini Fast', family: 'grok-3-mini-fast', status: 'stable', context: { combinedMax: 131_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/grok-3-mini-fast', pricing: { inputPerMTokens: 0.60, outputPerMTokens: 4.00 }, aliases: ['xai/grok-3-mini-fast'] },
+  { id: 'xai:grok-code-fast-1', provider: 'xai', vendorId: 'grok-code-fast-1', displayName: 'Grok Code Fast 1', family: 'grok-code-fast-1', status: 'stable', context: { combinedMax: 256_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/grok-code-fast-1', pricing: { inputPerMTokens: 0.20, outputPerMTokens: 1.50 }, aliases: ['xai/grok-code-fast-1'] },
+  { id: 'xai:grok-2-vision', provider: 'xai', vendorId: 'grok-2-vision', displayName: 'Grok 2 Vision', family: 'grok-2-vision', status: 'stable', context: { combinedMax: 33_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/grok-2-vision', pricing: { inputPerMTokens: 2.00, outputPerMTokens: 10.00 }, aliases: ['xai/grok-2-vision'] },
+  { id: 'xai:grok-2', provider: 'xai', vendorId: 'grok-2', displayName: 'Grok-2', family: 'grok-2', status: 'stable', context: { combinedMax: 131_000 }, modalities: { textIn: true, textOut: true }, source: 'https://vercel.com/ai-gateway/models/grok-2', pricing: { inputPerMTokens: 2.00, outputPerMTokens: 10.00 }, aliases: ['xai/grok-2'] },
 ] as const satisfies readonly Model[];

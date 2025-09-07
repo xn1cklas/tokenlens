@@ -1,7 +1,7 @@
 /**
  * Known model providers supported by this package.
  */
-export type Provider = 'openai' | 'anthropic' | 'google' | 'meta' | 'mistral' | 'cohere' | 'xai';
+export type Provider = 'openai' | 'anthropic' | 'google' | 'meta' | 'mistral' | 'cohere' | 'xai' | 'deepseek' | 'moonshotai' | 'alibaba';
 
 /**
  * Lifecycle status of a model. Useful for filtering or picking a minimum stability.
@@ -63,12 +63,18 @@ export type Model = {
   modalities?: Modalities;
   /** Approximate pricing info. */
   pricing?: Pricing;
+  /** Where the pricing numbers came from (e.g. 'provider', 'openrouter'). */
+  pricingSource?: string;
   /** Convenience aliases (without provider prefix). */
   aliases?: readonly string[];
   /** ISO date string when the model (version) was released, if known. */
   releasedAt?: string;
   /** URL to provider docs/model card for up-to-date info. */
   source: string;
+  /** Optional URL specifically used to verify context caps, if different from `source`. */
+  contextSource?: string;
+  /** ISO date when the entry was last verified against its source(s). */
+  verifiedAt?: string;
 };
 
 /**
