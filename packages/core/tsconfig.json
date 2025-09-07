@@ -1,0 +1,12 @@
+{
+  "extends": "../tokenlens/tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "paths": {
+      "tokenlens": ["../tokenlens/src"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["dist", "node_modules"]
+}
