@@ -7,12 +7,20 @@ import {
 } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils';
 import type { ComponentProps } from 'react';
+import type { LanguageModelUsage } from 'ai';
+import { breakdownTokens, estimateCost, normalizeUsage } from 'tokenlens';
 
 export type ContextProps = ComponentProps<'button'> & {
     /** Total context window size in tokens */
     maxTokens: number;
     /** Tokens used so far */
     usedTokens: number;
+    /** Optional full usage payload to enable breakdown view */
+    usage?: LanguageModelUsage | undefined;
+    /** Optional model id (canonical or alias) to compute cost */
+    modelId?: string;
+    /** Show token breakdown and optional cost inside hover */
+    showBreakdown?: boolean;
 };
 
 const THOUSAND = 1000;
@@ -56,6 +64,11 @@ const formatPercent = (value: number) => {
         : `${rounded.toFixed(1)}%`;
 };
 
+const formatUSD = (value?: number) => {
+    if (value === undefined || !Number.isFinite(value)) return undefined;
+    return `$${value.toFixed(value < 10 ? 2 : 1)}`; // 2dp for small amounts
+};
+
 type ContextIconProps = {
     percent: number; // 0 - 100
 };
@@ -74,7 +87,6 @@ const ContextIcon = ({ percent }: ContextIconProps) => {
             viewBox={`0 0 ${ICON_VIEWBOX} ${ICON_VIEWBOX}`}
             width="20"
         >
-            <title className="sr-only">Context availability</title>
             <circle
                 cx={ICON_CENTER}
                 cy={ICON_CENTER}
@@ -105,6 +117,9 @@ export const Context = ({
     className,
     maxTokens,
     usedTokens,
+    usage,
+    modelId,
+    showBreakdown,
     ...props
 }: ContextProps) => {
     const safeMax = Math.max(0, Number.isFinite(maxTokens) ? maxTokens : 0);
@@ -121,6 +136,18 @@ export const Context = ({
 
     const used = formatTokens(safeUsed);
     const total = formatTokens(safeMax);
+
+    const uNorm = usage ? normalizeUsage(usage as any) : undefined;
+    const uBreakdown = usage ? breakdownTokens(usage as any) : undefined;
+    const costUSD = modelId && usage ? estimateCost({ modelId, usage: usage as any }).totalUSD : undefined;
+    const costText = formatUSD(costUSD);
+
+    const segInput = Math.max(0, uNorm?.input ?? 0);
+    const segOutput = Math.max(0, uNorm?.output ?? 0);
+    const segCacheR = Math.max(0, uBreakdown?.cacheReads ?? 0);
+    const segCacheW = Math.max(0, uBreakdown?.cacheWrites ?? 0);
+    const denom = safeMax > 0 ? safeMax : 1;
+    const w = (n: number) => `${Math.min(100, Math.max(0, (n / denom) * 100)).toFixed(2)}%`;
     return (
         <HoverCard closeDelay={100} openDelay={100}>
             <HoverCardTrigger asChild>
@@ -132,16 +159,86 @@ export const Context = ({
                     type="button"
                     {...props}
                 >
-                    <span className="font-medium text-muted-foreground">
-                        {displayPct}
-                    </span>
+                    <span className="font-medium text-muted-foreground">{displayPct}</span>
                     <ContextIcon percent={usedPercent} />
+                    {costText && (
+                        <span className="ml-1 text-muted-foreground">• {costText}</span>
+                    )}
                 </button>
             </HoverCardTrigger>
-            <HoverCardContent align="center" className="w-fit p-2">
-                <p className="text-center text-sm">
-                    {displayPct} • {used} / {total} context used
-                </p>
+            <HoverCardContent align="center" className="w-fit p-3">
+                <div className="min-w-[240px] space-y-2">
+                    <p className="text-center text-sm">
+                        {displayPct} • {used} / {total} tokens
+                        {costText ? <span className="ml-1 text-muted-foreground">• {costText}</span> : null}
+                    </p>
+                    {uBreakdown && (
+                        <div className="space-y-2">
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                                <div className="h-full" style={{ width: w(segCacheR), background: 'var(--chart-2)', opacity: 0.9 }} />
+                                <div className="h-full" style={{ width: w(segCacheW), background: 'var(--chart-4)', opacity: 0.9 }} />
+                                <div className="h-full" style={{ width: w(segInput), background: 'var(--chart-1)', opacity: 0.9 }} />
+                                <div className="h-full" style={{ width: w(segOutput), background: 'var(--chart-3)', opacity: 0.9 }} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                                <div className="flex items-center justify-between">
+                                    <span className="flex items-center gap-2 text-muted-foreground">
+                                        <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-2)' }} />
+                                        Cache Hits
+                                    </span>
+                                    <span>{formatTokens(uBreakdown.cacheReads)}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="flex items-center gap-2 text-muted-foreground">
+                                        <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-4)' }} />
+                                        Cache Writes
+                                    </span>
+                                    <span>{formatTokens(uBreakdown.cacheWrites)}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="flex items-center gap-2 text-muted-foreground">
+                                        <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-1)' }} />
+                                        Input
+                                    </span>
+                                    <span>{formatTokens(uNorm?.input)}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="flex items-center gap-2 text-muted-foreground">
+                                        <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-3)' }} />
+                                        Output
+                                    </span>
+                                    <span>{formatTokens(uNorm?.output)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {showBreakdown && uBreakdown && (
+                        <div className="mt-1 space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground">Cache Hits</span>
+                                <span>{formatTokens(uBreakdown.cacheReads)}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground">Cache Writes</span>
+                                <span>{formatTokens(uBreakdown.cacheWrites)}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground">Input</span>
+                                <span>{formatTokens(uNorm?.input)}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground">Output</span>
+                                <span>{formatTokens(uNorm?.output)}</span>
+                            </div>
+                            {costText && (
+                                <div className="flex items-center justify-between pt-1 text-xs">
+                                    <span className="text-muted-foreground">Total cost</span>
+                                    <span>{costText}</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </HoverCardContent>
         </HoverCard>
     );
