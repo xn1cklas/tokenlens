@@ -32,12 +32,7 @@ const models = [
     { id: 'claude-opus-4-20250514', name: 'Claude 4 Opus' },
 ];
 
-type AppMessageMetadata = {
-    modelId: string;
-    context: { combinedMax?: number; inputMax?: number; outputMax?: number };
-};
-type AppDataTypes = { usage: LanguageModelUsage };
-type AppUIMessage = UIMessage<AppMessageMetadata, AppDataTypes>;
+type AppUIMessage = UIMessage<unknown, { usage: LanguageModelUsage }>;
 
 const InputDemo = () => {
     const [text, setText] = useState<string>('');
@@ -58,6 +53,7 @@ const InputDemo = () => {
     };
 
     const { messages, status, sendMessage } = useChat<AppUIMessage>({
+        experimental_throttle: 50,
         onData: (part) => {
             if (part.type === 'data-usage') {
                 setUsage(part.data);
@@ -79,8 +75,16 @@ const InputDemo = () => {
     }, [usage]);
 
     const contextNode = useMemo(
-        () => <Context maxTokens={contextMax} usedTokens={usedTokens} />,
-        [contextMax, usedTokens],
+        () => (
+            <Context
+                maxTokens={contextMax}
+                usedTokens={usedTokens}
+                usage={usage}
+                modelId={model}
+                showBreakdown
+            />
+        ),
+        [contextMax, usedTokens, usage, model],
     );
 
     // Optional: add a single log after usage arrives
