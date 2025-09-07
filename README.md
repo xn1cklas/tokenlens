@@ -10,8 +10,7 @@ Typed model metadata and context/cost utilities that help AI apps answer: Does t
 
 Works great with the Vercel AI SDK out of the box, and remains SDK‑agnostic.
 
-
-https://github.com/user-attachments/assets/a75392ea-ae11-4c6b-9fe3-3994be3178c6
+<img width="1036" height="730" alt="tokenlens" src="https://github.com/user-attachments/assets/cec999fc-8fff-4a06-9523-c55d1db9d1f8" />
 
 Highlights
 - Canonical model registry with alias resolution and minimal metadata you can trust.
