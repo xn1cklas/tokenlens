@@ -1,11 +1,22 @@
 {
-    "name": "ai-meta-monorepo",
-    "private": true,
-    "workspaces": ["packages/*", "apps/*"],
-    "scripts": {
-      "build": "pnpm -r --filter=!provider-tests build",
-      "test": "pnpm -r test",
-      "test:live": "pnpm -w --filter provider-tests test:live"
-    },
-    "packageManager": "pnpm@9.0.0"
-  }
+  "name": "ai-meta-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "test:live": "turbo test:live",
+    "format": "biome format"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.2",
+    "lefthook": "^1.12.3",
+    "turbo": "^2.5.6",
+    "typescript": "^5.9.2"
+  },
+  "packageManager": "pnpm@10.5.1+sha512.c424c076bd25c1a5b188c37bb1ca56cc1e136fbf530d98bcb3289982a08fd25527b8c9c4ec113be5e3393c39af04521dd647bcf1d0801eaf8ac6a7b14da313af"
+}
