@@ -7,6 +7,7 @@
   ],
   "type": "module",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "sideEffects": false,
   "exports": {
     ".": {
@@ -16,7 +17,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"  
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -25,9 +26,28 @@
   "keywords": [
     "ai",
     "llm",
-    "gpt",
-    "models",
-    "tokens"
+    "ai models",
+    "model registry",
+    "context window",
+    "token usage",
+    "tokens",
+    "pricing",
+    "cost estimation",
+    "usage normalization",
+    "prompt cache",
+    "vercel ai",
+    "vercel ai gateway",
+    "ai-sdk",
+    "openai",
+    "anthropic",
+    "google",
+    "mistral",
+    "cohere",
+    "xai",
+    "deepseek",
+    "meta",
+    "llama",
+    "gemini"
   ],
   "author": "Nicklas Scharpff <hi@n1cklas.com> (https://n1cklas.com)",
   "license": "MIT",

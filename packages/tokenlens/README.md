@@ -1,6 +1,11 @@
 tokenlens
 ========
 
+[![npm version](https://img.shields.io/npm/v/tokenlens.svg)](https://www.npmjs.com/package/tokenlens)
+[![npm downloads](https://img.shields.io/npm/dm/tokenlens.svg)](https://www.npmjs.com/package/tokenlens)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+
 Typed model metadata and context/cost utilities for AI apps.
 
 Stop copying model IDs, context sizes, and prices into your app. tokenlens gives you a single, strongly-typed registry plus tiny helpers to answer: “Does this fit?” and “What will it cost?”
@@ -12,6 +17,11 @@ Highlights
 - Cost estimates: rough USD costs with pricing aligned to Vercel AI Gateway where available.
 - Conversation helpers: aggregate per-turn usage, estimate conversation cost, measure context rot.
 - Pragmatic data policy: values are verified; fields are left undefined rather than guessed.
+
+Compatibility
+- SDK‑agnostic helpers: accepts common usage shapes (`prompt_tokens`, `completion_tokens`, `total_tokens`, `input_tokens`, `output_tokens`) and Vercel AI SDK v2 fields (`inputTokens`, `outputTokens`, `totalTokens`, `cachedInputTokens`).
+- ESM‑only, tree‑shakeable (`sideEffects: false`), zero runtime dependencies.
+- Works in Node and modern bundlers.
 
 Install
 - npm: `npm i tokenlens`
