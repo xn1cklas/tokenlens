@@ -18,7 +18,8 @@
   "scripts": {
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "fetch:models_dev": "node scripts/sync-models-dev.mjs"
+    "fetch:models": "node scripts/sync-models-dev.mjs",
+    "sync:models": "pnpm run fetch:models && pnpm run build"
   },
   "repository": {
     "type": "git",
