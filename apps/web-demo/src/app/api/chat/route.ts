@@ -22,22 +22,17 @@ export async function POST(req: Request) {
         reserveOutput: 256,
     });
 
-
-    // This is the event that triggers the compact listener.
-    if (Number.isFinite(percentUsed) && percentUsed >= COMPACT_THRESHOLD) {
-        const ev: CompactEvent = { modelId: model, percentUsed, remainingTokens: remainingCombined };
-        for (const l of compactListeners) l(ev);
+    const shouldCompact = (percentUsed: number) => {
+        return Number.isFinite(percentUsed) && percentUsed >= COMPACT_THRESHOLD;
     }
 
+    if (shouldCompact(percentUsed)) {
+        console.log('[ai-meta demo] Compact threshold reached', {
+            modelId: model,
+            percentUsed: Number(percentUsed.toFixed(3)),
+            remainingTokens: remainingCombined,
+            threshold: COMPACT_THRESHOLD,
+        });
+    }
     return result.toUIMessageStreamResponse();
 }
-
-// This is the listener that logs when compaction is advisable.
-onCompactThreshold((e) => {
-    console.log('[ai-meta demo] Compact threshold reached', {
-        modelId: e.modelId,
-        percentUsed: Number(e.percentUsed.toFixed(3)),
-        remainingTokens: e.remainingTokens,
-        threshold: COMPACT_THRESHOLD,
-    });
-});
