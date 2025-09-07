@@ -1,6 +1,12 @@
 import { COMPACT_THRESHOLD, compactListeners, onCompactThreshold, type CompactEvent } from '@/lib/utils';
-import { streamText, UIMessage, convertToModelMessages } from 'ai';
-import { remainingContext } from 'tokenlens';
+import {
+    streamText,
+    convertToModelMessages,
+    createUIMessageStream,
+    createUIMessageStreamResponse,
+} from 'ai';
+import type { UIMessage, LanguageModelUsage } from 'ai';
+import { getContextWindow } from 'tokenlens';
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
@@ -8,31 +14,45 @@ export async function POST(req: Request) {
     const { model, messages }: { messages: UIMessage[]; model: string } =
         await req.json();
 
-    const result = await streamText({
+    let finalUsage: LanguageModelUsage | undefined;
+    const result = streamText({
         model: model,
         messages: convertToModelMessages(messages),
+        onFinish: ({ usage }) => {
+            finalUsage = usage;
+            // eslint-disable-next-line no-console
+            console.log('[api/chat] onFinish usage', usage);
+        },
     });
 
-    const usage = await result.usage;
+    // Attach lightweight model context metadata to the response stream.
+    const context = getContextWindow(model);
 
-    // Get the remaining context and percent used.
-    const { remainingCombined, percentUsed } = remainingContext({
-        modelId: model,
-        usage: { input_tokens: usage.inputTokens, output_tokens: usage.outputTokens, total_tokens: usage.totalTokens },
-        reserveOutput: 256,
+    // Base message stream with context metadata
+    type AppMessageMetadata = {
+        modelId: string;
+        context: { combinedMax?: number; inputMax?: number; outputMax?: number };
+    };
+    type AppDataTypes = { usage: LanguageModelUsage };
+    type AppUIMessage = UIMessage<AppMessageMetadata, AppDataTypes>;
+
+    const baseStream = result.toUIMessageStream<AppUIMessage>({
+        messageMetadata: () => ({ modelId: model, context }),
     });
 
-    const shouldCompact = (percentUsed: number) => {
-        return Number.isFinite(percentUsed) && percentUsed >= COMPACT_THRESHOLD;
-    }
+    // Merge usage as an explicit data part at the end so the client can pick it up via onData.
+    const merged = createUIMessageStream<AppUIMessage>({
+        execute: async ({ writer }) => {
+            writer.merge(baseStream);
+            // Prefer onFinish-captured usage; fall back to totalUsage
+            try {
+                const usage = finalUsage ?? (await result.totalUsage);
+                writer.write({ type: 'data-usage', data: usage });
+            } catch (e) {
+                console.warn('[api/chat] usage not available', e);
+            }
+        },
+    });
 
-    if (shouldCompact(percentUsed)) {
-        console.log('[tokenlens demo] Compact threshold reached', {
-            modelId: model,
-            percentUsed: Number(percentUsed.toFixed(3)),
-            remainingTokens: remainingCombined,
-            threshold: COMPACT_THRESHOLD,
-        });
-    }
-    return result.toUIMessageStreamResponse();
+    return createUIMessageStreamResponse({ stream: merged });
 }

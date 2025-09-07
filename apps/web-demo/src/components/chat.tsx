@@ -14,8 +14,9 @@ import {
     PromptInputTools,
 } from '@/components/ai-elements/prompt-input';
 import { GlobeIcon, MicIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useChat } from '@ai-sdk/react';
+import type { LanguageModelUsage, UIMessage } from 'ai';
 import {
     Conversation,
     ConversationContent,
@@ -24,20 +25,24 @@ import {
 import { Message, MessageContent } from '@/components/ai-elements/message';
 import { Response } from '@/components/ai-elements/response';
 import { Context } from './ai-elements/context';
+import { getContextWindow, normalizeUsage } from 'tokenlens';
 
 const models = [
     { id: 'gpt-4o', name: 'GPT-4o' },
     { id: 'claude-opus-4-20250514', name: 'Claude 4 Opus' },
 ];
 
-const context = {
-    maxTokens: 100000,
-    usedTokens: 10000,
+type AppMessageMetadata = {
+    modelId: string;
+    context: { combinedMax?: number; inputMax?: number; outputMax?: number };
 };
+type AppDataTypes = { usage: LanguageModelUsage };
+type AppUIMessage = UIMessage<AppMessageMetadata, AppDataTypes>;
 
 const InputDemo = () => {
     const [text, setText] = useState<string>('');
     const [model, setModel] = useState<string>(models[0].id);
+    const [usage, setUsage] = useState<LanguageModelUsage | undefined>(undefined);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -52,7 +57,37 @@ const InputDemo = () => {
         setText('');
     };
 
-    const { messages, status, sendMessage } = useChat();
+    const { messages, status, sendMessage } = useChat<AppUIMessage>({
+        onData: (part) => {
+            if (part.type === 'data-usage') {
+                setUsage(part.data);
+            }
+        },
+    });
+
+    const contextMax = useMemo(() => {
+        // Resolve from selected model; stable across chunks.
+        const cw = getContextWindow(model);
+        return cw.combinedMax ?? cw.inputMax ?? 0;
+    }, [model]);
+
+    const usedTokens = useMemo(() => {
+        // Prefer explicit usage data part captured via onData
+        if (!usage) return 0; // update only when final usage arrives
+        const n = normalizeUsage(usage);
+        return typeof n.total === 'number' ? n.total : (n.input ?? 0) + (n.output ?? 0);
+    }, [usage]);
+
+    const contextNode = useMemo(
+        () => <Context maxTokens={contextMax} usedTokens={usedTokens} />,
+        [contextMax, usedTokens],
+    );
+
+    // Optional: add a single log after usage arrives
+    useEffect(() => {
+        if (!usage) return;
+        normalizeUsage(usage); // touch to ensure tree-shake-safe import usage
+    }, [usage]);
 
     return (
         <div className="max-w-4xl mx-auto p-6 relative size-full rounded-lg border h-[600px]">
@@ -112,10 +147,7 @@ const InputDemo = () => {
                                     ))}
                                 </PromptInputModelSelectContent>
                             </PromptInputModelSelect>
-                            <Context
-                                maxTokens={context.maxTokens}
-                                usedTokens={context.usedTokens}
-                            />
+                            {contextNode}
                         </PromptInputTools>
                         <PromptInputSubmit disabled={!text} status={status} />
                     </PromptInputToolbar>
