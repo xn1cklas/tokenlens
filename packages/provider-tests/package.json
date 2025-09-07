@@ -1,0 +1,22 @@
+{
+  "name": "provider-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "pretest": "pnpm -w --filter ai-meta build",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:live": "vitest run -t smoke",
+    "bench": "tsx scripts/benchmark.ts"
+  },
+  "devDependencies": {
+    "@ai-sdk/provider": "^2.0.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "ai": "^5.0.34",
+    "tsx": "^4.20.5",
+    "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "ai-meta": "workspace:*"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "extends": "../ai-meta/tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "noEmit": true,
+    "types": ["vitest/globals"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
+  },
+  "include": ["tests", "vitest.setup.ts"],
+  "exclude": ["node_modules", "dist"]
+}
+
