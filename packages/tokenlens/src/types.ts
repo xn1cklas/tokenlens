@@ -88,9 +88,11 @@ export type UsageLike = Partial<
     | 'total_tokens'
     | 'input_tokens'
     | 'output_tokens'
+    | 'reasoning_tokens'
     | 'promptTokens'
     | 'completionTokens'
-    | 'totalTokens',
+    | 'totalTokens'
+    | 'reasoningTokens',
     number
   >
 >;
