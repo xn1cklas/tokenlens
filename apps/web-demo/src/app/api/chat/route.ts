@@ -1,6 +1,5 @@
 import { streamText, convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse } from 'ai';
 import type { UIMessage, LanguageModelUsage } from 'ai';
-import { getContextWindow } from 'tokenlens';
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
@@ -18,8 +17,6 @@ export async function POST(req: Request) {
         },
     });
 
-    // Attach lightweight model context metadata to the response stream.
-    const context = getContextWindow(model);
 
     // Base message stream with context metadata
     type ServerUIMessage = UIMessage<unknown, { usage: LanguageModelUsage }>;
