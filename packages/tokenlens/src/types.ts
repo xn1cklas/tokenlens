@@ -117,4 +117,6 @@ export type TokenBreakdown = NormalizedUsage & {
   cacheReads?: number;
   /** Tokens written to cache (if provider exposes it). */
   cacheWrites?: number;
+  /** Tokens attributed to reasoning (if provider exposes it). */
+  reasoningTokens?: number;
 };

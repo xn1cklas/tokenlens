@@ -7,6 +7,7 @@ export type {
   Status,
   UsageLike,
   NormalizedUsage,
+  TokenBreakdown,
 } from "./types.js";
 export {
   models,

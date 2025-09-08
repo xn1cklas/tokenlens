@@ -65,7 +65,7 @@ import { normalizeUsage, breakdownTokens } from 'tokenlens';
 // Works with many shapes, including Vercel AI SDK fields
 const u1 = normalizeUsage({ prompt_tokens: 1000, completion_tokens: 150 });
 const u2 = normalizeUsage({ inputTokens: 900, outputTokens: 200, totalTokens: 1100 });
-const b = breakdownTokens({ inputTokens: 900, cachedInputTokens: 300 });
+const b = breakdownTokens({ inputTokens: 900, cachedInputTokens: 300, reasoningTokens: 120 });
 ```
 
 Context Budgeting & Compaction
