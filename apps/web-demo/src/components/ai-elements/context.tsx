@@ -149,8 +149,8 @@ export const Context = ({
     const used = formatTokens(safeUsed);
     const total = formatTokens(safeMax);
 
-    const uNorm = normalizeUsage(usage as any);
-    const uBreakdown = breakdownTokens(usage as any);
+    const uNorm = normalizeUsage(usage);
+    const uBreakdown = breakdownTokens(usage);
     const costUSD = modelId ? estimateCost({ modelId, usage: uNorm }).totalUSD : undefined;
     const costText = formatUSD(costUSD);
 
@@ -188,45 +188,45 @@ export const Context = ({
                     {(
                         true
                     ) && (
-                        <div className="space-y-2">
-                            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                                <div className="h-full" style={{ width: w(segCacheR), background: 'var(--chart-2)', opacity: 0.9 }} />
-                                <div className="h-full" style={{ width: w(segCacheW), background: 'var(--chart-4)', opacity: 0.9 }} />
-                                <div className="h-full" style={{ width: w(segInput), background: 'var(--chart-1)', opacity: 0.9 }} />
-                                <div className="h-full" style={{ width: w(segOutput), background: 'var(--chart-3)', opacity: 0.9 }} />
+                            <div className="space-y-2">
+                                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                                    <div className="h-full" style={{ width: w(segCacheR), background: 'var(--chart-2)', opacity: 0.9 }} />
+                                    <div className="h-full" style={{ width: w(segCacheW), background: 'var(--chart-4)', opacity: 0.9 }} />
+                                    <div className="h-full" style={{ width: w(segInput), background: 'var(--chart-1)', opacity: 0.9 }} />
+                                    <div className="h-full" style={{ width: w(segOutput), background: 'var(--chart-3)', opacity: 0.9 }} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                                    <div className="flex items-center justify-between">
+                                        <span className="flex items-center gap-2 text-muted-foreground">
+                                            <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-2)' }} />
+                                            Cache Hits
+                                        </span>
+                                        <span>{fmtOrUnknown(uBreakdown.cacheReads)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="flex items-center gap-2 text-muted-foreground">
+                                            <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-4)' }} />
+                                            Cache Writes
+                                        </span>
+                                        <span>{fmtOrUnknown(uBreakdown.cacheWrites)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="flex items-center gap-2 text-muted-foreground">
+                                            <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-1)' }} />
+                                            Input
+                                        </span>
+                                        <span>{formatTokens(uNorm.input)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="flex items-center gap-2 text-muted-foreground">
+                                            <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-3)' }} />
+                                            Output
+                                        </span>
+                                        <span>{formatTokens(uNorm.output)}</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                                <div className="flex items-center justify-between">
-                                    <span className="flex items-center gap-2 text-muted-foreground">
-                                        <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-2)' }} />
-                                        Cache Hits
-                                    </span>
-                                    <span>{fmtOrUnknown(uBreakdown.cacheReads)}</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="flex items-center gap-2 text-muted-foreground">
-                                        <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-4)' }} />
-                                        Cache Writes
-                                    </span>
-                                    <span>{fmtOrUnknown(uBreakdown.cacheWrites)}</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="flex items-center gap-2 text-muted-foreground">
-                                        <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-1)' }} />
-                                        Input
-                                    </span>
-                                    <span>{formatTokens(uNorm.input)}</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="flex items-center gap-2 text-muted-foreground">
-                                        <span className="inline-block size-2 rounded-sm" style={{ background: 'var(--chart-3)' }} />
-                                        Output
-                                    </span>
-                                    <span>{formatTokens(uNorm.output)}</span>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                        )}
                     {showBreakdown && (
                         <div className="mt-1 space-y-1">
                             <div className="flex items-center justify-between text-xs">
