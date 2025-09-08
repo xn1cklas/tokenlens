@@ -52,6 +52,7 @@ console.log({ meta, used, remaining, costUSD });
 Core Helpers
 - Registry: `resolveModel`, `listModels`, `MODEL_IDS`, `isModelId`, `assertModelId`
 - Usage: `normalizeUsage`, `breakdownTokens`, `consumedTokens`
+ 
 - Context: `getContextWindow`, `remainingContext`, `percentRemaining`, `fitsContext`, `pickModelFor`
 - Cost: `estimateCost`
 - Compaction: `shouldCompact`, `contextHealth`, `tokensToCompact`
@@ -66,6 +67,16 @@ import { normalizeUsage, breakdownTokens } from 'tokenlens';
 const u1 = normalizeUsage({ prompt_tokens: 1000, completion_tokens: 150 });
 const u2 = normalizeUsage({ inputTokens: 900, outputTokens: 200, totalTokens: 1100 });
 const b = breakdownTokens({ inputTokens: 900, cachedInputTokens: 300, reasoningTokens: 120 });
+```
+
+```ts
+import { estimateCost } from 'tokenlens';
+
+const costs = estimateCost({
+  modelId: 'openai:o3',
+  usage: { inputTokens: 1000, outputTokens: 200, reasoningTokens: 500, cachedInputTokens: 300 },
+});
+// { inputUSD?, outputUSD?, reasoningUSD?, cacheReadUSD?, cacheWriteUSD?, totalUSD? }
 ```
 
 Context Budgeting & Compaction

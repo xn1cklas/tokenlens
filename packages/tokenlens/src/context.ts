@@ -131,6 +131,8 @@ export function breakdownTokens(usage: UsageLike | NormalizedUsage | TokenBreakd
   return { ...base, cacheReads, cacheWrites, reasoningTokens };
 }
 
+// removed helper: callers should always go through `breakdownTokens`
+
 export type RemainingArgs = {
   modelId: ModelId | string;
   usage: UsageLike | NormalizedUsage | undefined;
@@ -216,19 +218,34 @@ export function pickModelFor(
  * Estimate USD cost from usage based on the model's configured pricing hints.
  * Returns partial values when only one direction (input/output) is available.
  */
-export function estimateCost({ modelId, usage }: { modelId: string; usage: UsageLike | NormalizedUsage }): {
+export function estimateCost({ modelId, usage }: { modelId: string; usage: UsageLike | NormalizedUsage | TokenBreakdown }): {
   inputUSD?: number;
   outputUSD?: number;
   totalUSD?: number;
+  reasoningUSD?: number;
+  cacheReadUSD?: number;
+  cacheWriteUSD?: number;
 } {
   const model = resolveModel(modelId);
   if (!model?.pricing) return {};
-  const u = normalizeUsage(usage);
-  const inputUSD = model.pricing.inputPerMTokens !== undefined ? (u.input / TOKENS_PER_MILLION) * model.pricing.inputPerMTokens : undefined;
-  const outputUSD = model.pricing.outputPerMTokens !== undefined ? (u.output / TOKENS_PER_MILLION) * model.pricing.outputPerMTokens : undefined;
-  const totalUSD =
-    inputUSD !== undefined && outputUSD !== undefined ? inputUSD + outputUSD : inputUSD ?? outputUSD;
-  return { inputUSD, outputUSD, totalUSD };
+  const base = normalizeUsage(usage as UsageLike | NormalizedUsage);
+  const breakdown = breakdownTokens(usage as UsageLike | NormalizedUsage | TokenBreakdown);
+
+  const inputUSD = model.pricing.inputPerMTokens !== undefined ? (base.input / TOKENS_PER_MILLION) * model.pricing.inputPerMTokens : undefined;
+  const outputUSD = model.pricing.outputPerMTokens !== undefined ? (base.output / TOKENS_PER_MILLION) * model.pricing.outputPerMTokens : undefined;
+  const reasoningUSD = model.pricing.reasoningPerMTokens !== undefined && typeof breakdown.reasoningTokens === 'number'
+    ? (breakdown.reasoningTokens / TOKENS_PER_MILLION) * model.pricing.reasoningPerMTokens
+    : undefined;
+  const cacheReadUSD = model.pricing.cacheReadPerMTokens !== undefined && typeof breakdown.cacheReads === 'number'
+    ? (breakdown.cacheReads / TOKENS_PER_MILLION) * model.pricing.cacheReadPerMTokens
+    : undefined;
+  const cacheWriteUSD = model.pricing.cacheWritePerMTokens !== undefined && typeof breakdown.cacheWrites === 'number'
+    ? (breakdown.cacheWrites / TOKENS_PER_MILLION) * model.pricing.cacheWritePerMTokens
+    : undefined;
+
+  const totalParts = [inputUSD, outputUSD, reasoningUSD, cacheReadUSD, cacheWriteUSD].filter((v): v is number => typeof v === 'number');
+  const totalUSD = totalParts.length ? totalParts.reduce((a, b) => a + b, 0) : undefined;
+  return { inputUSD, outputUSD, reasoningUSD, cacheReadUSD, cacheWriteUSD, totalUSD };
 }
 
 /**
