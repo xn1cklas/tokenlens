@@ -44,6 +44,20 @@ describe('AI SDK usage breakdown', () => {
         expect(b.total).toBe(120);
         expect(b.cacheReads).toBe(30);
     });
+
+    it('extracts reasoningTokens when present', () => {
+        const usage: VercelUsage = {
+            inputTokens: 200,
+            outputTokens: 50,
+            totalTokens: 250,
+            reasoningTokens: 75,
+        };
+        const b = breakdownTokens(usage);
+        expect(b.input).toBe(200);
+        expect(b.output).toBe(50);
+        expect(b.total).toBe(250);
+        expect(b.reasoningTokens).toBe(75);
+    });
 });
 
 describe('Helpers end-to-end with realistic values', () => {
@@ -75,6 +89,23 @@ describe('Helpers end-to-end with realistic values', () => {
         expect(c.totalUSD ?? 0).toBeGreaterThanOrEqual(0);
     });
 
+    it('estimateCost ignores reasoningTokens when model has no reasoning pricing', () => {
+        // openai:o1 currently has input/output pricing only
+        const modelId2 = 'openai:o1';
+        const usage2: VercelUsage = {
+            inputTokens: 1000,
+            outputTokens: 500,
+            totalTokens: 1500,
+            reasoningTokens: 200, // present but no pricing configured in registry
+        };
+        const c = estimateCost({ modelId: modelId2, usage: usage2 });
+        // expected: (1000/1e6)*15 + (500/1e6)*60 = 0.045
+        expect(c.reasoningUSD).toBeUndefined();
+        expect(c.inputUSD).toBeCloseTo(0.015, 10);
+        expect(c.outputUSD).toBeCloseTo(0.03, 10);
+        expect(c.totalUSD).toBeCloseTo(0.045, 10);
+    });
+
     it('sugar helpers work', () => {
         const meta = modelMeta(modelId);
         const percent = percentOfContextUsed({ id: modelId, usage, reserveOutput: 256 });
@@ -84,5 +115,4 @@ describe('Helpers end-to-end with realistic values', () => {
         expect(remaining).toBeGreaterThan(0);
     });
 });
-
 

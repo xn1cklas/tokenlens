@@ -30,6 +30,12 @@ export type Pricing = {
   inputPerMTokens?: number;
   /** USD per 1M output (completion) tokens. */
   outputPerMTokens?: number;
+  /** USD per 1M reasoning tokens (e.g. OpenAI o-series). */
+  reasoningPerMTokens?: number;
+  /** USD per 1M cache read tokens (e.g. Anthropic prompt cache reads). */
+  cacheReadPerMTokens?: number;
+  /** USD per 1M cache write tokens (e.g. Anthropic prompt cache writes). */
+  cacheWritePerMTokens?: number;
 };
 
 /**
@@ -88,9 +94,11 @@ export type UsageLike = Partial<
     | 'total_tokens'
     | 'input_tokens'
     | 'output_tokens'
+    | 'reasoning_tokens'
     | 'promptTokens'
     | 'completionTokens'
-    | 'totalTokens',
+    | 'totalTokens'
+    | 'reasoningTokens',
     number
   >
 >;
@@ -115,4 +123,11 @@ export type TokenBreakdown = NormalizedUsage & {
   cacheReads?: number;
   /** Tokens written to cache (if provider exposes it). */
   cacheWrites?: number;
+  /** Tokens attributed to reasoning (if provider exposes it). */
+  reasoningTokens?: number;
 };
+
+/**
+ * Unified DTO-style summary of usage and costs. Missing fields are simply undefined.
+ */
+// Unified UsageSummary DTO removed to keep API focused on model metadata + helpers

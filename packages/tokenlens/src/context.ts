@@ -71,7 +71,7 @@ export function normalizeUsage(usage: UsageLike | NormalizedUsage | undefined | 
  */
 export function breakdownTokens(usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined | null): TokenBreakdown {
   if (!usage) {
-    return { input: 0, output: 0, total: 0 };
+    return { input: 0, output: 0, total: 0, cacheReads: 0, cacheWrites: 0, reasoningTokens: 0 };
   }
   // Pass-through when already a breakdown
   if (
@@ -81,7 +81,14 @@ export function breakdownTokens(usage: UsageLike | NormalizedUsage | TokenBreakd
     ('cacheReads' in (usage as TokenBreakdown) || 'cacheWrites' in (usage as TokenBreakdown) || 'total' in (usage as TokenBreakdown))
   ) {
     const u0 = usage as TokenBreakdown;
-    return { input: u0.input, output: u0.output, total: u0.total ?? u0.input + u0.output, cacheReads: u0.cacheReads, cacheWrites: u0.cacheWrites };
+    return {
+      input: u0.input,
+      output: u0.output,
+      total: u0.total ?? u0.input + u0.output,
+      cacheReads: u0.cacheReads,
+      cacheWrites: u0.cacheWrites,
+      reasoningTokens: u0.reasoningTokens,
+    };
   }
   const base = normalizeUsage(usage as UsageLike | NormalizedUsage);
   const u = usage as unknown as Record<string, unknown> & {
@@ -93,6 +100,8 @@ export function breakdownTokens(usage: UsageLike | NormalizedUsage | TokenBreakd
     cache_creation_input_tokens?: number;
     cache_creation_tokens?: number;
     cachedInputTokens?: number;
+    reasoning_tokens?: number;
+    reasoningTokens?: number;
   };
 
   // Known/observed field names across providers (Anthropic/OpenAI) and SDKs
@@ -116,8 +125,13 @@ export function breakdownTokens(usage: UsageLike | NormalizedUsage | TokenBreakd
   const cacheReads = cacheReadCandidates[0];
   const cacheWrites = cacheWriteCandidates[0];
 
-  return { ...base, cacheReads, cacheWrites };
+  // Reasoning tokens (OpenAI o-series, AI SDK v2, others)
+  const reasoningCandidates = [u.reasoning_tokens, u.reasoningTokens].filter((v: unknown): v is number => typeof v === 'number');
+  const reasoningTokens = reasoningCandidates[0];
+  return { ...base, cacheReads, cacheWrites, reasoningTokens };
 }
+
+// removed helper: callers should always go through `breakdownTokens`
 
 export type RemainingArgs = {
   modelId: ModelId | string;
@@ -138,7 +152,7 @@ export function remainingContext(args: RemainingArgs): {
   model?: Model;
 } {
   const model = resolveModel(args.modelId);
-  const usage = 'input' in (args.usage ?? {}) ? (args.usage as NormalizedUsage) : normalizeUsage(args.usage as UsageLike);
+  const usage = normalizeUsage(args.usage as UsageLike | NormalizedUsage);
   const reserve = Math.max(0, args.reserveOutput ?? 0);
   const strategy = args.strategy ?? 'provider-default';
 
@@ -204,26 +218,41 @@ export function pickModelFor(
  * Estimate USD cost from usage based on the model's configured pricing hints.
  * Returns partial values when only one direction (input/output) is available.
  */
-export function estimateCost({ modelId, usage }: { modelId: string; usage: UsageLike | NormalizedUsage }): {
+export function estimateCost({ modelId, usage }: { modelId: string; usage: UsageLike | NormalizedUsage | TokenBreakdown }): {
   inputUSD?: number;
   outputUSD?: number;
   totalUSD?: number;
+  reasoningUSD?: number;
+  cacheReadUSD?: number;
+  cacheWriteUSD?: number;
 } {
   const model = resolveModel(modelId);
   if (!model?.pricing) return {};
-  const u = 'input' in (usage as any) ? (usage as NormalizedUsage) : normalizeUsage(usage as UsageLike);
-  const inputUSD = model.pricing.inputPerMTokens !== undefined ? (u.input / TOKENS_PER_MILLION) * model.pricing.inputPerMTokens : undefined;
-  const outputUSD = model.pricing.outputPerMTokens !== undefined ? (u.output / TOKENS_PER_MILLION) * model.pricing.outputPerMTokens : undefined;
-  const totalUSD =
-    inputUSD !== undefined && outputUSD !== undefined ? inputUSD + outputUSD : inputUSD ?? outputUSD;
-  return { inputUSD, outputUSD, totalUSD };
+  const base = normalizeUsage(usage as UsageLike | NormalizedUsage);
+  const breakdown = breakdownTokens(usage as UsageLike | NormalizedUsage | TokenBreakdown);
+
+  const inputUSD = model.pricing.inputPerMTokens !== undefined ? (base.input / TOKENS_PER_MILLION) * model.pricing.inputPerMTokens : undefined;
+  const outputUSD = model.pricing.outputPerMTokens !== undefined ? (base.output / TOKENS_PER_MILLION) * model.pricing.outputPerMTokens : undefined;
+  const reasoningUSD = model.pricing.reasoningPerMTokens !== undefined && typeof breakdown.reasoningTokens === 'number'
+    ? (breakdown.reasoningTokens / TOKENS_PER_MILLION) * model.pricing.reasoningPerMTokens
+    : undefined;
+  const cacheReadUSD = model.pricing.cacheReadPerMTokens !== undefined && typeof breakdown.cacheReads === 'number'
+    ? (breakdown.cacheReads / TOKENS_PER_MILLION) * model.pricing.cacheReadPerMTokens
+    : undefined;
+  const cacheWriteUSD = model.pricing.cacheWritePerMTokens !== undefined && typeof breakdown.cacheWrites === 'number'
+    ? (breakdown.cacheWrites / TOKENS_PER_MILLION) * model.pricing.cacheWritePerMTokens
+    : undefined;
+
+  const totalParts = [inputUSD, outputUSD, reasoningUSD, cacheReadUSD, cacheWriteUSD].filter((v): v is number => typeof v === 'number');
+  const totalUSD = totalParts.length ? totalParts.reduce((a, b) => a + b, 0) : undefined;
+  return { inputUSD, outputUSD, reasoningUSD, cacheReadUSD, cacheWriteUSD, totalUSD };
 }
 
 /**
  * Convenience: total consumed tokens from a usage object.
  */
 export function consumedTokens(usage: UsageLike | NormalizedUsage | undefined | null): number {
-  const u = normalizeUsage(usage as any);
+  const u = normalizeUsage(usage);
   return u.total ?? (u.input + u.output);
 }
 
@@ -278,7 +307,7 @@ export function tokensToCompact(args: {
 }): number {
   const model = resolveModel(args.modelId);
   if (!model) return 0;
-  const u = normalizeUsage(args.usage as any);
+  const u = normalizeUsage(args.usage);
   const used = u.input + u.output;
   const cap = model.context.combinedMax ?? model.context.inputMax;
   if (!cap || !Number.isFinite(cap)) return 0;
