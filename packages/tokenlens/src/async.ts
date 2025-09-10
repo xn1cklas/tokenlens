@@ -148,7 +148,7 @@ export async function fetchModels(
     });
   }
 
-  let res;
+  let res: Awaited<ReturnType<FetchLike>>;
   try {
     res = await fetchImpl(
       url,
