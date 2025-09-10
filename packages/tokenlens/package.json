@@ -17,8 +17,10 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "pnpm run build && vitest",
+    "test:run": "pnpm run build && vitest run",
     "fetch:models": "node scripts/sync-models-dev.mjs",
+    "sync:models": "pnpm run fetch:models && pnpm run build",
     "bench:lookup": "pnpm run build && node scripts/bench-lookup.mjs"
   },
   "repository": {
@@ -58,6 +60,7 @@
   },
   "homepage": "https://github.com/xn1cklas/tokenlens#readme",
   "devDependencies": {
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^1.6.1"
   }
 }
