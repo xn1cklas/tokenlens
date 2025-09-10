@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "es2022",
+    "module": "NodeNext",
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "strict": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "lib": ["es2022"],
+    "strictNullChecks": true
+  },
+  "include": ["src"],
+  "exclude": ["dist", "node_modules"]
+}
