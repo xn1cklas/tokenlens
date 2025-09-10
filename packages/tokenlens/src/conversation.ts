@@ -1,22 +1,29 @@
-import { estimateCost, remainingContext, normalizeUsage } from './context.js';
-import { resolveModel } from './registry.js';
-import type { ModelId } from './registry.js';
-import type { NormalizedUsage, TokenBreakdown, UsageLike } from './types.js';
+import { estimateCost, remainingContext, normalizeUsage } from "./context.js";
+import { resolveModel } from "./registry.js";
+import type { ModelId } from "./registry.js";
+import type { NormalizedUsage, TokenBreakdown, UsageLike } from "./types.js";
 
 /**
  * Sum an array of usage objects into a single normalized usage.
  * Accepts mixed shapes (provider usage, normalized usage, token breakdown).
  */
-export function sumUsage(usages: Array<UsageLike | NormalizedUsage | TokenBreakdown | undefined | null>): NormalizedUsage {
+export function sumUsage(
+  usages: Array<
+    UsageLike | NormalizedUsage | TokenBreakdown | undefined | null
+  >,
+): NormalizedUsage {
   let input = 0;
   let output = 0;
   let total: number | undefined = 0;
   for (const u of usages) {
     if (!u) continue;
-    const n = 'input' in (u as any) ? (u as NormalizedUsage) : normalizeUsage(u as UsageLike);
+    const n =
+      "input" in (u as any)
+        ? (u as NormalizedUsage)
+        : normalizeUsage(u as UsageLike);
     input += n.input || 0;
     output += n.output || 0;
-    if (typeof n.total === 'number') total = (total ?? 0) + n.total;
+    if (typeof n.total === "number") total = (total ?? 0) + n.total;
   }
   return { input, output, total: total ?? input + output };
 }
@@ -26,7 +33,9 @@ export function sumUsage(usages: Array<UsageLike | NormalizedUsage | TokenBreakd
  */
 export function estimateConversationCost(args: {
   modelId: ModelId | string;
-  usages: Array<UsageLike | NormalizedUsage | TokenBreakdown | undefined | null>;
+  usages: Array<
+    UsageLike | NormalizedUsage | TokenBreakdown | undefined | null
+  >;
 }): { inputUSD?: number; outputUSD?: number; totalUSD?: number } {
   const u = sumUsage(args.usages);
   return estimateCost({ modelId: args.modelId as string, usage: u });
@@ -58,9 +67,13 @@ export function computeContextRot(args: {
   targetStaleShareOfUsed?: number; // optional threshold (0..1) to compute a trimFrom index
 }): ContextRotResult {
   const keepRecentTurns = Math.max(0, args.keepRecentTurns ?? 3);
-  const tokens = (args.messageTokens ?? []).map((n) => Math.max(0, Math.floor(n)));
+  const tokens = (args.messageTokens ?? []).map((n) =>
+    Math.max(0, Math.floor(n)),
+  );
   const totalTokens = tokens.reduce((a, b) => a + b, 0);
-  const recentTokens = tokens.slice(-keepRecentTurns).reduce((a, b) => a + b, 0);
+  const recentTokens = tokens
+    .slice(-keepRecentTurns)
+    .reduce((a, b) => a + b, 0);
   const staleTokens = Math.max(0, totalTokens - recentTokens);
   const staleShareOfUsed = totalTokens > 0 ? staleTokens / totalTokens : 0;
 
@@ -69,12 +82,12 @@ export function computeContextRot(args: {
   if (args.modelId) {
     const m = resolveModel(args.modelId as string);
     const cap = m?.context.combinedMax ?? m?.context.inputMax;
-    if (typeof cap === 'number' && cap > 0) staleShareOfMax = staleTokens / cap;
+    if (typeof cap === "number" && cap > 0) staleShareOfMax = staleTokens / cap;
   }
 
   let trimFrom: number | undefined;
   const target = args.targetStaleShareOfUsed;
-  if (typeof target === 'number' && target >= 0 && target <= 1) {
+  if (typeof target === "number" && target >= 0 && target <= 1) {
     // Drop the minimal oldest prefix so that stale/(used after drop) <= target
     const maxDrop = Math.max(0, tokens.length - keepRecentTurns);
     let dropped = 0;
@@ -92,7 +105,14 @@ export function computeContextRot(args: {
     if (trimFrom === undefined) trimFrom = maxDrop; // worst-case drop all stale
   }
 
-  return { totalTokens, recentTokens, staleTokens, staleShareOfUsed, staleShareOfMax, trimFrom };
+  return {
+    totalTokens,
+    recentTokens,
+    staleTokens,
+    staleShareOfUsed,
+    staleShareOfMax,
+    trimFrom,
+  };
 }
 
 /**
@@ -104,7 +124,11 @@ export function nextTurnBudget(args: {
   usage: UsageLike | NormalizedUsage | undefined;
   reserveOutput?: number;
 }): number | undefined {
-  const rc = remainingContext({ modelId: args.modelId, usage: args.usage, reserveOutput: args.reserveOutput });
+  const rc = remainingContext({
+    modelId: args.modelId,
+    usage: args.usage,
+    reserveOutput: args.reserveOutput,
+  });
   // Prefer combined remaining (typical), fall back to input-only when applicable
   return rc.remainingCombined ?? rc.remainingInput;
 }

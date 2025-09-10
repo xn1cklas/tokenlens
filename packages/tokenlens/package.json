@@ -21,7 +21,8 @@
     "test:run": "pnpm run build && vitest run",
     "fetch:models": "node scripts/sync-models-dev.mjs",
     "sync:models": "pnpm run fetch:models && pnpm run build",
-    "bench:lookup": "pnpm run build && node scripts/bench-lookup.mjs"
+    "bench:lookup": "pnpm run build && node scripts/bench-lookup.mjs",
+    "pre-release": "pnpm run bench:lookup && pnpm run test:run && pnpm run sync:models && pnpm run build"
   },
   "repository": {
     "type": "git",

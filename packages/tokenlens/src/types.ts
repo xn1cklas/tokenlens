@@ -7,7 +7,7 @@ export type Provider = string;
 /**
  * Lifecycle status of a model. Useful for filtering or picking a minimum stability.
  */
-export type Status = 'stable' | 'preview' | 'deprecated' | 'retired';
+export type Status = "stable" | "preview" | "deprecated" | "retired";
 
 /**
  * Context window limits for a model. Some providers expose a single combined budget,
@@ -90,16 +90,16 @@ export type Model = {
  */
 export type UsageLike = Partial<
   Record<
-    | 'prompt_tokens'
-    | 'completion_tokens'
-    | 'total_tokens'
-    | 'input_tokens'
-    | 'output_tokens'
-    | 'reasoning_tokens'
-    | 'promptTokens'
-    | 'completionTokens'
-    | 'totalTokens'
-    | 'reasoningTokens',
+    | "prompt_tokens"
+    | "completion_tokens"
+    | "total_tokens"
+    | "input_tokens"
+    | "output_tokens"
+    | "reasoning_tokens"
+    | "promptTokens"
+    | "completionTokens"
+    | "totalTokens"
+    | "reasoningTokens",
     number
   >
 >;

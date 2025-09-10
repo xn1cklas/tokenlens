@@ -138,5 +138,9 @@
   border-radius: 9999px;
 }
 .pretty-scroll:hover::-webkit-scrollbar-thumb {
-  background-color: color-mix(in oklab, var(--color-foreground) 40%, transparent);
+  background-color: color-mix(
+    in oklab,
+    var(--color-foreground) 40%,
+    transparent
+  );
 }

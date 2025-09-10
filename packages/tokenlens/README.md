@@ -11,7 +11,7 @@ Typed model metadata and context/cost utilities that help AI apps answer: Does t
 Works great with the Vercel AI SDK out of the box, and remains SDK‑agnostic.
 
 
-https://github.com/user-attachments/assets/a75392ea-ae11-4c6b-9fe3-3994be3178c6
+![TokenLens overview](https://github.com/user-attachments/assets/a75392ea-ae11-4c6b-9fe3-3994be3178c6)
 
 Highlights
 - Canonical model registry with alias resolution and minimal metadata you can trust.
@@ -67,6 +67,45 @@ import { normalizeUsage, breakdownTokens } from 'tokenlens';
 const u1 = normalizeUsage({ prompt_tokens: 1000, completion_tokens: 150 });
 const u2 = normalizeUsage({ inputTokens: 900, outputTokens: 200, totalTokens: 1100 });
 const b = breakdownTokens({ inputTokens: 900, cachedInputTokens: 300, reasoningTokens: 120 });
+```
+
+Async Fetch (models.dev)
+```ts
+import {
+  fetchModels,
+  FetchModelsError,
+  type ModelsDevApi,
+  type ModelsDevProvider,
+  type ModelsDevModel,
+} from 'tokenlens';
+
+// 1) Fetch the full catalog (Node 18+ or modern browsers with global fetch)
+const catalog: ModelsDevApi = await fetchModels();
+
+// 2) Fetch by provider key (e.g. 'openai', 'anthropic', 'deepseek')
+const openai: ModelsDevProvider | undefined = await fetchModels({ provider: 'openai' });
+
+// 3) Fetch a specific model within a provider
+const gpto: ModelsDevModel | undefined = await fetchModels({ provider: 'openai', model: 'gpt-4o' });
+
+// 4) Search for a model across providers when provider is omitted
+const matches: Array<{ provider: string; model: ModelsDevModel }> = await fetchModels({ model: 'gpt-4.1' });
+
+// 5) Error handling with typed error codes
+try {
+  await fetchModels();
+} catch (err) {
+  if (err instanceof FetchModelsError) {
+    // err.code is one of: 'UNAVAILABLE' | 'NETWORK' | 'HTTP' | 'PARSE'
+    console.error('Fetch failed:', err.code, err.status, err.message);
+  } else {
+    throw err;
+  }
+}
+
+// 6) Provide a custom fetch (for Node < 18 or custom runtimes)
+// import fetch from 'cross-fetch' or 'undici'
+// const catalog = await fetchModels({ fetch });
 ```
 
 ```ts
@@ -125,3 +164,10 @@ Acknowlegements
 
 License
 MIT
+
+Notes on Images in README
+- Use standard Markdown images with absolute URLs (recommended for npm and GitHub):
+  - `![Alt text](https://example.com/your-image.png)`
+- Relative image paths only work if the image file is included in the published package.
+- HTML `<img>` tags also render on GitHub and npm if you need sizing:
+  - `<img src="https://example.com/img.png" alt="Preview" width="600" />`

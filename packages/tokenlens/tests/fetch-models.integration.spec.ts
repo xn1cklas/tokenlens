@@ -1,12 +1,16 @@
-import { describe, it, expect, expectTypeOf } from 'vitest';
-import { fetchModels } from '../src/index.ts';
-import type { ModelsDevApi, ModelsDevModel, ModelsDevProvider } from '../src/index.ts';
+import { describe, it, expect, expectTypeOf } from "vitest";
+import { fetchModels } from "../src/index.ts";
+import type {
+  ModelsDevApi,
+  ModelsDevModel,
+  ModelsDevProvider,
+} from "../src/index.ts";
 
-describe('fetchModels integration (live models.dev)', () => {
-  it('fetches catalog and preserves types', async () => {
+describe("fetchModels integration (live models.dev)", () => {
+  it("fetches catalog and preserves types", async () => {
     const catalog = (await fetchModels()) as ModelsDevApi;
     expectTypeOf(catalog).toMatchTypeOf<ModelsDevApi>();
-    expect(typeof catalog).toBe('object');
+    expect(typeof catalog).toBe("object");
     expect(catalog).not.toBeNull();
 
     const providerKeys = Object.keys(catalog);
@@ -15,8 +19,8 @@ describe('fetchModels integration (live models.dev)', () => {
     const providerKey = providerKeys[0]!;
     const providerObj = catalog[providerKey]!;
     expectTypeOf(providerObj).toMatchTypeOf<ModelsDevProvider>();
-    expect(providerObj.id).toBeTypeOf('string');
-    expect(typeof providerObj.models).toBe('object');
+    expect(providerObj.id).toBeTypeOf("string");
+    expect(typeof providerObj.models).toBe("object");
 
     const modelKeys = Object.keys(providerObj.models ?? {});
     // A provider should typically have at least one model
@@ -25,15 +29,20 @@ describe('fetchModels integration (live models.dev)', () => {
     const modelKey = modelKeys[0]!;
     const modelObj = providerObj.models[modelKey]!;
     expectTypeOf(modelObj).toMatchTypeOf<ModelsDevModel>();
-    expect(modelObj.id).toBeTypeOf('string');
+    expect(modelObj.id).toBeTypeOf("string");
 
     // Verify provider filter
     const fetchedProvider = await fetchModels({ provider: providerKey });
-    expectTypeOf(fetchedProvider).toMatchTypeOf<ModelsDevProvider | undefined>();
-    expect(fetchedProvider?.id).toBeTypeOf('string');
+    expectTypeOf(fetchedProvider).toMatchTypeOf<
+      ModelsDevProvider | undefined
+    >();
+    expect(fetchedProvider?.id).toBeTypeOf("string");
 
     // Verify provider+model filter
-    const fetchedModel = await fetchModels({ provider: providerKey, model: modelKey });
+    const fetchedModel = await fetchModels({
+      provider: providerKey,
+      model: modelKey,
+    });
     expectTypeOf(fetchedModel).toMatchTypeOf<ModelsDevModel | undefined>();
     expect(fetchedModel?.id).toBe(modelKey);
 
@@ -41,6 +50,6 @@ describe('fetchModels integration (live models.dev)', () => {
     const matches = await fetchModels({ model: modelKey });
     expect(Array.isArray(matches)).toBe(true);
     expect(matches.length).toBeGreaterThan(0);
-    expect(matches[0]!.model.id).toBeTypeOf('string');
+    expect(matches[0]!.model.id).toBeTypeOf("string");
   });
 });
