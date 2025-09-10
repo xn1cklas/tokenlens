@@ -10,7 +10,8 @@
     "build": "turbo build",
     "test": "turbo test",
     "test:live": "turbo test:live",
-    "format": "biome format"
+    "format": "biome format",
+    "sync:readme": "node scripts/sync-readme.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.2",
