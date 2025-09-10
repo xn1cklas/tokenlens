@@ -1,7 +1,8 @@
 /**
- * Known model providers supported by this package.
+ * Provider identifier. We accept any provider string so we can ingest the full
+ * models.dev catalog without maintaining a hardcoded allowlist here.
  */
-export type Provider = 'openai' | 'anthropic' | 'google' | 'meta' | 'mistral' | 'cohere' | 'xai' | 'deepseek' | 'moonshotai' | 'alibaba';
+export type Provider = string;
 
 /**
  * Lifecycle status of a model. Useful for filtering or picking a minimum stability.
