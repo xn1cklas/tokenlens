@@ -11,7 +11,7 @@ Typed model metadata and context/cost utilities that help AI apps answer: Does t
 Works great with the Vercel AI SDK out of the box, and remains SDK‑agnostic.
 
 
-![TokenLens overview](https://github.com/user-attachments/assets/a75392ea-ae11-4c6b-9fe3-3994be3178c6)
+![TokenLens overview](https://raw.githubusercontent.com/xn1cklas/tokenlens/HEAD/assets/tokenlens.png)
 
 Highlights
 - Canonical model registry with alias resolution and minimal metadata you can trust.
@@ -164,10 +164,3 @@ Acknowlegements
 
 License
 MIT
-
-Notes on Images in README
-- Use standard Markdown images with absolute URLs (recommended for npm and GitHub):
-  - `![Alt text](https://example.com/your-image.png)`
-- Relative image paths only work if the image file is included in the published package.
-- HTML `<img>` tags also render on GitHub and npm if you need sizing:
-  - `<img src="https://example.com/img.png" alt="Preview" width="600" />`
