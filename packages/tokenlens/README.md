@@ -49,6 +49,29 @@ const costUSD = costFromUsage({ id, usage });
 console.log({ meta, used, remaining, costUSD });
 ```
 
+Packages
+
+- `@tokenlens/core`: shared types and registry utilities.
+- `@tokenlens/models`: static provider-split catalog from models.dev.
+- `@tokenlens/fetch`: async client for models.dev API.
+- `@tokenlens/helpers`: DI-first helpers for context and cost.
+- `tokenlens`: compatibility aggregator that re-exports the above and injects a default static source.
+
+Backwards compatibility (deprecated)
+
+The `tokenlens` package injects a `defaultSource` built from `@tokenlens/models`. If you call helpers like `getContextWindow` or `estimateCost` without DI, it will use this static source. Prefer DI in new code.
+
+Prefer dependency injection (DI)
+
+```
+import { sourceFromModels } from '@tokenlens/helpers';
+import vercel from '@tokenlens/models/providers/vercel';
+import { getContextWindow, estimateCost } from '@tokenlens/helpers';
+
+const source = sourceFromModels(vercel);
+const cw = getContextWindow('gpt-4o', { source });
+```
+
 Core Helpers
 - Registry: `resolveModel`, `listModels`, `MODEL_IDS`, `isModelId`, `assertModelId`
 - Usage: `normalizeUsage`, `breakdownTokens`, `consumedTokens`

@@ -1,11 +1,8 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "target": "es2022",
-    "allowJs": true,
-    "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
@@ -13,6 +10,8 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmitOnError": true,
     "outDir": "dist",
     "rootDir": "src",
     "sourceMap": true,

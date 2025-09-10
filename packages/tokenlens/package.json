@@ -17,12 +17,11 @@
   },
   "scripts": {
     "build": "tsc",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "pnpm run build && vitest",
     "test:run": "pnpm run build && vitest run",
-    "fetch:models": "node scripts/sync-models-dev.mjs",
-    "sync:models": "pnpm run fetch:models && pnpm run build",
     "bench:lookup": "pnpm run build && node scripts/bench-lookup.mjs",
-    "pre-release": "pnpm run bench:lookup && pnpm run test:run && pnpm run sync:models && pnpm run build"
+    "pre-release": "pnpm run bench:lookup && pnpm run test:run && pnpm run build"
   },
   "repository": {
     "type": "git",
@@ -63,5 +62,11 @@
   "devDependencies": {
     "typescript": "^5.9.2",
     "vitest": "^1.6.1"
+  },
+  "dependencies": {
+    "@tokenlens/core": "workspace:*",
+    "@tokenlens/fetch": "workspace:*",
+    "@tokenlens/helpers": "workspace:*",
+    "@tokenlens/models": "workspace:*"
   }
 }
