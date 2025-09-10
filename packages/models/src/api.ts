@@ -1,5 +1,4 @@
-import type { ModelsDevApi } from "@tokenlens/core";
-import type { Model } from "@tokenlens/core";
+import type { Model, ModelsDevApi, ProviderInfo } from "@tokenlens/core";
 
 export type PickMap = Record<string, ReadonlyArray<string> | undefined>;
 
@@ -50,6 +49,17 @@ export function catalogFromModelArrays(
         last_updated: m.verifiedAt,
       };
     }
+  }
+  return out;
+}
+
+export function catalogFromProviders(
+  providers: ReadonlyArray<ProviderInfo>,
+): ModelsDevApi {
+  const out: ModelsDevApi = {};
+  for (const p of providers) {
+    if (!p?.id) continue;
+    out[p.id] = p as ProviderInfo;
   }
   return out;
 }

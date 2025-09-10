@@ -103,9 +103,7 @@ async function main() {
     const ts = toProviderTs(key, providerInfo);
     await fs.writeFile(filePath, `${ts}\n`);
     const binding = importBindingName(key);
-    indexImports.push(
-      `import ${binding} from './providers/${fileBase}.js';`,
-    );
+    indexImports.push(`import ${binding} from './providers/${fileBase}.js';`);
     indexEntries.push(`  ${JSON.stringify(key)}: ${binding},`);
   }
 

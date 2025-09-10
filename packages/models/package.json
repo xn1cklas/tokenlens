@@ -25,6 +25,7 @@
   ],
   "scripts": {
     "build": "tsc",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "fetch:models": "node scripts/sync-models-dev.mjs",
     "sync:models": "pnpm run fetch:models && pnpm run build"
   },
