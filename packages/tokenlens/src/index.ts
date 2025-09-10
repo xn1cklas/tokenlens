@@ -46,3 +46,13 @@ export {
   computeContextRot,
   nextTurnBudget,
 } from "./conversation.js";
+export {
+  fetchModels,
+  FetchModelsError,
+} from "./async.js";
+export type {
+  FetchLike,
+  ModelsDevApi,
+  ModelsDevProvider,
+  ModelsDevModel,
+} from "./async.js";
