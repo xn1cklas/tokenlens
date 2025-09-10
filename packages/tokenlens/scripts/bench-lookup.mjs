@@ -13,7 +13,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const cli = process.argv.slice(2);
-let iterations = 500_000;
+let iterations = 5000;
 const queries = [];
 for (let i = 0; i < cli.length; i++) {
   const a = cli[i];
