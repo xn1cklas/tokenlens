@@ -5,6 +5,7 @@ export type ModelSource = {
   list: (filter?: { provider?: string }) => Model[];
 };
 
+/** @deprecated Internal; consider using getModels/fetchModels + getContextData */
 export function sourceFromModels(models: readonly Model[]): ModelSource {
   const byId = new Map<string, Model>();
   const byAlias = new Map<string, string>();
@@ -31,6 +32,7 @@ export function sourceFromModels(models: readonly Model[]): ModelSource {
   return { resolve, list };
 }
 
+/** @deprecated Internal; consider using getModels/fetchModels + getContextData */
 export function sourceFromCatalog(catalog: ModelCatalog): ModelSource {
   const mapEntry = (
     provKey: string,
@@ -124,6 +126,7 @@ export function sourceFromCatalog(catalog: ModelCatalog): ModelSource {
   return sourceFromModels(all);
 }
 
+/** @deprecated Internal; consider using getModels with provider filters */
 export function selectStaticModels(
   providerArrays:
     | ReadonlyArray<ReadonlyArray<Model>>

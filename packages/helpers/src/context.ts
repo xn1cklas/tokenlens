@@ -2,12 +2,14 @@ import type {
   Model,
   ModelCatalog,
   NormalizedUsage,
+  ProviderInfo,
   TokenBreakdown,
   UsageLike,
 } from "@tokenlens/core";
 
 /**
  * Return the raw context window caps for a model id (canonical or alias).
+ * @deprecated Prefer getContextData({ modelId, catalog })
  */
 export function getContextWindow(
   modelId: string,
@@ -15,10 +17,18 @@ export function getContextWindow(
 ): {
   inputMax?: number;
   outputMax?: number;
-  combinedMax?: number;
+  combinedMax?: number; // deprecated alias for totalMax
+  totalMax?: number;
 } {
   const m = resolveModelFromCatalog(modelId, opts?.catalog);
-  return m?.context ?? {};
+  const ctx = (m?.context ?? {}) as {
+    inputMax?: number;
+    outputMax?: number;
+    combinedMax?: number;
+  };
+  return ctx?.combinedMax !== undefined
+    ? { ...ctx, totalMax: ctx.combinedMax }
+    : ctx;
 }
 
 type AIV2Usage = {
@@ -30,6 +40,9 @@ type AIV2Usage = {
 
 const TOKENS_PER_MILLION = 1_000_000;
 
+/**
+ * @deprecated Prefer getUsageData/getTokenCosts with a catalog
+ */
 export function normalizeUsage(
   usage: UsageLike | NormalizedUsage | undefined | null,
 ): NormalizedUsage {
@@ -70,6 +83,9 @@ export function normalizeUsage(
   return { input, output, total: input + output };
 }
 
+/**
+ * @deprecated Prefer getUsageData/getTokenCosts with a catalog
+ */
 export function breakdownTokens(
   usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined | null,
 ): TokenBreakdown {
@@ -142,6 +158,7 @@ export function breakdownTokens(
   return { ...base, cacheReads, cacheWrites, reasoningTokens };
 }
 
+/** @deprecated Prefer getContextData/getUsageData */
 export type RemainingArgs = {
   modelId: string;
   usage: UsageLike | NormalizedUsage | undefined;
@@ -150,6 +167,9 @@ export type RemainingArgs = {
   catalog?: ModelCatalog;
 };
 
+/**
+ * @deprecated Prefer getContextData/getUsageData with a catalog
+ */
 export function remainingContext(args: RemainingArgs): {
   remainingInput?: number;
   remainingCombined?: number;
@@ -194,6 +214,9 @@ export function remainingContext(args: RemainingArgs): {
   };
 }
 
+/**
+ * @deprecated Prefer getContextData/getUsageData with a catalog
+ */
 export function fitsContext({
   modelId,
   tokens,
@@ -212,6 +235,9 @@ export function fitsContext({
   return tokens + Math.max(0, reserveOutput ?? 0) <= cap;
 }
 
+/**
+ * @deprecated Prefer getContextData + filtering models externally
+ */
 export function pickModelFor(
   tokens: number,
   opts?: {
@@ -242,6 +268,9 @@ export function pickModelFor(
   return filtered[0];
 }
 
+/**
+ * @deprecated Prefer getTokenCosts/getUsageData with a catalog
+ */
 export function estimateCost({
   modelId,
   usage,
@@ -310,6 +339,9 @@ export function estimateCost({
   };
 }
 
+/**
+ * @deprecated Prefer getUsageData/getTokenCosts
+ */
 export function consumedTokens(
   usage: UsageLike | NormalizedUsage | undefined | null,
 ): number {
@@ -317,6 +349,278 @@ export function consumedTokens(
   return u.total ?? u.input + u.output;
 }
 
+// Aggregated usage summary (pure, no default catalog fallback)
+/** @deprecated Prefer getUsageData/getTokenCosts/getContextData */
+export type UsageSummary = {
+  modelId?: string;
+  context?: ReturnType<typeof getContextWindow>;
+  normalized: ReturnType<typeof normalizeUsage>;
+  breakdown: ReturnType<typeof breakdownTokens>;
+  costUSD?: ReturnType<typeof estimateCost>;
+  percentUsed?: number;
+};
+
+/**
+ * Convert gateway-style ids (e.g. "provider/model") into canonical
+ * TokenLens ids ("provider:model"). If already canonical, returns input.
+ */
+/** @deprecated Internal normalization is automatic; avoid direct use. */
+export function toModelId(gatewayId?: string) {
+  if (!gatewayId) return undefined as undefined;
+  const i = gatewayId.indexOf("/");
+  return i > 0
+    ? `${gatewayId.slice(0, i)}:${gatewayId.slice(i + 1)}`
+    : gatewayId;
+}
+
+/**
+ * Pure aggregator: summarize usage, cost, and context.
+ * Requires an explicit catalog for model-specific fields.
+ */
+/**
+ * @deprecated Prefer getUsageData/getTokenCosts/getContextData
+ */
+export function summarizeUsage(args: {
+  modelId?: string;
+  usage: UsageLike | undefined;
+  catalog?: ModelCatalog;
+  reserveOutput?: number;
+}): UsageSummary {
+  const normalized = normalizeUsage(args.usage);
+  const breakdown = breakdownTokens(args.usage);
+  if (!args.modelId) {
+    return {
+      modelId: undefined,
+      context: undefined,
+      normalized,
+      breakdown,
+      costUSD: undefined,
+      percentUsed: undefined,
+    };
+  }
+  const rc = remainingContext({
+    modelId: args.modelId,
+    usage: args.usage ?? {},
+    reserveOutput: args.reserveOutput,
+    catalog: args.catalog,
+  });
+  const canonicalId = rc.model?.id ?? toModelId(args.modelId);
+  const context =
+    rc.model?.context ??
+    (canonicalId
+      ? getContextWindow(canonicalId, { catalog: args.catalog })
+      : undefined);
+  const costUSD = canonicalId
+    ? estimateCost({
+        modelId: canonicalId,
+        usage: args.usage ?? {},
+        catalog: args.catalog,
+      })
+    : undefined;
+  return {
+    modelId: canonicalId,
+    context,
+    normalized,
+    breakdown,
+    costUSD,
+    percentUsed: rc.percentUsed,
+  };
+}
+
+// Minimal focused surface
+export type ContextData = {
+  inputMax?: number;
+  outputMax?: number;
+  combinedMax?: number;
+  totalMax?: number;
+};
+export type TokenCosts = {
+  inputUSD?: number;
+  outputUSD?: number;
+  totalUSD?: number;
+  reasoningUSD?: number;
+  cacheReadUSD?: number;
+  cacheWriteUSD?: number;
+};
+export type UsageData = { context?: ContextData; costUSD?: TokenCosts };
+
+// getTokenCosts: object and positional overloads, with alias fields
+export function getTokenCosts(args: {
+  modelId: string;
+  usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined;
+  providers: ModelCatalog | ProviderInfo;
+}): TokenCosts & {
+  inputTokenUSD?: number;
+  outputTokenUSD?: number;
+  reasoningTokenUSD?: number;
+  cacheReadsUSD?: number;
+  cacheWritesUSD?: number;
+};
+export function getTokenCosts(
+  modelId: string,
+  usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined,
+  providers: ModelCatalog | ProviderInfo,
+): TokenCosts & {
+  inputTokenUSD?: number;
+  outputTokenUSD?: number;
+  reasoningTokenUSD?: number;
+  cacheReadsUSD?: number;
+  cacheWritesUSD?: number;
+};
+export function getTokenCosts(
+  a:
+    | {
+        modelId: string;
+        usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined;
+        providers: ModelCatalog | ProviderInfo;
+      }
+    | string,
+  b?: UsageLike | NormalizedUsage | TokenBreakdown | undefined,
+  c?: ModelCatalog | ProviderInfo,
+) {
+  const modelId = typeof a === "string" ? a : a.modelId;
+  const usage = (typeof a === "string" ? b : a.usage) ?? {};
+  const providers = (typeof a === "string" ? c : a.providers) as
+    | ModelCatalog
+    | ProviderInfo;
+  const model = resolveModelFromCatalog(modelId, providers);
+  if (!model?.pricing) return {} as TokenCosts & { inputTokenUSD?: number };
+  const base = normalizeUsage(usage as UsageLike | NormalizedUsage);
+  const breakdown = breakdownTokens(
+    usage as UsageLike | NormalizedUsage | TokenBreakdown,
+  );
+  const inputUSD =
+    model.pricing.inputPerMTokens !== undefined
+      ? (base.input / TOKENS_PER_MILLION) * model.pricing.inputPerMTokens
+      : undefined;
+  const outputUSD =
+    model.pricing.outputPerMTokens !== undefined
+      ? (base.output / TOKENS_PER_MILLION) * model.pricing.outputPerMTokens
+      : undefined;
+  const reasoningUSD =
+    model.pricing.reasoningPerMTokens !== undefined &&
+    typeof breakdown.reasoningTokens === "number"
+      ? (breakdown.reasoningTokens / TOKENS_PER_MILLION) *
+        model.pricing.reasoningPerMTokens
+      : undefined;
+  const cacheReadUSD =
+    model.pricing.cacheReadPerMTokens !== undefined &&
+    typeof breakdown.cacheReads === "number"
+      ? (breakdown.cacheReads / TOKENS_PER_MILLION) *
+        model.pricing.cacheReadPerMTokens
+      : undefined;
+  const cacheWriteUSD =
+    model.pricing.cacheWritePerMTokens !== undefined &&
+    typeof breakdown.cacheWrites === "number"
+      ? (breakdown.cacheWrites / TOKENS_PER_MILLION) *
+        model.pricing.cacheWritePerMTokens
+      : undefined;
+  const totalParts = [
+    inputUSD,
+    outputUSD,
+    reasoningUSD,
+    cacheReadUSD,
+    cacheWriteUSD,
+  ].filter((v): v is number => typeof v === "number");
+  const totalUSD = totalParts.length
+    ? totalParts.reduce((a, b) => a + b, 0)
+    : undefined;
+  const res: TokenCosts = {
+    inputUSD,
+    outputUSD,
+    reasoningUSD,
+    cacheReadUSD,
+    cacheWriteUSD,
+    totalUSD,
+  };
+  return {
+    ...res,
+    inputTokenUSD: res.inputUSD,
+    outputTokenUSD: res.outputUSD,
+    reasoningTokenUSD: res.reasoningUSD,
+    cacheReadsUSD: res.cacheReadUSD,
+    cacheWritesUSD: res.cacheWriteUSD,
+  };
+}
+
+// getContext: object and positional overloads, with alias fields
+export function getContext(args: {
+  modelId: string;
+  providers: ModelCatalog | ProviderInfo;
+}): ContextData & {
+  maxInput?: number;
+  maxOutput?: number;
+  maxTotal?: number;
+};
+export function getContext(
+  modelId: string,
+  providers: ModelCatalog | ProviderInfo,
+): ContextData & {
+  maxInput?: number;
+  maxOutput?: number;
+  maxTotal?: number;
+};
+export function getContext(
+  a: { modelId: string; providers: ModelCatalog | ProviderInfo } | string,
+  b?: ModelCatalog | ProviderInfo,
+): ContextData & { maxInput?: number; maxOutput?: number; maxTotal?: number } {
+  const modelId = typeof a === "string" ? a : a.modelId;
+  const providers = (typeof a === "string" ? b : a.providers) as
+    | ModelCatalog
+    | ProviderInfo;
+  const model = resolveModelFromCatalog(modelId, providers);
+  const inputMax = model?.context?.inputMax;
+  const outputMax = model?.context?.outputMax;
+  const combinedMax = model?.context?.combinedMax;
+  const totalMax = combinedMax;
+  return {
+    inputMax,
+    outputMax,
+    combinedMax,
+    totalMax,
+    maxInput: inputMax,
+    maxOutput: outputMax,
+    maxTotal: totalMax,
+  };
+}
+
+// getUsage: object and positional overloads
+export function getUsage(args: {
+  modelId: string;
+  usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined;
+  providers: ModelCatalog;
+  reserveOutput?: number;
+}): UsageData;
+export function getUsage(
+  modelId: string,
+  usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined,
+  providers: ModelCatalog,
+  reserveOutput?: number,
+): UsageData;
+export function getUsage(
+  a:
+    | {
+        modelId: string;
+        usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined;
+        providers: ModelCatalog;
+        reserveOutput?: number;
+      }
+    | string,
+  b?: UsageLike | NormalizedUsage | TokenBreakdown | undefined,
+  c?: ModelCatalog,
+  _d?: number,
+): UsageData {
+  const modelId = typeof a === "string" ? a : a.modelId;
+  const usage = typeof a === "string" ? b : a.usage;
+  const providers = (typeof a === "string" ? c : a.providers) as ModelCatalog;
+  const context = getContext(modelId, providers);
+  const costUSD = getTokenCosts(modelId, usage, providers);
+  return { context, costUSD };
+}
+
+/**
+ * @deprecated Prefer getContextData/getUsageData
+ */
 export function percentRemaining(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage;
@@ -332,6 +636,9 @@ export function percentRemaining(args: {
   return 1 - rc.percentUsed;
 }
 
+/**
+ * @deprecated Prefer getContextData/getUsageData
+ */
 export function shouldCompact(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage;
@@ -349,6 +656,9 @@ export function shouldCompact(args: {
   return rc.percentUsed >= threshold;
 }
 
+/**
+ * @deprecated Prefer getContextData/getUsageData
+ */
 export function contextHealth(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage;
@@ -379,6 +689,9 @@ export function contextHealth(args: {
   return { percentUsed: rc.percentUsed, remaining, status };
 }
 
+/**
+ * @deprecated Prefer getContextData/getUsageData
+ */
 export function tokensToCompact(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage;
@@ -415,27 +728,50 @@ function statusMeets(actual: Model["status"], min: Model["status"]): boolean {
 // Dynamic model resolution using either the installed registry or a live catalog
 function resolveModelFromCatalog(
   idOrAlias: string,
-  catalog?: ModelCatalog,
+  providers?: ModelCatalog | ProviderInfo,
 ): Model | undefined {
-  if (!catalog) return undefined;
-  // Support canonical provider:id or providerless id; no custom alias mapping here.
-  const key = idOrAlias.trim();
-  let provider: string | undefined;
-  let mid: string | undefined;
-  const idx = key.indexOf(":");
-  if (idx > 0) {
-    provider = key.slice(0, idx);
-    mid = key.slice(idx + 1);
-    const prov = catalog[provider];
-    if (mid) {
-      const m = prov?.models?.[mid];
-      if (m) return mapModelsDevEntry(provider, mid, m, prov);
-    }
+  if (!providers) return undefined;
+  const base = idOrAlias.trim().toLowerCase();
+  const candidates: string[] = [base];
+  // Accept provider/model by translating to provider:model
+  if (base.includes("/")) {
+    const i = base.indexOf("/");
+    const p = base.slice(0, i);
+    const rest = base.slice(i + 1);
+    candidates.push(`${p}:${rest}`);
+    // try dot→dash in model segment (e.g. claude-3.5 → claude-3-5)
+    candidates.push(`${p}:${rest.replace(/(\d)\.(\d)/g, "$1-$2")}`);
   }
-  // providerless: search across providers
-  for (const [provKey, prov] of Object.entries(catalog)) {
-    const m = prov?.models?.[key as string];
-    if (m) return mapModelsDevEntry(provKey, key, m, prov);
+  // For provider:id, also try dot→dash variant
+  if (base.includes(":")) {
+    const i = base.indexOf(":");
+    const p = base.slice(0, i);
+    const rest = base.slice(i + 1);
+    candidates.push(`${p}:${rest.replace(/(\d)\.(\d)/g, "$1-$2")}`);
+  }
+  // For providerless ids, also try dot→dash variant across providers
+  if (!base.includes(":") && !base.includes("/")) {
+    candidates.push(base.replace(/(\d)\.(\d)/g, "$1-$2"));
+  }
+  for (const key of candidates) {
+    // provider-prefixed
+    const idx = key.indexOf(":");
+    if (idx > 0) {
+      const providerKey = key.slice(0, idx);
+      const mid = key.slice(idx + 1);
+      for (const [provKey, prov] of iterateProviders(providers)) {
+        if (mid) {
+          const m = prov?.models?.[mid as string];
+          if (m && (provKey === providerKey || providerKey.length > 0))
+            return mapModelsDevEntry(provKey, mid, m, prov);
+        }
+      }
+    }
+    // providerless: search across providers
+    for (const [provKey, prov] of iterateProviders(providers)) {
+      const m = prov?.models?.[key as string];
+      if (m) return mapModelsDevEntry(provKey, key, m, prov);
+    }
   }
   return undefined;
 }
@@ -549,4 +885,20 @@ function modelsFromCatalog(catalog: ModelCatalog): Model[] {
     }
   }
   return out;
+}
+
+// Internal: iterate providers uniformly whether a full catalog or a single provider was supplied
+function* iterateProviders(
+  providers: ModelCatalog | ProviderInfo,
+): Generator<[string, ProviderInfo]> {
+  if ((providers as ProviderInfo)?.models) {
+    const p = providers as ProviderInfo;
+    const key = (p as { id?: string }).id || "provider";
+    yield [key, p];
+    return;
+  }
+  for (const [key, prov] of Object.entries(providers as ModelCatalog)) {
+    // prov is ProviderInfo
+    yield [key, prov as ProviderInfo];
+  }
 }

@@ -6,6 +6,9 @@ import type {
 } from "@tokenlens/core";
 import { estimateCost, remainingContext } from "./context.js";
 
+/**
+ * @deprecated Prefer getContextData/getTokenCosts/getUsageData
+ */
 export function modelMeta(
   id: string,
   opts?: { catalog?: ModelCatalog },
@@ -19,6 +22,9 @@ export function modelMeta(
   pricePerTokenOut?: number;
   source: string;
 };
+/**
+ * @deprecated Prefer getContextData/getTokenCosts/getUsageData
+ */
 export function modelMeta(
   id: string,
   opts?: { catalog?: ModelCatalog },
@@ -61,6 +67,9 @@ export function modelMeta(
   };
 }
 
+/**
+ * @deprecated Prefer getContextData/getUsageData
+ */
 export function percentOfContextUsed(args: {
   id: string;
   usage: UsageLike | NormalizedUsage;
@@ -76,6 +85,9 @@ export function percentOfContextUsed(args: {
   return rc.percentUsed;
 }
 
+/**
+ * @deprecated Prefer getContextData/getUsageData
+ */
 export function tokensRemaining(args: {
   id: string;
   usage: UsageLike | NormalizedUsage;
@@ -91,6 +103,9 @@ export function tokensRemaining(args: {
   return rc.remainingCombined ?? rc.remainingInput;
 }
 
+/**
+ * @deprecated Prefer getTokenCosts/getUsageData
+ */
 export function costFromUsage(args: {
   id: string;
   usage: UsageLike | NormalizedUsage;

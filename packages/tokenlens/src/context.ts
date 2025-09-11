@@ -28,6 +28,19 @@ import {
   tokensToCompact as _tokensToCompact,
 } from "@tokenlens/helpers/context";
 import { defaultCatalog } from "./source.js";
+import {
+  summarizeUsage as _summarizeUsage,
+  toModelId as _toModelId,
+  getTokenCosts as _getTokenCosts,
+  getContext as _getContext,
+  getUsage as _getUsage,
+} from "@tokenlens/helpers/context";
+export type {
+  UsageSummary,
+  ContextData,
+  TokenCosts,
+  UsageData,
+} from "@tokenlens/helpers/context";
 
 /**
  * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
@@ -166,8 +179,70 @@ export function contextHealth(args: {
   });
 }
 
-// Pure helpers (no DI) – re-export directly
+// Pure helpers (no DI) – re-export directly (deprecated)
+/** @deprecated Prefer getUsageData/getTokenCosts */
 export const normalizeUsage = _normalizeUsage;
+/** @deprecated Prefer getUsageData/getTokenCosts */
 export const breakdownTokens = _breakdownTokens;
+/** @deprecated Prefer getUsageData/getTokenCosts */
 export const consumedTokens = _consumedTokens;
+/** @deprecated Prefer getContextData + filtering externally */
 export const pickModelFor = _pickModelFor;
+
+// Back-compat wrapper that injects defaultCatalog when not provided
+/** @deprecated Prefer getUsageData/getTokenCosts/getContextData */
+export function summarizeUsage(args: {
+  modelId?: string;
+  usage: UsageLike | undefined;
+  catalog?: ModelCatalog;
+  reserveOutput?: number;
+}) {
+  return _summarizeUsage({
+    modelId: args.modelId,
+    usage: args.usage,
+    catalog: args.catalog ?? defaultCatalog,
+    reserveOutput: args.reserveOutput,
+  });
+}
+
+/** @deprecated Internal normalization is automatic; avoid direct use. */
+export function toModelId(gatewayId?: string) {
+  return _toModelId(gatewayId);
+}
+
+// Focused surface wrappers with default catalog fallback
+export function getTokenCosts(args: {
+  modelId: string;
+  usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined;
+  providers?: ModelCatalog;
+}) {
+  return _getTokenCosts({
+    modelId: args.modelId,
+    usage: args.usage,
+    providers: args.providers ?? defaultCatalog,
+  });
+}
+
+export function getContext(args: {
+  modelId: string;
+  providers?: ModelCatalog;
+}) {
+  return _getContext({
+    modelId: args.modelId,
+    providers: args.providers ?? defaultCatalog,
+  });
+}
+
+export function getUsage(args: {
+  modelId: string;
+  usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined;
+  providers?: ModelCatalog;
+  reserveOutput?: number;
+}) {
+  return _getUsage({
+    modelId: args.modelId,
+    usage: args.usage,
+    providers: args.providers ?? defaultCatalog,
+    reserveOutput: args.reserveOutput,
+  });
+}

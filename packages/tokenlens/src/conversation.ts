@@ -15,7 +15,7 @@ import { defaultCatalog } from "./source.js";
 export { computeContextRot, sumUsage };
 
 /**
- * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
+ * @deprecated Prefer getUsageData/getTokenCosts; conversation-level helpers will move to a separate surface.
  */
 export function estimateConversationCost(args: {
   modelId: string;
@@ -33,7 +33,7 @@ export function estimateConversationCost(args: {
 }
 
 /**
- * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
+ * @deprecated Prefer getContextData/getUsageData; next-turn budgeting may be replaced by a separate component.
  */
 export function nextTurnBudget(args: {
   modelId: string;

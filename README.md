@@ -28,44 +28,66 @@ Install
 
 Quick Start
 ```ts
-import {
-  type ModelId,
-  modelMeta,
-  percentOfContextUsed,
-  tokensRemaining,
-  costFromUsage,
-} from 'tokenlens';
+import { fetchModels } from 'tokenlens';
+import { getContext, getTokenCosts, getUsage } from '@tokenlens/helpers';
 
-const id: ModelId = 'openai:gpt-4.1';
-// Works with provider usage or Vercel AI SDK usage
+// 1) Get providers (or import getModels() for a static set)
+const openai = await fetchModels('openai'); // or getModels() synchronously
+
+// 2) Use flexible ids: 'provider/model', 'provider:id', or providerless 'model'
+const modelId = 'openai/gpt-4o-mini';
 const usage = { prompt_tokens: 3200, completion_tokens: 400 };
 
-const meta = modelMeta(id);
-const used = percentOfContextUsed({ id, usage, reserveOutput: 256 });
-const remaining = tokensRemaining({ id, usage, reserveOutput: 256 });
-const costUSD = costFromUsage({ id, usage });
+// Context caps only
+const { maxInput, maxOutput, maxTotal } = getContext(modelId, openai);
 
-console.log({ meta, used, remaining, costUSD });
+// Cost breakdown only
+const {
+  inputUSD,
+  outputUSD,
+  reasoningUSD,
+  cacheReadUSD,
+  cacheWriteUSD,
+  totalUSD,
+} = getTokenCosts(modelId, usage, openai);
+
+// Or both together
+const usageData = getUsage(modelId, usage, openai);
+
+console.log({
+  maxInput,
+  maxOutput,
+  maxTotal,
+  inputUSD,
+  outputUSD,
+  reasoningUSD,
+  cacheReadUSD,
+  cacheWriteUSD,
+  totalUSD,
+  usageData,
+});
 ```
 
-Core Helpers
-- Registry: `resolveModel`, `listModels`, `MODEL_IDS`, `isModelId`, `assertModelId`
-- Usage: `normalizeUsage`, `breakdownTokens`, `consumedTokens`
-- Context: `getContextWindow`, `remainingContext`, `percentRemaining`, `fitsContext`, `pickModelFor`
-- Cost: `estimateCost`
-- Compaction: `shouldCompact`, `contextHealth`, `tokensToCompact`
-- Conversation: `sumUsage`, `estimateConversationCost`, `computeContextRot`, `nextTurnBudget`
-- Sugar: `modelMeta`, `percentOfContextUsed`, `tokensRemaining`, `costFromUsage`
+Focused API
+- fetchModels: fetch providers (models.dev dataset)
+- getModels: static providers registry
+- getContext(modelId, providers): returns caps `{ inputMax?, outputMax?, totalMax? }` (combinedMax remains as legacy alias)
+- getTokenCosts(modelId, usage, providers): returns `{ inputUSD?, outputUSD?, reasoningUSD?, cacheReadUSD?, cacheWriteUSD?, totalUSD? }`
+- getUsage(modelId, usage, providers, reserveOutput?): returns `{ context, costUSD }`
 
-Provider‑Agnostic Usage
-```ts
-import { normalizeUsage, breakdownTokens } from 'tokenlens';
+Deprecations
+- Most other helpers are now deprecated in favor of the focused API above, including but not limited to:
+  - Usage: `normalizeUsage`, `breakdownTokens`, `consumedTokens`
+  - Context: `getContextWindow`, `remainingContext`, `percentRemaining`, `fitsContext`, `pickModelFor`
+  - Cost: `estimateCost`
+  - Compaction: `shouldCompact`, `contextHealth`, `tokensToCompact`
+  - Conversation: `sumUsage`, `estimateConversationCost`, `computeContextRot`, `nextTurnBudget`
+  - Sugar: `modelMeta`, `percentOfContextUsed`, `tokensRemaining`, `costFromUsage`
 
-// Works with many shapes, including Vercel AI SDK fields
-const u1 = normalizeUsage({ prompt_tokens: 1000, completion_tokens: 150 });
-const u2 = normalizeUsage({ inputTokens: 900, outputTokens: 200, totalTokens: 1100 });
-const b = breakdownTokens({ inputTokens: 900, cachedInputTokens: 300, reasoningTokens: 120 });
-```
+Notes
+- ID normalization is automatic: accepts `provider/model`, `provider:id`, and providerless `model`.
+- Version dots are normalized to dashes in the model segment (e.g., `claude-3.5-haiku` → `claude-3-5-haiku`).
+- Cost outputs are estimates based on models.dev pricing fields. For authoritative cost numbers, read pricing and usage metrics from your model provider's API responses at runtime.
 Async Fetch (models.dev)
 
 ```ts
@@ -77,8 +99,8 @@ import {
   type ProviderModel,
 } from 'tokenlens';
 
-// 1) Fetch the full catalog (Node 18+ or modern browsers with global fetch)
-const catalog: ModelCatalog = await fetchModels();
+// 1) Fetch all providers (Node 18+ or modern browsers with global fetch)
+const providers: ModelCatalog = await fetchModels();
 
 // 2) Fetch by provider key (e.g. 'openai', 'anthropic', 'deepseek')
 const openai: ProviderInfo | undefined = await fetchModels({ provider: 'openai' });
@@ -103,21 +125,12 @@ try {
 
 // 6) Provide a custom fetch (for Node < 18 or custom runtimes)
 // import fetch from 'cross-fetch' or 'undici'
-// const catalog = await fetchModels({ fetch });
+// const providers = await fetchModels({ fetch });
 ```
 
 
 Context Budgeting & Compaction
-```ts
-import { remainingContext, shouldCompact, tokensToCompact, contextHealth } from 'tokenlens';
-
-const rc = remainingContext({ modelId: 'anthropic:claude-3-5-sonnet-20240620', usage: u1, reserveOutput: 256 });
-if (shouldCompact({ modelId: 'anthropic:claude-3-5-sonnet-20240620', usage: u1 })) {
-  const n = tokensToCompact({ modelId: 'anthropic:claude-3-5-sonnet-20240620', usage: u1 });
-  // summarize oldest messages by ~n tokens
-}
-const badge = contextHealth({ modelId: 'openai:gpt-4.1', usage: u2 }); // { status: 'ok'|'warn'|'compact' }
-```
+- These helpers are deprecated; prefer `getContext` and your own compaction logic.
 
 Advanced
 - Caps strategy: `remainingContext` supports `strategy: 'provider-default' | 'combined' | 'input-only'`.
@@ -127,14 +140,7 @@ Advanced
 - Defaults: `shouldCompact` defaults to `threshold: 0.85`; `contextHealth` defaults to `warnAt: 0.75`, `compactAt: 0.85`.
 
 Conversation Utilities
-```ts
-import { sumUsage, estimateConversationCost, computeContextRot, nextTurnBudget } from 'tokenlens';
-
-const totals = sumUsage([turn1.usage, turn2.usage, turn3.usage]);
-const cost = estimateConversationCost({ modelId: 'openai:gpt-4.1', usages: [turn1.usage, turn2.usage] });
-const rot = computeContextRot({ messageTokens: [800, 600, 400, 300, 200], keepRecentTurns: 2, modelId: 'openai:gpt-4.1' });
-const nextBudget = nextTurnBudget({ modelId: 'openai:gpt-4.1', usage: totals, reserveOutput: 256 });
-```
+- Deprecated in favor of higher-level conversation budgeting tools.
 
 Listing Models
 ```ts

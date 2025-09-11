@@ -58,6 +58,9 @@ export class FetchModelsError extends Error {
 
 // Overloads for strong return types depending on filters
 export async function fetchModels(): Promise<ModelCatalog>;
+export async function fetchModels(
+  provider: string,
+): Promise<ProviderInfo | undefined>;
 export async function fetchModels(opts: {
   provider?: undefined;
   model?: undefined;
@@ -94,7 +97,7 @@ export async function fetchModels(opts: {
  * - Throws FetchModelsError with code: 'UNAVAILABLE' (no fetch present), 'NETWORK', 'HTTP', or 'PARSE'.
  */
 export async function fetchModels(
-  opts: FetchModelsOptions = {},
+  opts: FetchModelsOptions | string = {},
 ): Promise<
   | ModelCatalog
   | ProviderInfo
@@ -102,6 +105,9 @@ export async function fetchModels(
   | Array<{ provider: string; model: ProviderModel }>
   | undefined
 > {
+  if (typeof opts === "string") {
+    return fetchModels({ provider: opts });
+  }
   const url = opts.baseUrl ?? "https://models.dev/api.json";
   const fetchImpl: FetchLike | undefined =
     opts.fetch ?? (globalThis as { fetch?: FetchLike }).fetch;

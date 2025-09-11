@@ -13,7 +13,7 @@ import {
 import { defaultCatalog } from "./source.js";
 
 /**
- * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or use a static catalog from `@tokenlens/models` (`getModels()`).
+ * @deprecated Prefer getContextData/getTokenCosts/getUsageData with a catalog
  */
 export function modelMeta(
   id: string,
@@ -35,7 +35,7 @@ export function modelMeta(
 }
 
 /**
- * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or use a static catalog from `@tokenlens/models` (`getModels()`).
+ * @deprecated Prefer getContextData/getUsageData
  */
 export function percentOfContextUsed(args: {
   id: string;
@@ -53,7 +53,7 @@ export function percentOfContextUsed(args: {
 }
 
 /**
- * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or use a static catalog from `@tokenlens/models` (`getModels()`).
+ * @deprecated Prefer getContextData/getUsageData
  */
 export function tokensRemaining(args: {
   id: string;
@@ -71,7 +71,7 @@ export function tokensRemaining(args: {
 }
 
 /**
- * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or use a static catalog from `@tokenlens/models` (`getModels()`).
+ * @deprecated Prefer getTokenCosts/getUsageData
  */
 export function costFromUsage(args: {
   id: string;

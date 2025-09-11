@@ -11,6 +11,9 @@ import {
   remainingContext,
 } from "./context.js";
 
+/**
+ * @deprecated This surface will likely be replaced by higher-level conversation tooling.
+ */
 export function sumUsage(
   usages: Array<
     UsageLike | NormalizedUsage | TokenBreakdown | undefined | null
@@ -34,6 +37,9 @@ export function sumUsage(
   return { input, output, total: total ?? input + output };
 }
 
+/**
+ * @deprecated Prefer getUsageData/getTokenCosts
+ */
 export function estimateConversationCost(args: {
   modelId: string;
   usages: Array<
@@ -58,6 +64,9 @@ export type ContextRotResult = {
   trimFrom?: number;
 };
 
+/**
+ * @deprecated This surface may move to a separate module.
+ */
 export function computeContextRot(args: {
   messageTokens: number[];
   keepRecentTurns?: number;
@@ -108,6 +117,9 @@ export function computeContextRot(args: {
   };
 }
 
+/**
+ * @deprecated Prefer getContextData/getUsageData
+ */
 export function nextTurnBudget(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage | undefined;
