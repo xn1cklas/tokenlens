@@ -21,11 +21,7 @@ export type FetchLike = (
   text(): Promise<string>;
 }>;
 
-import type {
-  ModelsDevApi,
-  ModelsDevModel,
-  ModelsDevProvider,
-} from "@tokenlens/core";
+import type { ModelCatalog, ProviderInfo, ProviderModel } from "@tokenlens/core";
 
 export type FetchModelsOptions = {
   /** Filter by provider key (e.g. "deepseek", "xai", "vercel"). */
@@ -57,35 +53,35 @@ export class FetchModelsError extends Error {
 }
 
 // Overloads for strong return types depending on filters
-export async function fetchModels(): Promise<ModelsDevApi>;
+export async function fetchModels(): Promise<ModelCatalog>;
 export async function fetchModels(opts: {
   provider?: undefined;
   model?: undefined;
   fetch?: FetchLike;
   signal?: unknown;
   baseUrl?: string;
-}): Promise<ModelsDevApi>;
+}): Promise<ModelCatalog>;
 export async function fetchModels(opts: {
   provider: string;
   model?: undefined;
   fetch?: FetchLike;
   signal?: unknown;
   baseUrl?: string;
-}): Promise<ModelsDevProvider | undefined>;
+}): Promise<ProviderInfo | undefined>;
 export async function fetchModels(opts: {
   provider?: undefined;
   model: string;
   fetch?: FetchLike;
   signal?: unknown;
   baseUrl?: string;
-}): Promise<Array<{ provider: string; model: ModelsDevModel }>>;
+}): Promise<Array<{ provider: string; model: ProviderModel }>>;
 export async function fetchModels(opts: {
   provider: string;
   model: string;
   fetch?: FetchLike;
   signal?: unknown;
   baseUrl?: string;
-}): Promise<ModelsDevModel | undefined>;
+}): Promise<ProviderModel | undefined>;
 
 /**
  * Fetches the models.dev catalog and optionally filters results by provider and/or model.
@@ -96,10 +92,10 @@ export async function fetchModels(opts: {
 export async function fetchModels(
   opts: FetchModelsOptions = {},
 ): Promise<
-  | ModelsDevApi
-  | ModelsDevProvider
-  | ModelsDevModel
-  | Array<{ provider: string; model: ModelsDevModel }>
+  | ModelCatalog
+  | ProviderInfo
+  | ProviderModel
+  | Array<{ provider: string; model: ProviderModel }>
   | undefined
 > {
   const url = opts.baseUrl ?? "https://models.dev/api.json";
@@ -149,14 +145,14 @@ export async function fetchModels(
     throw new FetchModelsError({ code: "PARSE", message });
   }
 
-  const catalog = data as ModelsDevApi;
+  const catalog = data as ModelCatalog;
   const { provider, model } = opts;
   if (!provider && !model) return catalog;
   if (provider && !model) return catalog[provider];
   if (provider && model) return catalog[provider]?.models?.[model];
 
   // model only: search across providers
-  const matches: Array<{ provider: string; model: ModelsDevModel }> = [];
+  const matches: Array<{ provider: string; model: ProviderModel }> = [];
   if (!model) return matches;
   for (const [provKey, prov] of Object.entries(catalog)) {
     const m = prov?.models?.[model];

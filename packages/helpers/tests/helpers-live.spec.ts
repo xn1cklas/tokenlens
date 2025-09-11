@@ -1,8 +1,8 @@
-import type { ModelsDevApi } from "@tokenlens/core";
+import type { ModelCatalog } from "@tokenlens/core";
 import { describe, expect, it } from "vitest";
 import { estimateCost, remainingContext } from "../src/context";
 
-const mockCatalog: ModelsDevApi = {
+const mockCatalog: ModelCatalog = {
   testprov: {
     id: "testprov",
     name: "Test Provider",

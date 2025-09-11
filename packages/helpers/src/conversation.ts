@@ -1,5 +1,5 @@
 import type {
-  ModelsDevApi,
+  ModelCatalog,
   NormalizedUsage,
   TokenBreakdown,
   UsageLike,
@@ -39,7 +39,7 @@ export function estimateConversationCost(args: {
   usages: Array<
     UsageLike | NormalizedUsage | TokenBreakdown | undefined | null
   >;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): { inputUSD?: number; outputUSD?: number; totalUSD?: number } {
   const u = sumUsage(args.usages);
   return estimateCost({
@@ -63,7 +63,7 @@ export function computeContextRot(args: {
   keepRecentTurns?: number;
   modelId?: string;
   targetStaleShareOfUsed?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): ContextRotResult {
   const keepRecentTurns = Math.max(0, args.keepRecentTurns ?? 3);
   const tokens = (args.messageTokens ?? []).map((n) =>
@@ -112,7 +112,7 @@ export function nextTurnBudget(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage | undefined;
   reserveOutput?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): number | undefined {
   const rc = remainingContext({
     modelId: args.modelId,

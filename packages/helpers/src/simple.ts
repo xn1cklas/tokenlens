@@ -1,14 +1,9 @@
-import type {
-  Model,
-  ModelsDevApi,
-  NormalizedUsage,
-  UsageLike,
-} from "@tokenlens/core";
+import type { Model, ModelCatalog, NormalizedUsage, UsageLike } from "@tokenlens/core";
 import { estimateCost, remainingContext } from "./context.js";
 
 export function modelMeta(
   id: string,
-  opts?: { catalog?: ModelsDevApi },
+  opts?: { catalog?: ModelCatalog },
 ): {
   id: string;
   displayName?: string;
@@ -21,7 +16,7 @@ export function modelMeta(
 };
 export function modelMeta(
   id: string,
-  opts?: { catalog?: ModelsDevApi },
+  opts?: { catalog?: ModelCatalog },
 ):
   | {
       id: string;
@@ -65,7 +60,7 @@ export function percentOfContextUsed(args: {
   id: string;
   usage: UsageLike | NormalizedUsage;
   reserveOutput?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): number {
   const rc = remainingContext({
     modelId: args.id,
@@ -80,7 +75,7 @@ export function tokensRemaining(args: {
   id: string;
   usage: UsageLike | NormalizedUsage;
   reserveOutput?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): number | undefined {
   const rc = remainingContext({
     modelId: args.id,
@@ -94,7 +89,7 @@ export function tokensRemaining(args: {
 export function costFromUsage(args: {
   id: string;
   usage: UsageLike | NormalizedUsage;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): number | undefined {
   const c = estimateCost({
     modelId: args.id,

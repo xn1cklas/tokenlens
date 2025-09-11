@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { FetchLike, ModelsDevApi } from "../src/index.ts";
+import type { FetchLike } from "../src/index.ts";
+import type { ModelCatalog } from "@tokenlens/core";
 import { fetchModels } from "../src/index.ts";
 
 const mockCatalog = {
@@ -67,7 +68,7 @@ describe("fetchModels (@tokenlens/fetch)", () => {
     const res = await withMockedFetch(okFetch(), async () =>
       fetchModels({ provider: "deepseek" }),
     );
-    const expected = (mockCatalog as unknown as ModelsDevApi).deepseek;
+    const expected = (mockCatalog as unknown as ModelCatalog).deepseek;
     expect(res).toEqual(expected);
   });
 
@@ -75,7 +76,7 @@ describe("fetchModels (@tokenlens/fetch)", () => {
     const res = await withMockedFetch(okFetch(), async () =>
       fetchModels({ provider: "deepseek", model: "deepseek-chat" }),
     );
-    const expectedProv = (mockCatalog as unknown as ModelsDevApi).deepseek;
+    const expectedProv = (mockCatalog as unknown as ModelCatalog).deepseek;
     const expected = expectedProv.models["deepseek-chat"];
     expect(res).toEqual(expected);
   });

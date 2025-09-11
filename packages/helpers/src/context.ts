@@ -1,17 +1,11 @@
-import type {
-  Model,
-  ModelsDevApi,
-  NormalizedUsage,
-  TokenBreakdown,
-  UsageLike,
-} from "@tokenlens/core";
+import type { Model, ModelCatalog, NormalizedUsage, TokenBreakdown, UsageLike } from "@tokenlens/core";
 
 /**
  * Return the raw context window caps for a model id (canonical or alias).
  */
 export function getContextWindow(
   modelId: string,
-  opts?: { catalog?: ModelsDevApi },
+  opts?: { catalog?: ModelCatalog },
 ): {
   inputMax?: number;
   outputMax?: number;
@@ -147,7 +141,7 @@ export type RemainingArgs = {
   usage: UsageLike | NormalizedUsage | undefined;
   reserveOutput?: number;
   strategy?: "combined" | "provider-default" | "input-only";
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 };
 
 export function remainingContext(args: RemainingArgs): {
@@ -203,7 +197,7 @@ export function fitsContext({
   modelId: string;
   tokens: number;
   reserveOutput?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): boolean {
   const m = resolveModelFromCatalog(modelId, catalog);
   if (!m) return false;
@@ -218,7 +212,7 @@ export function pickModelFor(
     provider?: Model["provider"];
     minStatus?: Model["status"];
     buffer?: number;
-    catalog?: ModelsDevApi;
+    catalog?: ModelCatalog;
   },
 ): Model | undefined {
   const buffer = Math.max(0, opts?.buffer ?? 0);
@@ -249,7 +243,7 @@ export function estimateCost({
 }: {
   modelId: string;
   usage: UsageLike | NormalizedUsage | TokenBreakdown;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): {
   inputUSD?: number;
   outputUSD?: number;
@@ -321,7 +315,7 @@ export function percentRemaining(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage;
   reserveOutput?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): number {
   const rc = remainingContext({
     modelId: args.modelId,
@@ -337,7 +331,7 @@ export function shouldCompact(args: {
   usage: UsageLike | NormalizedUsage;
   reserveOutput?: number;
   threshold?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): boolean {
   const threshold = Math.max(0, Math.min(1, args.threshold ?? 0.85));
   const rc = remainingContext({
@@ -355,7 +349,7 @@ export function contextHealth(args: {
   reserveOutput?: number;
   warnAt?: number;
   compactAt?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): {
   percentUsed: number;
   remaining?: number;
@@ -384,7 +378,7 @@ export function tokensToCompact(args: {
   usage: UsageLike | NormalizedUsage;
   reserveOutput?: number;
   targetPercent?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): number {
   const model = resolveModelFromCatalog(args.modelId, args.catalog);
   if (!model) return 0;
@@ -415,7 +409,7 @@ function statusMeets(actual: Model["status"], min: Model["status"]): boolean {
 // Dynamic model resolution using either the installed registry or a live catalog
 function resolveModelFromCatalog(
   idOrAlias: string,
-  catalog?: ModelsDevApi,
+  catalog?: ModelCatalog,
 ): Model | undefined {
   if (!catalog) return undefined;
   // Support canonical provider:id or providerless id; no custom alias mapping here.
@@ -538,7 +532,7 @@ function mapModelsDevEntry(
   } as Model;
 }
 
-function modelsFromCatalog(catalog: ModelsDevApi): Model[] {
+function modelsFromCatalog(catalog: ModelCatalog): Model[] {
   const out: Model[] = [];
   for (const [provKey, prov] of Object.entries(catalog)) {
     for (const mid of Object.keys(prov?.models ?? {})) {

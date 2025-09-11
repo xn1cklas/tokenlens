@@ -1,4 +1,4 @@
-import type { ModelsDevApi } from "@tokenlens/core";
+import type { ModelCatalog } from "@tokenlens/core";
 import { describe, expect, it } from "vitest";
 import { estimateCost, normalizeUsage, remainingContext } from "../src/context";
 
@@ -9,14 +9,14 @@ describe("helpers basic", () => {
   });
 
   it("computes remaining context without throwing", () => {
-    const catalog: ModelsDevApi = {
+    const catalog: ModelCatalog = {
       test: {
         id: "test",
         models: {
           foo: { id: "foo", name: "Foo", limit: { context: 1000 } },
         },
       },
-    } as unknown as ModelsDevApi;
+    } as unknown as ModelCatalog;
     const rc = remainingContext({
       modelId: "test:foo",
       usage: { input_tokens: 100 },
@@ -26,7 +26,7 @@ describe("helpers basic", () => {
   });
 
   it("estimates cost when pricing is present (may be undefined)", () => {
-    const catalog: ModelsDevApi = {
+    const catalog: ModelCatalog = {
       test: {
         id: "test",
         models: {
@@ -38,7 +38,7 @@ describe("helpers basic", () => {
           },
         },
       },
-    } as unknown as ModelsDevApi;
+    } as unknown as ModelCatalog;
     const c = estimateCost({
       modelId: "test:bar",
       usage: { input_tokens: 1000, output_tokens: 500 },

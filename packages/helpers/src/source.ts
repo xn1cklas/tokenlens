@@ -1,4 +1,4 @@
-import type { Model, ModelsDevApi, ModelsDevModel } from "@tokenlens/core";
+import type { Model, ModelCatalog, ProviderModel } from "@tokenlens/core";
 
 export type ModelSource = {
   resolve: (idOrAlias: string) => Model | undefined;
@@ -31,12 +31,12 @@ export function sourceFromModels(models: readonly Model[]): ModelSource {
   return { resolve, list };
 }
 
-export function sourceFromCatalog(catalog: ModelsDevApi): ModelSource {
+export function sourceFromCatalog(catalog: ModelCatalog): ModelSource {
   const mapEntry = (
     provKey: string,
     mid: string,
-    m: ModelsDevModel,
-    prov: ModelsDevApi[string],
+    m: ProviderModel,
+    prov: ModelCatalog[string],
   ): Model => {
     const inputMods: string[] = Array.isArray(m?.modalities?.input)
       ? m.modalities.input
@@ -117,7 +117,7 @@ export function sourceFromCatalog(catalog: ModelsDevApi): ModelSource {
   const all: Model[] = [];
   for (const [provKey, prov] of Object.entries(catalog)) {
     for (const mid of Object.keys(prov?.models ?? {})) {
-      const m = prov.models[mid] as ModelsDevModel;
+      const m = prov.models[mid] as ProviderModel;
       all.push(mapEntry(provKey, mid, m, prov));
     }
   }

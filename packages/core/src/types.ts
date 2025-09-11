@@ -127,7 +127,5 @@ export type ProviderInfo = {
 /** Root catalog keyed by provider */
 export type ProvidersCatalog = Record<string, ProviderInfo>;
 
-// Back-compat aliases for existing names in the codebase
-export type ModelsDevModel = ProviderModel;
-export type ModelsDevProvider = ProviderInfo;
-export type ModelsDevApi = ProvidersCatalog;
+// Canonical alias for the root catalog shape
+export type ModelCatalog = ProvidersCatalog;

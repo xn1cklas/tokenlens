@@ -1,7 +1,8 @@
 {
   "name": "@tokenlens/helpers",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": false,
+  "description": "Helpers for context windows, usage normalization, compaction, and cost estimation.",
   "type": "module",
   "sideEffects": false,
   "main": "dist/index.js",
@@ -27,13 +28,38 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "prebuild": "rm -rf dist",
     "build": "tsc",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "prepublishOnly": "pnpm run build"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xn1cklas/tokenlens.git",
+    "directory": "packages/helpers"
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "helpers",
+    "context window",
+    "usage normalization",
+    "pricing",
+    "cost estimation",
+    "model registry"
+  ],
+  "author": "Nicklas Scharpff <hi@n1cklas.com> (https://n1cklas.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xn1cklas/tokenlens/issues"
+  },
+  "homepage": "https://github.com/xn1cklas/tokenlens/tree/HEAD/packages/helpers#readme",
   "dependencies": {
     "@tokenlens/core": "workspace:*",
     "@tokenlens/fetch": "workspace:*"

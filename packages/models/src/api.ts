@@ -1,12 +1,12 @@
-import type { Model, ModelsDevApi, ProviderInfo } from "@tokenlens/core";
+import type { Model, ModelCatalog, ProviderInfo } from "@tokenlens/core";
 
 export type PickMap = Record<string, ReadonlyArray<string> | undefined>;
 
 export function catalogFromModelArrays(
   providerArrays: ReadonlyArray<ReadonlyArray<Model>>,
   pick?: PickMap,
-): ModelsDevApi {
-  const out: ModelsDevApi = {};
+): ModelCatalog {
+  const out: ModelCatalog = {} as ModelCatalog;
   for (const arr of providerArrays) {
     for (const m of arr) {
       if (!m?.id || !m?.provider) continue;
@@ -55,8 +55,8 @@ export function catalogFromModelArrays(
 
 export function catalogFromProviders(
   providers: ReadonlyArray<ProviderInfo>,
-): ModelsDevApi {
-  const out: ModelsDevApi = {};
+): ModelCatalog {
+  const out: ModelCatalog = {} as ModelCatalog;
   for (const p of providers) {
     if (!p?.id) continue;
     out[p.id] = p as ProviderInfo;

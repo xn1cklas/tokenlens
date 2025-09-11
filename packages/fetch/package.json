@@ -1,7 +1,8 @@
 {
   "name": "@tokenlens/fetch",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": false,
+  "description": "Typed client for models.dev to fetch model catalogs with friendly errors.",
   "type": "module",
   "sideEffects": false,
   "main": "dist/index.js",
@@ -15,12 +16,37 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "prepublishOnly": "pnpm run build"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xn1cklas/tokenlens.git",
+    "directory": "packages/fetch"
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "models.dev",
+    "fetch",
+    "client",
+    "http",
+    "model registry",
+    "catalog"
+  ],
+  "author": "Nicklas Scharpff <hi@n1cklas.com> (https://n1cklas.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xn1cklas/tokenlens/issues"
+  },
+  "homepage": "https://github.com/xn1cklas/tokenlens/tree/HEAD/packages/fetch#readme",
   "dependencies": {
     "@tokenlens/core": "workspace:*"
   },
