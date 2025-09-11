@@ -1,14 +1,14 @@
 /* eslint-disable no-console */
-import { writeFile, mkdir } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
-  MODEL_IDS,
-  modelMeta,
-  getContextWindow,
-  remainingContext,
-  percentOfContextUsed,
-  tokensRemaining,
   estimateCost,
+  getContextWindow,
+  defaultCatalog,
+  modelMeta,
+  percentOfContextUsed,
+  remainingContext,
+  tokensRemaining,
 } from "tokenlens";
 
 type Scenario = {
@@ -52,64 +52,65 @@ function buildScenarios(maxTokens: number | undefined): Scenario[] {
 async function main() {
   const results: Array<Record<string, unknown>> = [];
 
-  for (const id of MODEL_IDS) {
-    const meta = modelMeta(id);
-    const caps = getContextWindow(id);
-    const scenarios = buildScenarios(meta.maxTokens);
+  for (const [providerKey, provider] of Object.entries(defaultCatalog)) {
+    const modelKeys = Object.keys(provider?.models ?? {});
+    for (const mid of modelKeys) {
+      const id = `${providerKey}:${mid}`;
+      const meta = modelMeta(id);
+      const caps = getContextWindow(id);
+      const scenarios = buildScenarios(meta?.maxTokens);
 
-    const scenarioResults = scenarios.map((s) => {
-      const rc = remainingContext({
-        modelId: id,
-        usage: s.usage,
-        reserveOutput: s.reserveOutput,
+      const scenarioResults = scenarios.map((s) => {
+        const rc = remainingContext({
+          modelId: id,
+          usage: s.usage,
+          reserveOutput: s.reserveOutput,
+        });
+        const percent = percentOfContextUsed({
+          id,
+          usage: s.usage,
+          reserveOutput: s.reserveOutput,
+        });
+        const remaining = tokensRemaining({
+          id,
+          usage: s.usage,
+          reserveOutput: s.reserveOutput,
+        });
+        const cost = estimateCost({ modelId: id, usage: s.usage });
+        const total = s.usage.total ?? s.usage.input + s.usage.output;
+        const fits = rc.model
+          ? total + Math.max(0, s.reserveOutput ?? 0) <=
+            (rc.model.context.combinedMax ??
+              rc.model.context.inputMax ??
+              Number.POSITIVE_INFINITY)
+          : false;
+        return {
+          name: s.name,
+          usage: s.usage,
+          reserveOutput: s.reserveOutput,
+          remainingContext: {
+            remainingCombined: rc.remainingCombined,
+            remainingInput: rc.remainingInput,
+            percentUsed: Number(percent.toFixed(6)),
+          },
+          tokensRemaining: remaining,
+          estimateCost: cost,
+          fitsContext: fits,
+        };
       });
-      const percent = percentOfContextUsed({
-        id,
-        usage: s.usage,
-        reserveOutput: s.reserveOutput,
-      });
-      const remaining = tokensRemaining({
-        id,
-        usage: s.usage,
-        reserveOutput: s.reserveOutput,
-      });
-      const cost = estimateCost({ modelId: id, usage: s.usage });
-      const fits =
-        typeof (s.usage.total ?? s.usage.input + s.usage.output) === "number"
-          ? rc.model
-            ? (s.usage.total ?? s.usage.input + s.usage.output) +
-                Math.max(0, s.reserveOutput ?? 0) <=
-              (rc.model.context.combinedMax ??
-                rc.model.context.inputMax ??
-                Number.POSITIVE_INFINITY)
-            : false
-          : undefined;
-      return {
-        name: s.name,
-        usage: s.usage,
-        reserveOutput: s.reserveOutput,
-        remainingContext: {
-          remainingCombined: rc.remainingCombined,
-          remainingInput: rc.remainingInput,
-          percentUsed: Number(percent.toFixed(6)),
-        },
-        tokensRemaining: remaining,
-        estimateCost: cost,
-        fitsContext: fits,
-      };
-    });
 
-    results.push({
-      id: meta.id,
-      provider: meta.provider,
-      status: meta.status,
-      maxTokens: meta.maxTokens,
-      pricePerTokenIn: meta.pricePerTokenIn,
-      pricePerTokenOut: meta.pricePerTokenOut,
-      source: meta.source,
-      contextWindow: caps,
-      scenarios: scenarioResults,
-    });
+      results.push({
+        id: meta?.id ?? id,
+        provider: meta?.provider ?? providerKey,
+        status: meta?.status,
+        maxTokens: meta?.maxTokens,
+        pricePerTokenIn: meta?.pricePerTokenIn,
+        pricePerTokenOut: meta?.pricePerTokenOut,
+        source: meta?.source,
+        contextWindow: caps,
+        scenarios: scenarioResults,
+      });
+    }
   }
 
   // Stable sort by id for reproducibility
@@ -120,11 +121,11 @@ async function main() {
   const outFile = resolve(outDir, "tokenlens-benchmark.json");
   await writeFile(
     outFile,
-    JSON.stringify(
+    `${JSON.stringify(
       { generatedAt: new Date().toISOString(), models: results },
       null,
       2,
-    ) + "\n",
+    )}\n`,
     "utf8",
   );
   console.log(`Benchmark written: ${outFile}`);
