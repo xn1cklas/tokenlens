@@ -13,6 +13,22 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./models": {
+      "types": "./dist/exports/models.d.ts",
+      "default": "./dist/exports/models.js"
+    },
+    "./helpers": {
+      "types": "./dist/exports/helpers.d.ts",
+      "default": "./dist/exports/helpers.js"
+    },
+    "./fetch": {
+      "types": "./dist/exports/fetch.d.ts",
+      "default": "./dist/exports/fetch.js"
+    },
+    "./core": {
+      "types": "./dist/exports/core.d.ts",
+      "default": "./dist/exports/core.js"
     }
   },
   "publishConfig": {
