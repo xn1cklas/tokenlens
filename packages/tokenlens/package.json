@@ -1,6 +1,6 @@
 {
   "name": "tokenlens",
-  "version": "1.3.0-canary.2",
+  "version": "1.3.0-canary.3",
   "description": "A lightweight registry of LLM model information, like name and context sizes, for building AI-powered apps.",
   "files": [
     "dist"
