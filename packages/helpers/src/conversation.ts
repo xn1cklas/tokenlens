@@ -38,7 +38,7 @@ export function sumUsage(
 }
 
 /**
- * @deprecated Prefer getUsageData/getTokenCosts
+ * @deprecated Prefer getUsage/getTokenCosts
  */
 export function estimateConversationCost(args: {
   modelId: string;
@@ -118,7 +118,7 @@ export function computeContextRot(args: {
 }
 
 /**
- * @deprecated Prefer getContextData/getUsageData
+ * @deprecated Prefer getContext/getUsage
  */
 export function nextTurnBudget(args: {
   modelId: string;

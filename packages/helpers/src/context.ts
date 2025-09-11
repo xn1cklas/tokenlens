@@ -9,7 +9,7 @@ import type {
 
 /**
  * Return the raw context window caps for a model id (canonical or alias).
- * @deprecated Prefer getContextData({ modelId, catalog })
+ * @deprecated Prefer getContext({ modelId, providers })
  */
 export function getContextWindow(
   modelId: string,
@@ -41,7 +41,7 @@ type AIV2Usage = {
 const TOKENS_PER_MILLION = 1_000_000;
 
 /**
- * @deprecated Prefer getUsageData/getTokenCosts with a catalog
+ * @deprecated Prefer getUsage/getTokenCosts with providers
  */
 export function normalizeUsage(
   usage: UsageLike | NormalizedUsage | undefined | null,
@@ -84,7 +84,7 @@ export function normalizeUsage(
 }
 
 /**
- * @deprecated Prefer getUsageData/getTokenCosts with a catalog
+ * @deprecated Prefer getUsage/getTokenCosts with providers
  */
 export function breakdownTokens(
   usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined | null,
@@ -142,12 +142,14 @@ export function breakdownTokens(
     u.prompt_tokens_details?.cached_tokens,
     u.promptTokensDetails?.cachedTokens,
     u.cachedInputTokens,
+    (u as unknown as { cacheReads?: number }).cacheReads,
   ].filter((v: unknown): v is number => typeof v === "number");
   const cacheWriteCandidates = [
     u.cache_creation_input_tokens,
     u.cache_creation_tokens,
     u.prompt_cache_write_tokens,
     u.promptTokensDetails?.cacheCreationTokens,
+    (u as unknown as { cacheWrites?: number }).cacheWrites,
   ].filter((v: unknown): v is number => typeof v === "number");
   const cacheReads = cacheReadCandidates[0];
   const cacheWrites = cacheWriteCandidates[0];
@@ -158,7 +160,7 @@ export function breakdownTokens(
   return { ...base, cacheReads, cacheWrites, reasoningTokens };
 }
 
-/** @deprecated Prefer getContextData/getUsageData */
+/** @deprecated Prefer getContext/getUsage */
 export type RemainingArgs = {
   modelId: string;
   usage: UsageLike | NormalizedUsage | undefined;
@@ -168,7 +170,7 @@ export type RemainingArgs = {
 };
 
 /**
- * @deprecated Prefer getContextData/getUsageData with a catalog
+ * @deprecated Prefer getContext/getUsage with providers
  */
 export function remainingContext(args: RemainingArgs): {
   remainingInput?: number;
@@ -215,7 +217,7 @@ export function remainingContext(args: RemainingArgs): {
 }
 
 /**
- * @deprecated Prefer getContextData/getUsageData with a catalog
+ * @deprecated Prefer getContext/getUsage with providers
  */
 export function fitsContext({
   modelId,
@@ -236,7 +238,7 @@ export function fitsContext({
 }
 
 /**
- * @deprecated Prefer getContextData + filtering models externally
+ * @deprecated Prefer getContext + filtering models externally
  */
 export function pickModelFor(
   tokens: number,
@@ -269,7 +271,7 @@ export function pickModelFor(
 }
 
 /**
- * @deprecated Prefer getTokenCosts/getUsageData with a catalog
+ * @deprecated Prefer getTokenCosts/getUsage with providers
  */
 export function estimateCost({
   modelId,
@@ -340,7 +342,7 @@ export function estimateCost({
 }
 
 /**
- * @deprecated Prefer getUsageData/getTokenCosts
+ * @deprecated Prefer getUsage/getTokenCosts
  */
 export function consumedTokens(
   usage: UsageLike | NormalizedUsage | undefined | null,
@@ -350,7 +352,7 @@ export function consumedTokens(
 }
 
 // Aggregated usage summary (pure, no default catalog fallback)
-/** @deprecated Prefer getUsageData/getTokenCosts/getContextData */
+/** @deprecated Prefer getUsage/getTokenCosts/getContext */
 export type UsageSummary = {
   modelId?: string;
   context?: ReturnType<typeof getContextWindow>;
@@ -378,7 +380,7 @@ export function toModelId(gatewayId?: string) {
  * Requires an explicit catalog for model-specific fields.
  */
 /**
- * @deprecated Prefer getUsageData/getTokenCosts/getContextData
+ * @deprecated Prefer getUsage/getTokenCosts/getContext
  */
 export function summarizeUsage(args: {
   modelId?: string;
@@ -619,7 +621,7 @@ export function getUsage(
 }
 
 /**
- * @deprecated Prefer getContextData/getUsageData
+ * @deprecated Prefer getContext/getUsage
  */
 export function percentRemaining(args: {
   modelId: string;
@@ -637,7 +639,7 @@ export function percentRemaining(args: {
 }
 
 /**
- * @deprecated Prefer getContextData/getUsageData
+ * @deprecated Prefer getContext/getUsage
  */
 export function shouldCompact(args: {
   modelId: string;
@@ -657,7 +659,7 @@ export function shouldCompact(args: {
 }
 
 /**
- * @deprecated Prefer getContextData/getUsageData
+ * @deprecated Prefer getContext/getUsage
  */
 export function contextHealth(args: {
   modelId: string;
@@ -690,7 +692,7 @@ export function contextHealth(args: {
 }
 
 /**
- * @deprecated Prefer getContextData/getUsageData
+ * @deprecated Prefer getContext/getUsage
  */
 export function tokensToCompact(args: {
   modelId: string;

@@ -15,7 +15,7 @@ import { defaultCatalog } from "./source.js";
 export { computeContextRot, sumUsage };
 
 /**
- * @deprecated Prefer getUsageData/getTokenCosts; conversation-level helpers will move to a separate surface.
+ * @deprecated Prefer getUsage/getTokenCosts; conversation-level helpers may move to a separate surface.
  */
 export function estimateConversationCost(args: {
   modelId: string;
@@ -33,7 +33,7 @@ export function estimateConversationCost(args: {
 }
 
 /**
- * @deprecated Prefer getContextData/getUsageData; next-turn budgeting may be replaced by a separate component.
+ * @deprecated Prefer getContext/getUsage; next-turn budgeting may be replaced by a separate component.
  */
 export function nextTurnBudget(args: {
   modelId: string;

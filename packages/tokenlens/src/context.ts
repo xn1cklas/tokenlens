@@ -43,7 +43,7 @@ export type {
 } from "@tokenlens/helpers/context";
 
 /**
- * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
+ * @deprecated Prefer getContext/getUsage/getTokenCosts with `{ providers }`. For raw caps use helpers directly.
  */
 export function getContextWindow(
   modelId: string,
@@ -54,7 +54,7 @@ export function getContextWindow(
 }
 
 /**
- * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
+ * @deprecated Prefer getContext/getUsage with `{ providers }`.
  */
 export function remainingContext(args: {
   modelId: string;
@@ -74,7 +74,7 @@ export function remainingContext(args: {
 }
 
 /**
- * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
+ * @deprecated Prefer getTokenCosts/getUsage with `{ providers }`.
  */
 export function estimateCost(args: {
   modelId: string;
@@ -86,7 +86,7 @@ export function estimateCost(args: {
 }
 
 /**
- * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
+ * @deprecated Prefer getContext/getUsage with `{ providers }`.
  */
 export function fitsContext(args: {
   modelId: string;
@@ -180,17 +180,17 @@ export function contextHealth(args: {
 }
 
 // Pure helpers (no DI) – re-export directly (deprecated)
-/** @deprecated Prefer getUsageData/getTokenCosts */
+/** @deprecated Prefer getUsage/getTokenCosts */
 export const normalizeUsage = _normalizeUsage;
-/** @deprecated Prefer getUsageData/getTokenCosts */
+/** @deprecated Prefer getUsage/getTokenCosts */
 export const breakdownTokens = _breakdownTokens;
-/** @deprecated Prefer getUsageData/getTokenCosts */
+/** @deprecated Prefer getUsage/getTokenCosts */
 export const consumedTokens = _consumedTokens;
-/** @deprecated Prefer getContextData + filtering externally */
+/** @deprecated Prefer getContext + filtering externally */
 export const pickModelFor = _pickModelFor;
 
 // Back-compat wrapper that injects defaultCatalog when not provided
-/** @deprecated Prefer getUsageData/getTokenCosts/getContextData */
+/** @deprecated Prefer getUsage/getTokenCosts/getContext */
 export function summarizeUsage(args: {
   modelId?: string;
   usage: UsageLike | undefined;
