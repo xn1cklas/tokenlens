@@ -21,7 +21,11 @@ export type FetchLike = (
   text(): Promise<string>;
 }>;
 
-import type { ModelCatalog, ProviderInfo, ProviderModel } from "@tokenlens/core";
+import type {
+  ModelCatalog,
+  ProviderInfo,
+  ProviderModel,
+} from "@tokenlens/core";
 
 export type FetchModelsOptions = {
   /** Filter by provider key (e.g. "deepseek", "xai", "vercel"). */
