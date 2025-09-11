@@ -1,5 +1,5 @@
 import type {
-  ModelsDevApi,
+  ModelCatalog,
   NormalizedUsage,
   TokenBreakdown,
   UsageLike,
@@ -15,14 +15,14 @@ import { defaultCatalog } from "./source.js";
 export { computeContextRot, sumUsage };
 
 /**
- * @deprecated Prefer passing { source } or { catalog } explicitly.
+ * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
  */
 export function estimateConversationCost(args: {
   modelId: string;
   usages: Array<
     UsageLike | NormalizedUsage | TokenBreakdown | undefined | null
   >;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }) {
   const catalog = args.catalog ?? defaultCatalog;
   return _estimateConversationCost({
@@ -33,13 +33,13 @@ export function estimateConversationCost(args: {
 }
 
 /**
- * @deprecated Prefer passing { source } or { catalog } explicitly.
+ * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
  */
 export function nextTurnBudget(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage | undefined;
   reserveOutput?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): number | undefined {
   const catalog = args.catalog ?? defaultCatalog;
   return _nextTurnBudget({

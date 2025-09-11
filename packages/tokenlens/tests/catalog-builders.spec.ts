@@ -1,4 +1,4 @@
-import type { Model, ModelsDevApi } from "@tokenlens/core";
+import type { Model, ModelCatalog } from "@tokenlens/core";
 import {
   catalogFromModelArrays,
   catalogFromProviders,
@@ -6,7 +6,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 describe("catalog builders", () => {
-  it("catalogFromModelArrays maps Model[] into ModelsDevApi", () => {
+  it("catalogFromModelArrays maps Model[] into ModelCatalog", () => {
     const arr: Model[] = [
       {
         id: "provA:model1",
@@ -19,7 +19,7 @@ describe("catalog builders", () => {
         source: "test",
       },
     ];
-    const catalog: ModelsDevApi = catalogFromModelArrays([arr]);
+    const catalog: ModelCatalog = catalogFromModelArrays([arr]);
     expect(catalog.provA).toBeTruthy();
     expect(catalog.provA.models["model1"]).toBeTruthy();
     expect(catalog.provA.models["model1"].id).toBe("model1");

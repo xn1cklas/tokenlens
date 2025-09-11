@@ -1,6 +1,6 @@
 {
   "name": "tokenlens",
-  "version": "1.2.1",
+  "version": "1.3.0-canary.0",
   "description": "A lightweight registry of LLM model information, like name and context sizes, for building AI-powered apps.",
   "files": [
     "dist"
@@ -15,9 +15,12 @@
       "default": "./dist/index.js"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "pnpm run build && vitest",
     "test:run": "pnpm run build && vitest run",
     "bench:lookup": "pnpm run build && node scripts/bench-lookup.mjs",
@@ -25,7 +28,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/xn1cklas/tokenlens.git"
+    "url": "git+https://github.com/xn1cklas/tokenlens.git",
+    "directory": "packages/tokenlens"
   },
   "keywords": [
     "ai",
@@ -58,7 +62,7 @@
   "bugs": {
     "url": "https://github.com/xn1cklas/tokenlens/issues"
   },
-  "homepage": "https://github.com/xn1cklas/tokenlens#readme",
+  "homepage": "https://github.com/xn1cklas/tokenlens/tree/HEAD/packages/tokenlens#readme",
   "devDependencies": {
     "typescript": "^5.9.2",
     "vitest": "^1.6.1"

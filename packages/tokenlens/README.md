@@ -10,7 +10,6 @@ Typed model metadata and context/cost utilities that help AI apps answer: Does t
 
 Works great with the Vercel AI SDK out of the box, and remains SDK‑agnostic.
 
-
 ![TokenLens overview](https://raw.githubusercontent.com/xn1cklas/tokenlens/HEAD/assets/tokenlens.png)
 
 Highlights
@@ -49,33 +48,9 @@ const costUSD = costFromUsage({ id, usage });
 console.log({ meta, used, remaining, costUSD });
 ```
 
-Packages
-
-- `@tokenlens/core`: shared types and registry utilities.
-- `@tokenlens/models`: static provider-split catalog from models.dev.
-- `@tokenlens/fetch`: async client for models.dev API.
-- `@tokenlens/helpers`: DI-first helpers for context and cost.
-- `tokenlens`: compatibility aggregator that re-exports the above and injects a default static source.
-
-Backwards compatibility (deprecated)
-
-The `tokenlens` package injects a `defaultSource` built from `@tokenlens/models`. If you call helpers like `getContextWindow` or `estimateCost` without DI, it will use this static source. Prefer DI in new code.
-
-Prefer dependency injection (DI)
-
-```
-import { sourceFromModels } from '@tokenlens/helpers';
-import vercel from '@tokenlens/models/providers/vercel';
-import { getContextWindow, estimateCost } from '@tokenlens/helpers';
-
-const source = sourceFromModels(vercel);
-const cw = getContextWindow('gpt-4o', { source });
-```
-
 Core Helpers
 - Registry: `resolveModel`, `listModels`, `MODEL_IDS`, `isModelId`, `assertModelId`
 - Usage: `normalizeUsage`, `breakdownTokens`, `consumedTokens`
- 
 - Context: `getContextWindow`, `remainingContext`, `percentRemaining`, `fitsContext`, `pickModelFor`
 - Cost: `estimateCost`
 - Compaction: `shouldCompact`, `contextHealth`, `tokensToCompact`
@@ -91,28 +66,28 @@ const u1 = normalizeUsage({ prompt_tokens: 1000, completion_tokens: 150 });
 const u2 = normalizeUsage({ inputTokens: 900, outputTokens: 200, totalTokens: 1100 });
 const b = breakdownTokens({ inputTokens: 900, cachedInputTokens: 300, reasoningTokens: 120 });
 ```
-
 Async Fetch (models.dev)
+
 ```ts
 import {
   fetchModels,
   FetchModelsError,
-  type ModelsDevApi,
-  type ModelsDevProvider,
-  type ModelsDevModel,
+  type ModelCatalog,
+  type ProviderInfo,
+  type ProviderModel,
 } from 'tokenlens';
 
 // 1) Fetch the full catalog (Node 18+ or modern browsers with global fetch)
-const catalog: ModelsDevApi = await fetchModels();
+const catalog: ModelCatalog = await fetchModels();
 
 // 2) Fetch by provider key (e.g. 'openai', 'anthropic', 'deepseek')
-const openai: ModelsDevProvider | undefined = await fetchModels({ provider: 'openai' });
+const openai: ProviderInfo | undefined = await fetchModels({ provider: 'openai' });
 
 // 3) Fetch a specific model within a provider
-const gpto: ModelsDevModel | undefined = await fetchModels({ provider: 'openai', model: 'gpt-4o' });
+const gpto: ProviderModel | undefined = await fetchModels({ provider: 'openai', model: 'gpt-4o' });
 
 // 4) Search for a model across providers when provider is omitted
-const matches: Array<{ provider: string; model: ModelsDevModel }> = await fetchModels({ model: 'gpt-4.1' });
+const matches: Array<{ provider: string; model: ProviderModel }> = await fetchModels({ model: 'gpt-4.1' });
 
 // 5) Error handling with typed error codes
 try {
@@ -131,15 +106,6 @@ try {
 // const catalog = await fetchModels({ fetch });
 ```
 
-```ts
-import { estimateCost } from 'tokenlens';
-
-const costs = estimateCost({
-  modelId: 'openai:o3',
-  usage: { inputTokens: 1000, outputTokens: 200, reasoningTokens: 500, cachedInputTokens: 300 },
-});
-// { inputUSD?, outputUSD?, reasoningUSD?, cacheReadUSD?, cacheWriteUSD?, totalUSD? }
-```
 
 Context Budgeting & Compaction
 ```ts

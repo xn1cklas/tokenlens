@@ -1,6 +1,6 @@
 import type {
   Model,
-  ModelsDevApi,
+  ModelCatalog,
   NormalizedUsage,
   UsageLike,
 } from "@tokenlens/core";
@@ -13,11 +13,11 @@ import {
 import { defaultCatalog } from "./source.js";
 
 /**
- * @deprecated Prefer DI via { source } constructed from @tokenlens/models.
+ * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or use a static catalog from `@tokenlens/models` (`getModels()`).
  */
 export function modelMeta(
   id: string,
-  opts?: { catalog?: ModelsDevApi },
+  opts?: { catalog?: ModelCatalog },
 ):
   | {
       id: string;
@@ -35,13 +35,13 @@ export function modelMeta(
 }
 
 /**
- * @deprecated Prefer DI via { source }.
+ * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or use a static catalog from `@tokenlens/models` (`getModels()`).
  */
 export function percentOfContextUsed(args: {
   id: string;
   usage: UsageLike | NormalizedUsage;
   reserveOutput?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): number {
   const catalog = args.catalog ?? defaultCatalog;
   return _percentOfContextUsed({
@@ -53,13 +53,13 @@ export function percentOfContextUsed(args: {
 }
 
 /**
- * @deprecated Prefer DI via { source }.
+ * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or use a static catalog from `@tokenlens/models` (`getModels()`).
  */
 export function tokensRemaining(args: {
   id: string;
   usage: UsageLike | NormalizedUsage;
   reserveOutput?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): number | undefined {
   const catalog = args.catalog ?? defaultCatalog;
   return _tokensRemaining({
@@ -71,12 +71,12 @@ export function tokensRemaining(args: {
 }
 
 /**
- * @deprecated Prefer DI via { source }.
+ * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or use a static catalog from `@tokenlens/models` (`getModels()`).
  */
 export function costFromUsage(args: {
   id: string;
   usage: UsageLike | NormalizedUsage;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): number | undefined {
   const catalog = args.catalog ?? defaultCatalog;
   return _costFromUsage({ id: args.id, usage: args.usage, catalog });

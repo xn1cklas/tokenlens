@@ -1,7 +1,8 @@
 /**
- * @deprecated Static bundled catalog access. Prefer the DI-based approach:
- * - fetch live data via `fetchModels()` (async)
- * - or import specific provider modules from `@tokenlens/models/providers/*` and build a small catalog
- *   with `catalogFromModelArrays([...])`.
+ * @deprecated Static bundled catalog access.
+ * For new code:
+ * - Fetch a live catalog via `fetchModels()` from `@tokenlens/fetch`.
+ * - Or build a static catalog via `getModels()` from `@tokenlens/models`,
+ *   or import specific providers from `@tokenlens/models/providers/*` and compose your own set.
  */
 export { getModels } from "@tokenlens/models";

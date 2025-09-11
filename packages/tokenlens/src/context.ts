@@ -1,12 +1,14 @@
 /**
- * Context + cost helpers (back-compat wrappers).
+ * Context and cost helpers (back-compat wrappers).
  *
- * Prefer DI from @tokenlens/models via sourceFromModels([...]) or
- * live catalogs via @tokenlens/fetch. These wrappers default to the
- * static defaultSource for backwards compatibility.
+ * For new code, pass a catalog explicitly:
+ * - Fetch a live catalog via `fetchModels()` from `@tokenlens/fetch` and pass `{ catalog }`.
+ * - Or build a static catalog via `getModels()` from `@tokenlens/models` and pass `{ catalog }`.
+ *
+ * These wrappers fall back to a bundled default catalog for backwards compatibility.
  */
 import type {
-  ModelsDevApi,
+  ModelCatalog,
   NormalizedUsage,
   TokenBreakdown,
   UsageLike,
@@ -28,25 +30,25 @@ import {
 import { defaultCatalog } from "./source.js";
 
 /**
- * @deprecated Prefer passing { source } or { catalog } explicitly.
+ * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
  */
 export function getContextWindow(
   modelId: string,
-  opts?: { catalog?: ModelsDevApi },
+  opts?: { catalog?: ModelCatalog },
 ) {
   const catalog = opts?.catalog ?? defaultCatalog;
   return _getContextWindow(modelId, { catalog });
 }
 
 /**
- * @deprecated Prefer passing { source } or { catalog } explicitly.
+ * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
  */
 export function remainingContext(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage | undefined;
   reserveOutput?: number;
   strategy?: "combined" | "provider-default" | "input-only";
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }) {
   const catalog = args.catalog ?? defaultCatalog;
   return _remainingContext({
@@ -59,25 +61,25 @@ export function remainingContext(args: {
 }
 
 /**
- * @deprecated Prefer passing { source } or { catalog } explicitly.
+ * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
  */
 export function estimateCost(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage | TokenBreakdown;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }) {
   const catalog = args.catalog ?? defaultCatalog;
   return _estimateCost({ modelId: args.modelId, usage: args.usage, catalog });
 }
 
 /**
- * @deprecated Prefer passing { source } or { catalog } explicitly.
+ * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
  */
 export function fitsContext(args: {
   modelId: string;
   tokens: number;
   reserveOutput?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): boolean {
   const catalog = args.catalog ?? defaultCatalog;
   return _fitsContext({
@@ -89,13 +91,13 @@ export function fitsContext(args: {
 }
 
 /**
- * @deprecated Prefer passing { source } or { catalog } explicitly.
+ * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
  */
 export function percentRemaining(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage;
   reserveOutput?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }): number {
   const catalog = args.catalog ?? defaultCatalog;
   return _percentRemaining({
@@ -107,14 +109,14 @@ export function percentRemaining(args: {
 }
 
 /**
- * @deprecated Prefer passing { source } or { catalog } explicitly.
+ * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
  */
 export function shouldCompact(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage;
   reserveOutput?: number;
   threshold?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }) {
   const catalog = args.catalog ?? defaultCatalog;
   return _shouldCompact({
@@ -127,14 +129,14 @@ export function shouldCompact(args: {
 }
 
 /**
- * @deprecated Prefer passing { source } or { catalog } explicitly.
+ * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
  */
 export function tokensToCompact(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage;
   reserveOutput?: number;
   targetPercent?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }) {
   const catalog = args.catalog ?? defaultCatalog;
   return _tokensToCompact({
@@ -147,13 +149,13 @@ export function tokensToCompact(args: {
 }
 
 /**
- * @deprecated Prefer passing { source } or { catalog } explicitly.
+ * @deprecated Pass `{ catalog }` from `@tokenlens/fetch` (`fetchModels()`) or from `@tokenlens/models` (`getModels()`).
  */
 export function contextHealth(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage;
   reserveOutput?: number;
-  catalog?: ModelsDevApi;
+  catalog?: ModelCatalog;
 }) {
   const catalog = args.catalog ?? defaultCatalog;
   return _contextHealth({

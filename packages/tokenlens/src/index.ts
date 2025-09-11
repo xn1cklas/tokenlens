@@ -10,3 +10,9 @@ export * from "./context.js";
 export * from "./simple.js";
 export * from "./conversation.js";
 export * from "./source.js";
+// Keep these utility builders available via tokenlens for back-compat
+export {
+  sourceFromModels,
+  sourceFromCatalog,
+  selectStaticModels,
+} from "@tokenlens/helpers";
