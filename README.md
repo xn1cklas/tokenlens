@@ -72,22 +72,22 @@ Async Fetch (models.dev)
 import {
   fetchModels,
   FetchModelsError,
-  type ModelsDevApi,
-  type ModelsDevProvider,
-  type ModelsDevModel,
+  type ModelCatalog,
+  type ProviderInfo,
+  type ProviderModel,
 } from 'tokenlens';
 
 // 1) Fetch the full catalog (Node 18+ or modern browsers with global fetch)
-const catalog: ModelsDevApi = await fetchModels();
+const catalog: ModelCatalog = await fetchModels();
 
 // 2) Fetch by provider key (e.g. 'openai', 'anthropic', 'deepseek')
-const openai: ModelsDevProvider | undefined = await fetchModels({ provider: 'openai' });
+const openai: ProviderInfo | undefined = await fetchModels({ provider: 'openai' });
 
 // 3) Fetch a specific model within a provider
-const gpto: ModelsDevModel | undefined = await fetchModels({ provider: 'openai', model: 'gpt-4o' });
+const gpto: ProviderModel | undefined = await fetchModels({ provider: 'openai', model: 'gpt-4o' });
 
 // 4) Search for a model across providers when provider is omitted
-const matches: Array<{ provider: string; model: ModelsDevModel }> = await fetchModels({ model: 'gpt-4.1' });
+const matches: Array<{ provider: string; model: ProviderModel }> = await fetchModels({ model: 'gpt-4.1' });
 
 // 5) Error handling with typed error codes
 try {

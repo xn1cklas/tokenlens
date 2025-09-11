@@ -3,7 +3,32 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [
+        "dist/**",
+        "lib/**",
+        "build/**",
+        ".next/**",
+        "!.next/cache/**"
+      ]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "test:run": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "sync:models": {
+      "cache": false,
+      "outputs": [
+        "packages/models/src/providers/**",
+        "packages/models/src/index.ts"
+      ]
     },
     "format": {
       "dependsOn": ["^format"]
