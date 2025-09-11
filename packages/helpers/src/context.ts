@@ -1,4 +1,10 @@
-import type { Model, ModelCatalog, NormalizedUsage, TokenBreakdown, UsageLike } from "@tokenlens/core";
+import type {
+  Model,
+  ModelCatalog,
+  NormalizedUsage,
+  TokenBreakdown,
+  UsageLike,
+} from "@tokenlens/core";
 
 /**
  * Return the raw context window caps for a model id (canonical or alias).
@@ -268,21 +274,21 @@ export function estimateCost({
       : undefined;
   const reasoningUSD =
     model.pricing.reasoningPerMTokens !== undefined &&
-    typeof breakdown.reasoningTokens === "number"
+      typeof breakdown.reasoningTokens === "number"
       ? (breakdown.reasoningTokens / TOKENS_PER_MILLION) *
-        model.pricing.reasoningPerMTokens
+      model.pricing.reasoningPerMTokens
       : undefined;
   const cacheReadUSD =
     model.pricing.cacheReadPerMTokens !== undefined &&
-    typeof breakdown.cacheReads === "number"
+      typeof breakdown.cacheReads === "number"
       ? (breakdown.cacheReads / TOKENS_PER_MILLION) *
-        model.pricing.cacheReadPerMTokens
+      model.pricing.cacheReadPerMTokens
       : undefined;
   const cacheWriteUSD =
     model.pricing.cacheWritePerMTokens !== undefined &&
-    typeof breakdown.cacheWrites === "number"
+      typeof breakdown.cacheWrites === "number"
       ? (breakdown.cacheWrites / TOKENS_PER_MILLION) *
-        model.pricing.cacheWritePerMTokens
+      model.pricing.cacheWritePerMTokens
       : undefined;
   const totalParts = [
     inputUSD,
@@ -457,10 +463,10 @@ function mapModelsDevEntry(
   >,
 ): Model {
   const inputMods: string[] = Array.isArray(m?.modalities?.input)
-    ? m.modalities.input
+    ? (m.modalities?.input as string[])
     : [];
   const outputMods: string[] = Array.isArray(m?.modalities?.output)
-    ? m.modalities.output
+    ? (m.modalities?.output as string[])
     : [];
   const textIn = inputMods.includes("text");
   const imageIn = inputMods.includes("image");
@@ -473,28 +479,28 @@ function mapModelsDevEntry(
     typeof m?.limit?.output === "number" ? m.limit.output : undefined;
   const pricing =
     m?.cost &&
-    (typeof m.cost.input === "number" ||
-      typeof m.cost.output === "number" ||
-      typeof m.cost.reasoning === "number" ||
-      typeof m.cost.cache_read === "number" ||
-      typeof m.cost.cache_write === "number")
+      (typeof m.cost.input === "number" ||
+        typeof m.cost.output === "number" ||
+        typeof m.cost.reasoning === "number" ||
+        typeof m.cost.cache_read === "number" ||
+        typeof m.cost.cache_write === "number")
       ? {
-          ...(typeof m.cost.input === "number"
-            ? { inputPerMTokens: m.cost.input }
-            : {}),
-          ...(typeof m.cost.output === "number"
-            ? { outputPerMTokens: m.cost.output }
-            : {}),
-          ...(typeof m.cost.reasoning === "number"
-            ? { reasoningPerMTokens: m.cost.reasoning }
-            : {}),
-          ...(typeof m.cost.cache_read === "number"
-            ? { cacheReadPerMTokens: m.cost.cache_read }
-            : {}),
-          ...(typeof m.cost.cache_write === "number"
-            ? { cacheWritePerMTokens: m.cost.cache_write }
-            : {}),
-        }
+        ...(typeof m.cost.input === "number"
+          ? { inputPerMTokens: m.cost.input }
+          : {}),
+        ...(typeof m.cost.output === "number"
+          ? { outputPerMTokens: m.cost.output }
+          : {}),
+        ...(typeof m.cost.reasoning === "number"
+          ? { reasoningPerMTokens: m.cost.reasoning }
+          : {}),
+        ...(typeof m.cost.cache_read === "number"
+          ? { cacheReadPerMTokens: m.cost.cache_read }
+          : {}),
+        ...(typeof m.cost.cache_write === "number"
+          ? { cacheWritePerMTokens: m.cost.cache_write }
+          : {}),
+      }
       : undefined;
   return {
     id: `${provider}:${modelId}`,
@@ -511,10 +517,10 @@ function mapModelsDevEntry(
     modalities:
       textIn || textOut || imageIn
         ? {
-            ...(textIn && { textIn: true }),
-            ...(textOut && { textOut: true }),
-            ...(imageIn && { imageIn: true }),
-          }
+          ...(textIn && { textIn: true }),
+          ...(textOut && { textOut: true }),
+          ...(imageIn && { imageIn: true }),
+        }
         : undefined,
     pricing,
     pricingSource: "models.dev",

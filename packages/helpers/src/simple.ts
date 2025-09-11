@@ -1,4 +1,9 @@
-import type { Model, ModelCatalog, NormalizedUsage, UsageLike } from "@tokenlens/core";
+import type {
+  Model,
+  ModelCatalog,
+  NormalizedUsage,
+  UsageLike,
+} from "@tokenlens/core";
 import { estimateCost, remainingContext } from "./context.js";
 
 export function modelMeta(

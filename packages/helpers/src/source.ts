@@ -39,10 +39,10 @@ export function sourceFromCatalog(catalog: ModelCatalog): ModelSource {
     prov: ModelCatalog[string],
   ): Model => {
     const inputMods: string[] = Array.isArray(m?.modalities?.input)
-      ? m.modalities.input
+      ? (m.modalities?.input as string[])
       : [];
     const outputMods: string[] = Array.isArray(m?.modalities?.output)
-      ? m.modalities.output
+      ? (m.modalities?.output as string[])
       : [];
     const textIn = inputMods.includes("text");
     const imageIn = inputMods.includes("image");
@@ -55,28 +55,28 @@ export function sourceFromCatalog(catalog: ModelCatalog): ModelSource {
       typeof m?.limit?.output === "number" ? m.limit.output : undefined;
     const pricing =
       m?.cost &&
-      (typeof m.cost.input === "number" ||
-        typeof m.cost.output === "number" ||
-        typeof m.cost.reasoning === "number" ||
-        typeof m.cost.cache_read === "number" ||
-        typeof m.cost.cache_write === "number")
+        (typeof m.cost.input === "number" ||
+          typeof m.cost.output === "number" ||
+          typeof m.cost.reasoning === "number" ||
+          typeof m.cost.cache_read === "number" ||
+          typeof m.cost.cache_write === "number")
         ? {
-            ...(typeof m.cost.input === "number"
-              ? { inputPerMTokens: m.cost.input }
-              : {}),
-            ...(typeof m.cost.output === "number"
-              ? { outputPerMTokens: m.cost.output }
-              : {}),
-            ...(typeof m.cost.reasoning === "number"
-              ? { reasoningPerMTokens: m.cost.reasoning }
-              : {}),
-            ...(typeof m.cost.cache_read === "number"
-              ? { cacheReadPerMTokens: m.cost.cache_read }
-              : {}),
-            ...(typeof m.cost.cache_write === "number"
-              ? { cacheWritePerMTokens: m.cost.cache_write }
-              : {}),
-          }
+          ...(typeof m.cost.input === "number"
+            ? { inputPerMTokens: m.cost.input }
+            : {}),
+          ...(typeof m.cost.output === "number"
+            ? { outputPerMTokens: m.cost.output }
+            : {}),
+          ...(typeof m.cost.reasoning === "number"
+            ? { reasoningPerMTokens: m.cost.reasoning }
+            : {}),
+          ...(typeof m.cost.cache_read === "number"
+            ? { cacheReadPerMTokens: m.cost.cache_read }
+            : {}),
+          ...(typeof m.cost.cache_write === "number"
+            ? { cacheWritePerMTokens: m.cost.cache_write }
+            : {}),
+        }
         : undefined;
     return {
       id: `${provKey}:${mid}`,
@@ -93,10 +93,10 @@ export function sourceFromCatalog(catalog: ModelCatalog): ModelSource {
       modalities:
         textIn || textOut || imageIn
           ? {
-              ...(textIn && { textIn: true }),
-              ...(textOut && { textOut: true }),
-              ...(imageIn && { imageIn: true }),
-            }
+            ...(textIn && { textIn: true }),
+            ...(textOut && { textOut: true }),
+            ...(imageIn && { imageIn: true }),
+          }
           : undefined,
       pricing,
       pricingSource: "models.dev",
