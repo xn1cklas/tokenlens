@@ -14,6 +14,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./providers/*": {
+      "types": "./dist/exports/providers/*.d.ts",
+      "default": "./dist/exports/providers/*.js"
+    },
     "./models": {
       "types": "./dist/exports/models.d.ts",
       "default": "./dist/exports/models.js"
@@ -35,6 +39,7 @@
     "access": "public"
   },
   "scripts": {
+    "prebuild": "node scripts/gen-providers.mjs",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "pnpm run build && vitest",
