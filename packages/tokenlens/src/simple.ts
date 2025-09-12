@@ -1,23 +1,24 @@
-import { estimateCost, remainingContext } from "./context.js";
-import { resolveModel } from "./registry.js";
-import type { ModelId } from "./registry.js";
-import type { Model, NormalizedUsage, UsageLike } from "./types.js";
+import type {
+  Model,
+  ModelCatalog,
+  NormalizedUsage,
+  UsageLike,
+} from "@tokenlens/core";
+import {
+  costFromUsage as _costFromUsage,
+  modelMeta as _modelMeta,
+  percentOfContextUsed as _percentOfContextUsed,
+  tokensRemaining as _tokensRemaining,
+} from "@tokenlens/helpers/simple";
+import { defaultCatalog } from "./source.js";
 
 /**
- * Convenience accessor for commonly-used model metadata and derived values.
- * Accepts canonical ids or aliases. Overloaded to return `undefined` for unknown ids.
+ * @deprecated Prefer getContextData/getTokenCosts/getUsageData with a catalog
  */
-export function modelMeta(id: ModelId): {
-  id: string;
-  displayName?: string;
-  provider: Model["provider"];
-  status: Model["status"];
-  maxTokens?: number;
-  pricePerTokenIn?: number;
-  pricePerTokenOut?: number;
-  source: string;
-};
-export function modelMeta(id: string):
+export function modelMeta(
+  id: string,
+  opts?: { catalog?: ModelCatalog },
+):
   | {
       id: string;
       displayName?: string;
@@ -29,68 +30,54 @@ export function modelMeta(id: string):
       source: string;
     }
   | undefined {
-  const m = resolveModel(id);
-  if (!m) return undefined;
-  const cap = m.context.combinedMax ?? m.context.inputMax;
-  return {
-    id: m.id,
-    displayName: m.displayName,
-    provider: m.provider,
-    status: m.status,
-    maxTokens: cap,
-    pricePerTokenIn:
-      m.pricing?.inputPerMTokens !== undefined
-        ? m.pricing.inputPerMTokens / 1_000_000
-        : undefined,
-    pricePerTokenOut:
-      m.pricing?.outputPerMTokens !== undefined
-        ? m.pricing.outputPerMTokens / 1_000_000
-        : undefined,
-    source: m.source,
-  };
+  const catalog = opts?.catalog ?? defaultCatalog;
+  return _modelMeta(id, { catalog });
 }
 
-// Intentionally no throwing variant to keep API small.
-
 /**
- * Return the proportion (0..1) of context consumed, optionally reserving output.
+ * @deprecated Prefer getContextData/getUsageData
  */
 export function percentOfContextUsed(args: {
   id: string;
   usage: UsageLike | NormalizedUsage;
   reserveOutput?: number;
+  catalog?: ModelCatalog;
 }): number {
-  const rc = remainingContext({
-    modelId: args.id,
+  const catalog = args.catalog ?? defaultCatalog;
+  return _percentOfContextUsed({
+    id: args.id,
     usage: args.usage,
     reserveOutput: args.reserveOutput,
+    catalog,
   });
-  return rc.percentUsed;
 }
 
 /**
- * Return remaining token budget (combined or input-only depending on the model).
+ * @deprecated Prefer getContextData/getUsageData
  */
 export function tokensRemaining(args: {
   id: string;
   usage: UsageLike | NormalizedUsage;
   reserveOutput?: number;
+  catalog?: ModelCatalog;
 }): number | undefined {
-  const rc = remainingContext({
-    modelId: args.id,
+  const catalog = args.catalog ?? defaultCatalog;
+  return _tokensRemaining({
+    id: args.id,
     usage: args.usage,
     reserveOutput: args.reserveOutput,
+    catalog,
   });
-  return rc.remainingCombined ?? rc.remainingInput;
 }
 
 /**
- * Return total estimated USD cost from usage if pricing hints are available.
+ * @deprecated Prefer getTokenCosts/getUsageData
  */
 export function costFromUsage(args: {
   id: string;
   usage: UsageLike | NormalizedUsage;
+  catalog?: ModelCatalog;
 }): number | undefined {
-  const c = estimateCost({ modelId: args.id, usage: args.usage });
-  return c.totalUSD;
+  const catalog = args.catalog ?? defaultCatalog;
+  return _costFromUsage({ id: args.id, usage: args.usage, catalog });
 }

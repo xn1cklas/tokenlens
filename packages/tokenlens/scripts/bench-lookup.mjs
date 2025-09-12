@@ -6,11 +6,12 @@
 //   node scripts/bench-lookup.mjs                         # default id, 500k iters
 //   node scripts/bench-lookup.mjs "gpt-4o" 1000000       # alias example
 //   node scripts/bench-lookup.mjs "openai:gpt-4o" 750000 # canonical id example
-import { performance } from "node:perf_hooks";
-import { resolveModel, getModelRaw, MODEL_IDS } from "../dist/registry.js";
+
 import fs from "node:fs";
 import path from "node:path";
+import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
+import { getModelRaw, MODEL_IDS, resolveModel } from "../dist/registry.js";
 
 const cli = process.argv.slice(2);
 let iterations = 5000;
@@ -45,7 +46,7 @@ function fmt(num) {
   return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
-function bench(label, fn, iters) {
+function bench(_label, fn, iters) {
   // Warm-up (JIT + caches)
   const warmup = Math.min(50_000, Math.max(5_000, Math.floor(iters * 0.05)));
   let sink = 0;

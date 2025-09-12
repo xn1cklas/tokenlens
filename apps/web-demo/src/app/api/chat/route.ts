@@ -1,10 +1,10 @@
+import type { LanguageModelUsage, UIMessage } from "ai";
 import {
-  streamText,
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
+  streamText,
 } from "ai";
-import type { UIMessage, LanguageModelUsage } from "ai";
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 

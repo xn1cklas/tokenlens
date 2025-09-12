@@ -1,0 +1,106 @@
+export const deepinfraModels = {
+  id: "deepinfra",
+  name: "Deep Infra",
+  npm: "@ai-sdk/deepinfra",
+  doc: "https://deepinfra.com/models",
+  env: ["DEEPINFRA_API_KEY"],
+  models: {
+    "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo": {
+      id: "Qwen/Qwen3-Coder-480B-A35B-Instruct-Turbo",
+      name: "Qwen3 Coder 480B A35B Instruct Turbo",
+      attachment: false,
+      reasoning: false,
+      temperature: true,
+      tool_call: true,
+      knowledge: "2025-04",
+      release_date: "2025-07-23",
+      last_updated: "2025-07-23",
+      modalities: {
+        input: ["text"],
+        output: ["text"],
+      },
+      open_weights: true,
+      cost: {
+        input: 0.3,
+        output: 1.2,
+      },
+      limit: {
+        context: 262144,
+        output: 66536,
+      },
+    },
+    "Qwen/Qwen3-Coder-480B-A35B-Instruct": {
+      id: "Qwen/Qwen3-Coder-480B-A35B-Instruct",
+      name: "Qwen3 Coder 480B A35B Instruct",
+      attachment: false,
+      reasoning: false,
+      temperature: true,
+      tool_call: true,
+      knowledge: "2025-04",
+      release_date: "2025-07-23",
+      last_updated: "2025-07-23",
+      modalities: {
+        input: ["text"],
+        output: ["text"],
+      },
+      open_weights: true,
+      cost: {
+        input: 0.4,
+        output: 1.6,
+      },
+      limit: {
+        context: 262144,
+        output: 66536,
+      },
+    },
+    "zai-org/GLM-4.5": {
+      id: "zai-org/GLM-4.5",
+      name: "GLM-4.5",
+      attachment: false,
+      reasoning: false,
+      temperature: true,
+      tool_call: true,
+      knowledge: "2025-04",
+      release_date: "2025-07-28",
+      last_updated: "2025-07-28",
+      modalities: {
+        input: ["text"],
+        output: ["text"],
+      },
+      open_weights: true,
+      cost: {
+        input: 0.6,
+        output: 2.2,
+      },
+      limit: {
+        context: 131072,
+        output: 98304,
+      },
+    },
+    "moonshotai/Kimi-K2-Instruct": {
+      id: "moonshotai/Kimi-K2-Instruct",
+      name: "Kimi K2",
+      attachment: false,
+      reasoning: false,
+      temperature: true,
+      tool_call: true,
+      knowledge: "2024-10",
+      release_date: "2025-07-11",
+      last_updated: "2025-07-11",
+      modalities: {
+        input: ["text"],
+        output: ["text"],
+      },
+      open_weights: true,
+      cost: {
+        input: 0.5,
+        output: 2,
+      },
+      limit: {
+        context: 131072,
+        output: 32768,
+      },
+    },
+  },
+} as const;
+export default deepinfraModels;

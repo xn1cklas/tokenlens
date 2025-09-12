@@ -1,14 +1,13 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
-  MODEL_IDS,
-  models,
-  aliases,
-  resolveModel,
+  assertModelId,
   getModelRaw,
   isModelId,
-  assertModelId,
   listModels,
+  MODEL_IDS,
+  models,
+  resolveModel,
 } from "../dist/registry.js";
 
 describe("registry basics", () => {

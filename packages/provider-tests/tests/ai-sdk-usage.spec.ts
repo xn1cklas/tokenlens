@@ -1,16 +1,16 @@
-import { describe, it, expect } from "vitest";
+import type { LanguageModelV2Usage as VercelUsage } from "@ai-sdk/provider";
 import {
-  normalizeUsage,
   breakdownTokens,
-  remainingContext,
-  getContextWindow,
-  fitsContext,
   estimateCost,
+  fitsContext,
+  getContextWindow,
   modelMeta,
+  normalizeUsage,
   percentOfContextUsed,
+  remainingContext,
   tokensRemaining,
 } from "tokenlens";
-import type { LanguageModelV2Usage as VercelUsage } from "@ai-sdk/provider";
+import { describe, expect, it } from "vitest";
 
 // The AI SDK's LanguageModelV2Usage shape as used by generateText/stream APIs.
 // We don't import the type to avoid type-only dependency churn; we mirror the fields.
@@ -134,7 +134,7 @@ describe("Helpers end-to-end with realistic values", () => {
       usage,
       reserveOutput: 256,
     });
-    expect(meta.id).toBe(modelId);
+    expect(meta?.id).toBe(modelId);
     expect(percent).toBeGreaterThan(0);
     expect(remaining).toBeGreaterThan(0);
   });
