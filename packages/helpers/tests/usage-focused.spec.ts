@@ -22,7 +22,7 @@ describe("focused helpers", () => {
   it("resolves provider/model and dot versioning for context", () => {
     const ctx = getContext({
       modelId: "anthropic/claude-3.5-haiku",
-      providers: catalog as any,
+      providers: catalog,
     });
     expect(ctx.combinedMax).toBe(200000);
     expect(ctx.totalMax).toBe(200000);
@@ -31,7 +31,7 @@ describe("focused helpers", () => {
   it("accepts providerless id with dot versioning when catalog is provided", () => {
     const ctx = getContext({
       modelId: "claude-3.5-haiku",
-      providers: catalog as any,
+      providers: catalog,
     });
     expect(ctx.combinedMax).toBe(200000);
     expect(ctx.totalMax).toBe(200000);
@@ -41,7 +41,7 @@ describe("focused helpers", () => {
     const cost = getTokenCosts({
       modelId: "claude-3.5-haiku",
       usage: { input_tokens: 1_000_000, output_tokens: 1_000_000 },
-      providers: catalog as any,
+      providers: catalog,
     });
     expect(cost.totalUSD).toBeCloseTo(4.0, 6);
   });
@@ -50,7 +50,7 @@ describe("focused helpers", () => {
     const cost = getTokenCosts({
       modelId: "anthropic/claude-3.5-haiku",
       usage: { input_tokens: 1_000_000, output_tokens: 1_000_000 },
-      providers: catalog as any,
+      providers: catalog,
     });
     // 1.0 + 3.0 per 1M tokens
     expect(cost.totalUSD).toBeCloseTo(4.0, 6);
@@ -60,7 +60,7 @@ describe("focused helpers", () => {
     const res = getUsage({
       modelId: "anthropic/claude-3.5-haiku",
       usage: { input_tokens: 1_000_000, output_tokens: 1_000_000 },
-      providers: catalog as any,
+      providers: catalog,
     });
     expect(res.context?.combinedMax).toBe(200000);
     expect(res.costUSD?.totalUSD).toBeCloseTo(4.0, 6);

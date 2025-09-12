@@ -1,6 +1,6 @@
 {
   "name": "@tokenlens/core",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0-beta.1",
   "private": false,
   "description": "Core types and registry utilities for TokenLens (model metadata).",
   "type": "module",
@@ -11,6 +11,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./id": {
+      "types": "./dist/id.d.ts",
+      "default": "./dist/id.js"
     },
     "./registry": {
       "types": "./dist/registry.d.ts",

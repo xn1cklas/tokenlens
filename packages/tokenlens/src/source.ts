@@ -1,5 +1,5 @@
-import { getModels } from "@tokenlens/models";
 import type { ModelCatalog } from "@tokenlens/core";
+import { getModels } from "@tokenlens/models";
 
 /**
  * Default static catalog built from `@tokenlens/models` (models.dev-compatible shape).

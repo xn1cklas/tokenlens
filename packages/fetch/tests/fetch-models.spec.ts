@@ -1,6 +1,6 @@
+import type { ModelCatalog } from "@tokenlens/core";
 import { describe, expect, it } from "vitest";
 import type { FetchLike } from "../src/index.ts";
-import type { ModelCatalog } from "@tokenlens/core";
 import { fetchModels } from "../src/index.ts";
 
 const mockCatalog = {

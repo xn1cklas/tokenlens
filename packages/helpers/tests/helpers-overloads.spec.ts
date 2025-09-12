@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { getContext, getTokenCosts, getUsage } from "../src/context.js";
 
 const catalog = {
@@ -31,10 +31,7 @@ const catalog = {
 
 describe("helpers overloads: getContext", () => {
   it("supports object form", () => {
-    const ctx = getContext({
-      modelId: "prov/basic",
-      providers: catalog as any,
-    });
+    const ctx = getContext({ modelId: "prov/basic", providers: catalog });
     expect(ctx.combinedMax).toBe(2000);
     expect(ctx.inputMax).toBe(1500);
     expect(ctx.outputMax).toBe(500);
@@ -46,7 +43,7 @@ describe("helpers overloads: getContext", () => {
   });
 
   it("supports positional form", () => {
-    const ctx = getContext("prov/basic", catalog as any);
+    const ctx = getContext("prov/basic", catalog);
     expect(ctx.combinedMax).toBe(2000);
     expect(ctx.totalMax).toBe(2000);
   });
@@ -57,7 +54,7 @@ describe("helpers overloads: getTokenCosts", () => {
     const cost = getTokenCosts({
       modelId: "prov/basic",
       usage: { input_tokens: 1_000_000, output_tokens: 1_000_000 },
-      providers: catalog as any,
+      providers: catalog,
     });
     // 1.0 + 3.0 per 1M tokens
     expect(cost.inputUSD).toBeCloseTo(1.0, 6);
@@ -77,8 +74,8 @@ describe("helpers overloads: getTokenCosts", () => {
         reasoningTokens: 100_000,
         cacheReads: 200_000,
         cacheWrites: 300_000,
-      } as any,
-      catalog as any,
+      },
+      catalog,
     );
     // Per-million pricing: input 1.0, output 3.0, reasoning 10.0, reads 0.5, writes 0.25
     expect(cost.inputUSD).toBeCloseTo(0.5, 6);
@@ -99,7 +96,7 @@ describe("helpers overloads: getUsage", () => {
     const res = getUsage({
       modelId: "prov/basic",
       usage: { input_tokens: 1_000_000, output_tokens: 1_000_000 },
-      providers: catalog as any,
+      providers: catalog,
     });
     expect(res.context?.combinedMax).toBe(2000);
     expect(res.costUSD?.totalUSD).toBeCloseTo(4.0, 6);
@@ -109,7 +106,7 @@ describe("helpers overloads: getUsage", () => {
     const res = getUsage(
       "prov/priced",
       { input_tokens: 1_000_000, output_tokens: 0 },
-      catalog as any,
+      catalog,
     );
     expect(res.context?.combinedMax).toBe(100000);
     expect(res.costUSD?.inputUSD).toBeCloseTo(1.0, 6);

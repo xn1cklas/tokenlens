@@ -6,6 +6,7 @@ import type {
   TokenBreakdown,
   UsageLike,
 } from "@tokenlens/core";
+import { toModelId } from "@tokenlens/core/id";
 
 /**
  * Return the raw context window caps for a model id (canonical or alias).
@@ -361,19 +362,6 @@ export type UsageSummary = {
   costUSD?: ReturnType<typeof estimateCost>;
   percentUsed?: number;
 };
-
-/**
- * Convert gateway-style ids (e.g. "provider/model") into canonical
- * TokenLens ids ("provider:model"). If already canonical, returns input.
- */
-/** @deprecated Internal normalization is automatic; avoid direct use. */
-export function toModelId(gatewayId?: string) {
-  if (!gatewayId) return undefined as undefined;
-  const i = gatewayId.indexOf("/");
-  return i > 0
-    ? `${gatewayId.slice(0, i)}:${gatewayId.slice(i + 1)}`
-    : gatewayId;
-}
 
 /**
  * Pure aggregator: summarize usage, cost, and context.

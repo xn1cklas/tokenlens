@@ -1,5 +1,5 @@
-import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
-import { resolve, join, dirname } from "node:path";
+import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -88,7 +88,7 @@ function syncPackageHeaders() {
 
     try {
       const pkgJson = JSON.parse(readFileSync(pkgJsonPath, "utf8"));
-      let readme = readFileSync(readmePath, "utf8");
+      const readme = readFileSync(readmePath, "utf8");
 
       // Normalize by removing any prior screenshot occurrences to keep a single copy at top
       const lines = readme
@@ -140,7 +140,7 @@ function syncPackageHeaders() {
       if (updated !== original) {
         writeFileSync(
           readmePath,
-          updated.endsWith("\n") ? updated : updated + "\n",
+          updated.endsWith("\n") ? updated : `${updated}\n`,
           "utf8",
         );
         console.log(`Synced header for ${fullName}`);

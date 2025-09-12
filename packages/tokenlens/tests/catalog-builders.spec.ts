@@ -21,18 +21,18 @@ describe("catalog builders", () => {
     ];
     const catalog: ModelCatalog = catalogFromModelArrays([arr]);
     expect(catalog.provA).toBeTruthy();
-    expect(catalog.provA.models["model1"]).toBeTruthy();
-    expect(catalog.provA.models["model1"].id).toBe("model1");
-    expect(catalog.provA.models["model1"].name).toBe("Model One");
-    expect(catalog.provA.models["model1"].limit?.context).toBe(1000);
-    expect(catalog.provA.models["model1"].limit?.output).toBe(200);
-    expect(catalog.provA.models["model1"].cost?.input).toBe(1);
-    expect(catalog.provA.models["model1"].cost?.output).toBe(2);
+    expect(catalog.provA.models.model1).toBeTruthy();
+    expect(catalog.provA.models.model1.id).toBe("model1");
+    expect(catalog.provA.models.model1.name).toBe("Model One");
+    expect(catalog.provA.models.model1.limit?.context).toBe(1000);
+    expect(catalog.provA.models.model1.limit?.output).toBe(200);
+    expect(catalog.provA.models.model1.cost?.input).toBe(1);
+    expect(catalog.provA.models.model1.cost?.output).toBe(2);
     expect(
-      catalog.provA.models["model1"].modalities?.input?.includes("text"),
+      catalog.provA.models.model1.modalities?.input?.includes("text"),
     ).toBe(true);
     expect(
-      catalog.provA.models["model1"].modalities?.output?.includes("text"),
+      catalog.provA.models.model1.modalities?.output?.includes("text"),
     ).toBe(true);
   });
 

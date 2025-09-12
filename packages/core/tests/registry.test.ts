@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-
 import { createRegistry } from "../src/registry.js";
 import type { Model } from "../src/types.js";
 
@@ -36,6 +35,7 @@ const {
   MODEL_IDS,
   models,
   resolveModel,
+  resolveModels,
   getModelRaw,
   isModelId,
   assertModelId,
@@ -78,6 +78,44 @@ describe("resolution and aliases", () => {
         expect(typeof m2?.id).toBe("string");
       }
     }
+  });
+
+  it("resolveModels returns multiple matches for shared aliases across providers", () => {
+    const localReg = createRegistry([
+      {
+        id: "anthropic:claude-3-5-sonnet-20240620",
+        provider: "anthropic",
+        status: "stable",
+        context: { combinedMax: 200000 },
+        aliases: ["claude-3-5-sonnet-20240620", "claude-3-5-sonnet"],
+        source: "test",
+      },
+      {
+        id: "openrouter:anthropic/claude-3-5-sonnet-20240620",
+        provider: "openrouter",
+        status: "stable",
+        context: { combinedMax: 200000 },
+        aliases: ["anthropic/claude-3-5-sonnet-20240620", "claude-3-5-sonnet"],
+        source: "test",
+      },
+    ] satisfies Model[]);
+
+    const { resolveModels: rm } = localReg;
+
+    const matches1 = rm("claude-3-5-sonnet");
+    expect(matches1.length).toBe(2);
+    expect(matches1.map((m) => m.id).sort()).toEqual(
+      [
+        "anthropic:claude-3-5-sonnet-20240620",
+        "openrouter:anthropic/claude-3-5-sonnet-20240620",
+      ].sort(),
+    );
+
+    const matches2 = rm("anthropic/claude-3.5-sonnet-20240620");
+    // Input should normalize via toModelId and return the Anthropic canonical
+    expect(matches2.map((m) => m.id)).toContain(
+      "anthropic:claude-3-5-sonnet-20240620",
+    );
   });
 
   it("vendorId or family-like aliases resolve (e.g., qwen3-coder-plus)", () => {

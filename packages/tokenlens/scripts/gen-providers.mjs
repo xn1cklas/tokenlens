@@ -1,5 +1,5 @@
-import { readdirSync, mkdirSync, writeFileSync, statSync } from "node:fs";
-import { resolve, dirname, join } from "node:path";
+import { mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -57,13 +57,12 @@ function main() {
 
   // Also generate an index for convenience (not exported by subpath)
   const indexPath = join(outDir, `index.ts`);
-  const index =
-    names
-      .map(
-        (n) =>
-          `export * as ${n.replace(/[^a-zA-Z0-9_]/g, "_")} from "./${n}.js";`,
-      )
-      .join("\n") + "\n";
+  const index = `${names
+    .map(
+      (n) =>
+        `export * as ${n.replace(/[^a-zA-Z0-9_]/g, "_")} from "./${n}.js";`,
+    )
+    .join("\n")}\n`;
   writeFileSync(indexPath, index, "utf8");
 }
 

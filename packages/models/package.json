@@ -1,6 +1,6 @@
 {
   "name": "@tokenlens/models",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0-beta.1",
   "private": false,
   "description": "Tree-shakeable static models.dev catalog split by provider for TokenLens.",
   "type": "module",
@@ -32,6 +32,8 @@
     "typecheck": "tsc --noEmit",
     "fetch:models": "node scripts/sync-models-dev.mjs",
     "sync:models": "pnpm run fetch:models && pnpm run build",
+    "test": "pnpm --filter @tokenlens/core run build && pnpm --filter @tokenlens/helpers run build && vitest",
+    "test:run": "pnpm --filter @tokenlens/core run build && pnpm --filter @tokenlens/helpers run build && vitest run",
     "prepublishOnly": "pnpm run build"
   },
   "repository": {
@@ -63,5 +65,9 @@
   "homepage": "https://github.com/xn1cklas/tokenlens/tree/HEAD/packages/models#readme",
   "dependencies": {
     "@tokenlens/core": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.1",
+    "typescript": "^5.9.2"
   }
 }

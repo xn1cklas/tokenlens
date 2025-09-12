@@ -24,6 +24,11 @@ Import patterns
 - Full arrays: `import { modelsDev } from '@tokenlens/models'` (legacy array of `Model`).
 - Build a catalog: `import { getModels } from '@tokenlens/models'` (models.dev‑compatible object).
 - Focused arrays: `import openai from '@tokenlens/models/providers/openai'` and create a tiny catalog via a helper.
+- Pick raw model entries: `import { getModelMeta } from '@tokenlens/models/api'`.
+  - First build providers: `const providers = getModels()`
+  - Single model: `getModelMeta(providers, 'openai', 'gpt-4o')`
+  - Multiple: `getModelMeta(providers, 'openai', ['gpt-4o', 'o3-mini'])`
+  - Whole provider: `getModelMeta(providers, 'openai')`
 
 With helpers (DI)
 ```

@@ -19,27 +19,25 @@ import {
   contextHealth as _contextHealth,
   estimateCost as _estimateCost,
   fitsContext as _fitsContext,
+  getContext as _getContext,
   getContextWindow as _getContextWindow,
+  getTokenCosts as _getTokenCosts,
+  getUsage as _getUsage,
   normalizeUsage as _normalizeUsage,
   percentRemaining as _percentRemaining,
   pickModelFor as _pickModelFor,
   remainingContext as _remainingContext,
   shouldCompact as _shouldCompact,
+  summarizeUsage as _summarizeUsage,
   tokensToCompact as _tokensToCompact,
 } from "@tokenlens/helpers/context";
 import { defaultCatalog } from "./source.js";
-import {
-  summarizeUsage as _summarizeUsage,
-  toModelId as _toModelId,
-  getTokenCosts as _getTokenCosts,
-  getContext as _getContext,
-  getUsage as _getUsage,
-} from "@tokenlens/helpers/context";
+
 export type {
-  UsageSummary,
   ContextData,
   TokenCosts,
   UsageData,
+  UsageSummary,
 } from "@tokenlens/helpers/context";
 
 /**
@@ -206,9 +204,7 @@ export function summarizeUsage(args: {
 }
 
 /** @deprecated Internal normalization is automatic; avoid direct use. */
-export function toModelId(gatewayId?: string) {
-  return _toModelId(gatewayId);
-}
+// Note: toModelId is exported from @tokenlens/core and re-exported in index.ts
 
 // Focused surface wrappers with default catalog fallback
 export function getTokenCosts(args: {
