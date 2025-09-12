@@ -26,6 +26,7 @@ import type {
   ProviderInfo,
   ProviderModel,
 } from "@tokenlens/core";
+export { getModelMeta } from "@tokenlens/core";
 
 export type FetchModelsOptions = {
   /** Filter by provider key (e.g. "deepseek", "xai", "vercel"). */

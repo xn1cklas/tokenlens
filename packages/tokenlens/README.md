@@ -107,6 +107,27 @@ try {
 ```
 
 
+Picking Model Metadata
+```ts
+import { getModels, getModelMeta } from 'tokenlens';
+
+// Build a static catalog (or use fetchModels() dynamically)
+const providers = getModels();
+
+// Provider info
+const openai = getModelMeta({ providers, provider: 'openai' });
+
+// Single model
+const gpto = getModelMeta({ providers, provider: 'openai', model: 'gpt-4o' });
+
+// Multiple models
+const picks = getModelMeta({ providers, provider: 'openai', models: ['gpt-4o', 'o3-mini'] });
+
+// Providerless id
+const viaId = getModelMeta({ providers, id: 'openai:gpt-4o' }); // or 'openai/gpt-4o'
+```
+
+
 Context Budgeting & Compaction
 ```ts
 import { remainingContext, shouldCompact, tokensToCompact, contextHealth } from 'tokenlens';

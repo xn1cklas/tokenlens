@@ -19,14 +19,19 @@ Install
 
 API
 - `fetchModels({ provider?, model?, fetch?, signal?, baseUrl? })`
+- `getModelMeta(providers, ...)` 
 
 Usage
 ```
-import { fetchModels, FetchModelsError } from '@tokenlens/fetch';
+import { fetchModels, getModelMeta, FetchModelsError } from '@tokenlens/fetch';
 
 const catalog = await fetchModels();
 const openai = await fetchModels({ provider: 'openai' });
 const gpt4o = await fetchModels({ provider: 'openai', model: 'gpt-4o' });
+
+// Pick raw metadata directly from the fetched catalog
+const prov = getModelMeta({ providers: catalog, provider: 'openai' });
+const model = getModelMeta({ providers: catalog, id: 'openai:gpt-4o' });
 
 try {
   await fetchModels();

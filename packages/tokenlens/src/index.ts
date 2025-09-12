@@ -7,6 +7,8 @@ export {
   sourceFromCatalog,
   sourceFromModels,
 } from "@tokenlens/helpers";
+// Convenience re-export: pick provider/model metadata from a catalog
+export { getModelMeta } from "@tokenlens/core";
 // Re-export helpers first, then override wrapper names below
 // Intentionally not re-exporting all of @tokenlens/helpers to avoid name conflicts.
 // The public surface is provided via our wrappers below and direct imports

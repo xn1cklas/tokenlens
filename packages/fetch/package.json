@@ -1,6 +1,6 @@
 {
   "name": "@tokenlens/fetch",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0-beta.1",
   "private": false,
   "description": "Typed client for models.dev to fetch model catalogs with friendly errors.",
   "type": "module",
