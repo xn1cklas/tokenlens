@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { fetchModels } from "../src/index.ts";
+import { describe, expect, it } from "vitest";
 import type { FetchLike } from "../src/index.ts";
+import { fetchModels } from "../src/index.ts";
 
 // Small mock catalog matching the models.dev API structure
 const mockCatalog = {
@@ -98,7 +98,7 @@ describe("fetchModels (tokenlens)", () => {
     expect(Array.isArray(res)).toBe(true);
     const arr = res as Array<{ provider: string; model: unknown }>;
     expect(arr.length).toBe(1);
-    expect(arr[0]!.provider).toBe("deepseek");
+    expect(arr[0]?.provider).toBe("deepseek");
   });
 
   it("propagates HTTP errors with details", async () => {
@@ -124,11 +124,11 @@ async function withMockedFetch<T>(
   mock: FetchLike,
   run: () => Promise<T>,
 ): Promise<T> {
-  const original = (globalThis as any).fetch;
-  (globalThis as any).fetch = mock;
+  const original = (globalThis as { fetch?: FetchLike }).fetch;
+  (globalThis as { fetch?: FetchLike }).fetch = mock;
   try {
     return await run();
   } finally {
-    (globalThis as any).fetch = original;
+    (globalThis as { fetch?: FetchLike }).fetch = original;
   }
 }

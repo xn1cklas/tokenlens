@@ -1,0 +1,106 @@
+export const perplexityModels = {
+  id: "perplexity",
+  name: "Perplexity",
+  npm: "@perplexity-ai/sdk",
+  doc: "https://docs.perplexity.ai",
+  env: ["PERPLEXITY_API_KEY"],
+  models: {
+    "sonar-pro": {
+      id: "sonar-pro",
+      name: "Sonar Pro",
+      attachment: true,
+      reasoning: false,
+      temperature: true,
+      tool_call: false,
+      knowledge: "2025-09-01",
+      release_date: "2024-01-01",
+      last_updated: "2025-09-01",
+      modalities: {
+        input: ["text", "image"],
+        output: ["text"],
+      },
+      open_weights: false,
+      cost: {
+        input: 3,
+        output: 15,
+      },
+      limit: {
+        context: 200000,
+        output: 8192,
+      },
+    },
+    sonar: {
+      id: "sonar",
+      name: "Sonar",
+      attachment: false,
+      reasoning: false,
+      temperature: true,
+      tool_call: false,
+      knowledge: "2025-09-01",
+      release_date: "2024-01-01",
+      last_updated: "2025-09-01",
+      modalities: {
+        input: ["text"],
+        output: ["text"],
+      },
+      open_weights: false,
+      cost: {
+        input: 1,
+        output: 1,
+      },
+      limit: {
+        context: 128000,
+        output: 4096,
+      },
+    },
+    "sonar-reasoning": {
+      id: "sonar-reasoning",
+      name: "Sonar Reasoning",
+      attachment: false,
+      reasoning: true,
+      temperature: true,
+      tool_call: false,
+      knowledge: "2025-09-01",
+      release_date: "2024-01-01",
+      last_updated: "2025-09-01",
+      modalities: {
+        input: ["text"],
+        output: ["text"],
+      },
+      open_weights: false,
+      cost: {
+        input: 1,
+        output: 5,
+      },
+      limit: {
+        context: 128000,
+        output: 4096,
+      },
+    },
+    "sonar-reasoning-pro": {
+      id: "sonar-reasoning-pro",
+      name: "Sonar Reasoning Pro",
+      attachment: true,
+      reasoning: true,
+      temperature: true,
+      tool_call: false,
+      knowledge: "2025-09-01",
+      release_date: "2024-01-01",
+      last_updated: "2025-09-01",
+      modalities: {
+        input: ["text", "image"],
+        output: ["text"],
+      },
+      open_weights: false,
+      cost: {
+        input: 2,
+        output: 8,
+      },
+      limit: {
+        context: 128000,
+        output: 4096,
+      },
+    },
+  },
+} as const;
+export default perplexityModels;

@@ -64,8 +64,8 @@ export const moonshotai_cnModels = {
       temperature: true,
       tool_call: true,
       knowledge: "2024-10",
-      release_date: "2025-07-14",
-      last_updated: "2025-07-14",
+      release_date: "2025-09-05",
+      last_updated: "2025-09-05",
       modalities: {
         input: ["text"],
         output: ["text"],
@@ -77,8 +77,8 @@ export const moonshotai_cnModels = {
         cache_read: 0.6,
       },
       limit: {
-        context: 131072,
-        output: 16384,
+        context: 262144,
+        output: 262144,
       },
     },
   },

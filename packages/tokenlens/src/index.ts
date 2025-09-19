@@ -1,58 +1,24 @@
-/**
- * Public API surface: types, registry helpers, context & cost utilities, and sugar helpers.
- */
-export type {
-  Model,
-  Provider,
-  Status,
-  UsageLike,
-  NormalizedUsage,
-  TokenBreakdown,
-} from "./types.js";
+// Aggregate public API by re-exporting scoped packages
+export * from "@tokenlens/core";
+export * from "@tokenlens/fetch";
+// Keep these utility builders available via tokenlens for back-compat
 export {
-  models,
-  aliases,
-  getModelRaw,
-  resolveModel,
-  listModels,
-  MODEL_IDS,
-  isModelId,
-  assertModelId,
-} from "./registry.js";
-export type { ModelId } from "./registry.js";
-export {
-  getContextWindow,
-  normalizeUsage,
-  breakdownTokens,
-  remainingContext,
-  fitsContext,
-  pickModelFor,
-  estimateCost,
-  consumedTokens,
-  percentRemaining,
-  shouldCompact,
-  contextHealth,
-  tokensToCompact,
-} from "./context.js";
-export {
-  modelMeta,
-  percentOfContextUsed,
-  tokensRemaining,
-  costFromUsage,
-} from "./simple.js";
-export {
-  sumUsage,
-  estimateConversationCost,
-  computeContextRot,
-  nextTurnBudget,
-} from "./conversation.js";
-export {
-  fetchModels,
-  FetchModelsError,
-} from "./async.js";
-export type {
-  FetchLike,
-  ModelsDevApi,
-  ModelsDevProvider,
-  ModelsDevModel,
-} from "./async.js";
+  selectStaticModels,
+  sourceFromCatalog,
+  sourceFromModels,
+} from "@tokenlens/helpers";
+// Convenience re-export: pick provider/model metadata from a catalog
+export { getModelMeta } from "@tokenlens/core";
+// Back-compat types previously exported from local ./types
+export type * from "./types.js";
+// Re-export helpers first, then override wrapper names below
+// Intentionally not re-exporting all of @tokenlens/helpers to avoid name conflicts.
+// The public surface is provided via our wrappers below and direct imports
+// from @tokenlens/helpers remain available to advanced users.
+// Back-compat wrappers that inject a default catalog when none is passed
+export * from "./context.js";
+export * from "./conversation.js";
+export * from "./simple.js";
+export * from "./source.js";
+// Back-compat: re-export registry helpers from built-in static catalog
+export * from "./registry.js";

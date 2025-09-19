@@ -1,0 +1,61 @@
+{
+  "tool": "bench-lookup",
+  "date": "2025-09-16T07:38:03.393Z",
+  "package": {
+    "name": "tokenlens",
+    "version": "1.3.0-canary.5"
+  },
+  "node": "v22.19.0",
+  "environment": {
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "dataset": {
+    "modelsCount": 669
+  },
+  "iterations": 5000,
+  "queries": [
+    {
+      "input": "openai:gpt-4o",
+      "canonical": "openai:gpt-4o",
+      "resolveModel": {
+        "ms": 0.11400000000000432,
+        "nsPerOp": 22.800000000000864,
+        "opsPerSec": 43859649.12280536
+      },
+      "getModelRaw": {
+        "ms": 0.03750000000000142,
+        "nsPerOp": 7.500000000000283,
+        "opsPerSec": 133333333.33332829
+      }
+    },
+    {
+      "input": "anthropic:claude-3-5-sonnet-20240620",
+      "canonical": "anthropic:claude-3-5-sonnet-20240620",
+      "resolveModel": {
+        "ms": 0.2947500000000005,
+        "nsPerOp": 58.9500000000001,
+        "opsPerSec": 16963528.413910065
+      },
+      "getModelRaw": {
+        "ms": 0.08962499999999807,
+        "nsPerOp": 17.924999999999613,
+        "opsPerSec": 55788005.57880176
+      }
+    },
+    {
+      "input": "alibaba:qwen3-coder-plus",
+      "canonical": "alibaba:qwen3-coder-plus",
+      "resolveModel": {
+        "ms": 0.3164999999999978,
+        "nsPerOp": 63.29999999999956,
+        "opsPerSec": 15797788.309636762
+      },
+      "getModelRaw": {
+        "ms": 0.08995900000000034,
+        "nsPerOp": 17.99180000000007,
+        "opsPerSec": 55580875.732277825
+      }
+    }
+  ]
+}

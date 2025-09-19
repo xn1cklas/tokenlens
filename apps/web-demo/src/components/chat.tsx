@@ -1,5 +1,18 @@
 "use client";
 
+import { useChat } from "@ai-sdk/react";
+import { getContextWindow, normalizeUsage } from "@tokenlens/helpers";
+import { catalogFromProviders } from "@tokenlens/models/api";
+import vercelModels from "@tokenlens/models/vercel";
+import type { LanguageModelUsage, UIMessage } from "ai";
+import { GlobeIcon, MicIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import { Message, MessageContent } from "@/components/ai-elements/message";
 import {
   PromptInput,
   PromptInputButton,
@@ -13,19 +26,8 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
-import { GlobeIcon, MicIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useChat } from "@ai-sdk/react";
-import type { LanguageModelUsage, UIMessage } from "ai";
-import {
-  Conversation,
-  ConversationContent,
-  ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
-import { Message, MessageContent } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
 import { Context } from "./ai-elements/context";
-import { getContextWindow, normalizeUsage } from "tokenlens";
 
 const models = [
   { id: "gpt-4o", name: "GPT-4o" },
@@ -62,11 +64,13 @@ const InputDemo = () => {
     },
   });
 
+  const catalog = useMemo(() => catalogFromProviders([vercelModels]), []);
+
   const contextMax = useMemo(() => {
-    // Resolve from selected model; stable across chunks.
-    const cw = getContextWindow(model);
+    // Resolve from selected model within the selected provider source.
+    const cw = getContextWindow(model, { catalog });
     return cw.combinedMax ?? cw.inputMax ?? 0;
-  }, [model]);
+  }, [model, catalog]);
 
   const usedTokens = useMemo(() => {
     // Prefer explicit usage data part captured via onData

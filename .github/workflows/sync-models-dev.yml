@@ -32,12 +32,15 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate models from models.dev
-        run: node packages/tokenlens/scripts/sync-models-dev.mjs
+        run: pnpm -w --filter @tokenlens/models run fetch:models
+
+      - name: Typecheck generated sources
+        run: pnpm -w --filter @tokenlens/models run typecheck
 
       - name: Check for changes
         id: diff
         run: |
-          if git diff --quiet --exit-code -- packages/tokenlens/src/models/models_dev.ts; then
+          if git diff --quiet --exit-code -- packages/models/src; then
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             echo "changed=true" >> $GITHUB_OUTPUT
@@ -48,12 +51,12 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore(tokenlens): sync models.dev registry"
-          title: "chore(tokenlens): sync models.dev registry"
+          commit-message: "chore(models): sync models.dev registry"
+          title: "chore(models): sync models.dev registry"
           body: |
-            Automated weekly sync of Tokenlens models from models.dev.
+            Automated weekly sync of @tokenlens/models from models.dev.
             
-            This PR was created by GitHub Actions after running `scripts/sync-models-dev.mjs`.
+            This PR was created by GitHub Actions after running `packages/models/scripts/sync-models-dev.mjs`.
           branch: chore/sync-models-dev
           delete-branch: true
           signoff: false
@@ -61,6 +64,4 @@ jobs:
           author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
           labels: chore, automated pr
           add-paths: |
-            packages/tokenlens/src/models/models_dev.ts
-
-
+            packages/models/src/**

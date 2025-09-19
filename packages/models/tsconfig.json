@@ -1,14 +1,15 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "target": "es2022",
     "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "moduleDetection": "force",
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "strict": true,
+    "noEmitOnError": true,
     "outDir": "dist",
     "rootDir": "src",
     "sourceMap": true,

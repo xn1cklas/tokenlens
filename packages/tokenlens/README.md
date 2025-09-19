@@ -10,7 +10,6 @@ Typed model metadata and context/cost utilities that help AI apps answer: Does t
 
 Works great with the Vercel AI SDK out of the box, and remains SDK‑agnostic.
 
-
 ![TokenLens overview](https://raw.githubusercontent.com/xn1cklas/tokenlens/HEAD/assets/tokenlens.png)
 
 Highlights
@@ -52,7 +51,6 @@ console.log({ meta, used, remaining, costUSD });
 Core Helpers
 - Registry: `resolveModel`, `listModels`, `MODEL_IDS`, `isModelId`, `assertModelId`
 - Usage: `normalizeUsage`, `breakdownTokens`, `consumedTokens`
- 
 - Context: `getContextWindow`, `remainingContext`, `percentRemaining`, `fitsContext`, `pickModelFor`
 - Cost: `estimateCost`
 - Compaction: `shouldCompact`, `contextHealth`, `tokensToCompact`
@@ -68,28 +66,28 @@ const u1 = normalizeUsage({ prompt_tokens: 1000, completion_tokens: 150 });
 const u2 = normalizeUsage({ inputTokens: 900, outputTokens: 200, totalTokens: 1100 });
 const b = breakdownTokens({ inputTokens: 900, cachedInputTokens: 300, reasoningTokens: 120 });
 ```
-
 Async Fetch (models.dev)
+
 ```ts
 import {
   fetchModels,
   FetchModelsError,
-  type ModelsDevApi,
-  type ModelsDevProvider,
-  type ModelsDevModel,
+  type ModelCatalog,
+  type ProviderInfo,
+  type ProviderModel,
 } from 'tokenlens';
 
 // 1) Fetch the full catalog (Node 18+ or modern browsers with global fetch)
-const catalog: ModelsDevApi = await fetchModels();
+const catalog: ModelCatalog = await fetchModels();
 
 // 2) Fetch by provider key (e.g. 'openai', 'anthropic', 'deepseek')
-const openai: ModelsDevProvider | undefined = await fetchModels({ provider: 'openai' });
+const openai: ProviderInfo | undefined = await fetchModels({ provider: 'openai' });
 
 // 3) Fetch a specific model within a provider
-const gpto: ModelsDevModel | undefined = await fetchModels({ provider: 'openai', model: 'gpt-4o' });
+const gpto: ProviderModel | undefined = await fetchModels({ provider: 'openai', model: 'gpt-4o' });
 
 // 4) Search for a model across providers when provider is omitted
-const matches: Array<{ provider: string; model: ModelsDevModel }> = await fetchModels({ model: 'gpt-4.1' });
+const matches: Array<{ provider: string; model: ProviderModel }> = await fetchModels({ model: 'gpt-4.1' });
 
 // 5) Error handling with typed error codes
 try {
@@ -108,15 +106,27 @@ try {
 // const catalog = await fetchModels({ fetch });
 ```
 
-```ts
-import { estimateCost } from 'tokenlens';
 
-const costs = estimateCost({
-  modelId: 'openai:o3',
-  usage: { inputTokens: 1000, outputTokens: 200, reasoningTokens: 500, cachedInputTokens: 300 },
-});
-// { inputUSD?, outputUSD?, reasoningUSD?, cacheReadUSD?, cacheWriteUSD?, totalUSD? }
+Picking Model Metadata
+```ts
+import { getModels, getModelMeta } from 'tokenlens';
+
+// Build a static catalog (or use fetchModels() dynamically)
+const providers = getModels();
+
+// Provider info
+const openai = getModelMeta({ providers, provider: 'openai' });
+
+// Single model
+const gpto = getModelMeta({ providers, provider: 'openai', model: 'gpt-4o' });
+
+// Multiple models
+const picks = getModelMeta({ providers, provider: 'openai', models: ['gpt-4o', 'o3-mini'] });
+
+// Providerless id
+const viaId = getModelMeta({ providers, id: 'openai:gpt-4o' }); // or 'openai/gpt-4o'
 ```
+
 
 Context Budgeting & Compaction
 ```ts

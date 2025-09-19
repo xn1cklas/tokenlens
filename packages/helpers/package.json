@@ -1,0 +1,71 @@
+{
+  "name": "@tokenlens/helpers",
+  "version": "1.3.0",
+  "private": false,
+  "description": "Helpers for context windows, usage normalization, compaction, and cost estimation.",
+  "type": "module",
+  "sideEffects": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./context": {
+      "types": "./dist/context.d.ts",
+      "default": "./dist/context.js"
+    },
+    "./simple": {
+      "types": "./dist/simple.d.ts",
+      "default": "./dist/simple.js"
+    },
+    "./conversation": {
+      "types": "./dist/conversation.d.ts",
+      "default": "./dist/conversation.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prebuild": "rm -rf dist",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "prepublishOnly": "pnpm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xn1cklas/tokenlens.git",
+    "directory": "packages/helpers"
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "helpers",
+    "context window",
+    "usage normalization",
+    "pricing",
+    "cost estimation",
+    "model registry"
+  ],
+  "author": "Nicklas Scharpff <hi@n1cklas.com> (https://n1cklas.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xn1cklas/tokenlens/issues"
+  },
+  "homepage": "https://github.com/xn1cklas/tokenlens/tree/HEAD/packages/helpers#readme",
+  "dependencies": {
+    "@tokenlens/core": "workspace:*",
+    "@tokenlens/fetch": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "vitest": "^1.6.1"
+  }
+}

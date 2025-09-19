@@ -6,52 +6,6 @@ export const fireworks_aiModels = {
   doc: "https://fireworks.ai/docs/",
   env: ["FIREWORKS_API_KEY"],
   models: {
-    "accounts/fireworks/gpt-oss-20b": {
-      id: "accounts/fireworks/gpt-oss-20b",
-      name: "GPT OSS 20B",
-      attachment: false,
-      reasoning: true,
-      temperature: true,
-      tool_call: true,
-      release_date: "2025-08-05",
-      last_updated: "2025-08-05",
-      modalities: {
-        input: ["text"],
-        output: ["text"],
-      },
-      open_weights: true,
-      cost: {
-        input: 0.05,
-        output: 0.2,
-      },
-      limit: {
-        context: 131072,
-        output: 32768,
-      },
-    },
-    "accounts/fireworks/gpt-oss-120b": {
-      id: "accounts/fireworks/gpt-oss-120b",
-      name: "GPT OSS 120B",
-      attachment: false,
-      reasoning: true,
-      temperature: true,
-      tool_call: true,
-      release_date: "2025-08-05",
-      last_updated: "2025-08-05",
-      modalities: {
-        input: ["text"],
-        output: ["text"],
-      },
-      open_weights: true,
-      cost: {
-        input: 0.15,
-        output: 0.6,
-      },
-      limit: {
-        context: 131072,
-        output: 32768,
-      },
-    },
     "accounts/fireworks/models/qwen3-235b-a22b": {
       id: "accounts/fireworks/models/qwen3-235b-a22b",
       name: "Qwen3 235B-A22B",
@@ -74,6 +28,29 @@ export const fireworks_aiModels = {
       limit: {
         context: 128000,
         output: 16384,
+      },
+    },
+    "accounts/fireworks/models/gpt-oss-20b": {
+      id: "accounts/fireworks/models/gpt-oss-20b",
+      name: "GPT OSS 20B",
+      attachment: false,
+      reasoning: true,
+      temperature: true,
+      tool_call: true,
+      release_date: "2025-08-05",
+      last_updated: "2025-08-05",
+      modalities: {
+        input: ["text"],
+        output: ["text"],
+      },
+      open_weights: true,
+      cost: {
+        input: 0.05,
+        output: 0.2,
+      },
+      limit: {
+        context: 131072,
+        output: 32768,
       },
     },
     "accounts/fireworks/models/deepseek-v3-0324": {
@@ -193,6 +170,29 @@ export const fireworks_aiModels = {
       limit: {
         context: 128000,
         output: 16384,
+      },
+    },
+    "accounts/fireworks/models/gpt-oss-120b": {
+      id: "accounts/fireworks/models/gpt-oss-120b",
+      name: "GPT OSS 120B",
+      attachment: false,
+      reasoning: true,
+      temperature: true,
+      tool_call: true,
+      release_date: "2025-08-05",
+      last_updated: "2025-08-05",
+      modalities: {
+        input: ["text"],
+        output: ["text"],
+      },
+      open_weights: true,
+      cost: {
+        input: 0.15,
+        output: 0.6,
+      },
+      limit: {
+        context: 131072,
+        output: 32768,
       },
     },
     "accounts/fireworks/models/glm-4p5": {

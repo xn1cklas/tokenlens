@@ -1,101 +1,59 @@
-import { modelsDev } from "./models/models_dev.js";
-import type { Model, Provider, Status } from "./types.js";
+import { createRegistry } from "@tokenlens/core/registry";
+import type { Model } from "@tokenlens/core/types";
+import { sourceFromCatalog } from "@tokenlens/helpers";
+import { getModels } from "@tokenlens/models";
+
+// Build a static registry from the generated catalog
+const catalog = getModels();
+const source = sourceFromCatalog(catalog);
+const all = source.list();
+const reg = createRegistry(all as unknown as readonly Model[]);
 
 /**
- * Canonical registry backing array ordered by declaration.
+ * @deprecated Use `@tokenlens/core/registry` with a catalog from
+ * `@tokenlens/models` or `@tokenlens/fetch` instead.
  */
-const all = [
-  // Sourced from models.dev
-  ...modelsDev,
-] as const;
-
-export type ModelId = (typeof all)[number]["id"];
-
+export const MODEL_IDS = reg.MODEL_IDS;
 /**
- * Readonly list of supported canonical model ids. Useful for autocomplete.
+ * @deprecated Use `@tokenlens/core/registry` created from your own catalog.
  */
-export const MODEL_IDS = all.map((m) => m.id) as readonly ModelId[];
-
+export const models = reg.models;
 /**
- * Map of canonical id → model metadata, frozen for safety.
+ * @deprecated Use `@tokenlens/core/registry` created from your own catalog.
  */
-export const models: Readonly<Record<ModelId, Model>> = Object.freeze(
-  Object.fromEntries(all.map((m) => [m.id, m as Model])) as Record<
-    ModelId,
-    Model
-  >,
-);
-
-// Build alias map. Aliases can be (1) provider-less canonical strings or (2) vendor ids.
-const aliasEntries: Array<[string, string]> = [];
-for (const m of all) {
-  const providerPrefix = m.provider + ":";
-  // Self entries for convenience (allow resolving raw vendor ids and family names)
-  if (m.vendorId) aliasEntries.push([m.vendorId.toLowerCase(), m.id]);
-  if (m.family) aliasEntries.push([m.family.toLowerCase(), m.id]);
-  // Strip provider prefix for a short alias (e.g. 'gpt-4o')
-  if (m.id.startsWith(providerPrefix)) {
-    aliasEntries.push([m.id.slice(providerPrefix.length).toLowerCase(), m.id]);
-  }
-  // Custom aliases
-  for (const a of m.aliases ?? []) aliasEntries.push([a.toLowerCase(), m.id]);
-}
-
-// If duplicates exist, keep the first in order of declaration
-const aliasMap = new Map<string, string>();
-for (const [k, v] of aliasEntries) if (!aliasMap.has(k)) aliasMap.set(k, v);
-
+export const aliases = reg.aliases;
 /**
- * Map of case-insensitive alias → canonical id. Includes provider-less ids,
- * vendor ids, family names, and any custom aliases declared on entries.
+ * @deprecated Use `@tokenlens/core/registry` created from your own catalog.
  */
-export const aliases: Readonly<Record<string, string>> = Object.freeze(
-  Object.fromEntries(aliasMap),
-);
-
+export const getModelRaw = reg.getModelRaw;
 /**
- * Get a model by its canonical id without alias resolution.
+ * @deprecated Use `@tokenlens/core/registry` created from your own catalog.
  */
-export function getModelRaw(id: string): Model | undefined {
-  return (models as Record<string, Model>)[id];
-}
-
+export const resolveModel = reg.resolveModel;
 /**
- * Resolve a model by canonical id or any known alias. Comparison is case-insensitive.
+ * @deprecated Prefer calling `isModelId` on a registry you create via
+ * `@tokenlens/core/registry`. Note: model ids are plain `string` in v1.3+;
+ * this function is a runtime guard only.
  */
-export function resolveModel(idOrAlias: string): Model | undefined {
-  const key = idOrAlias.trim().toLowerCase();
-  const canonical = (models as Record<string, Model>)[key] ? key : aliases[key];
-  return canonical ? (models as Record<string, Model>)[canonical] : undefined;
-}
-
+export const isModelId = (value: string): value is ModelId =>
+  (MODEL_IDS as readonly string[]).includes(value);
 /**
- * Type guard for canonical model ids.
+ * @deprecated Prefer `assertModelId` from a registry you create via
+ * `@tokenlens/core/registry`. Note: model ids are plain `string` in v1.3+;
+ * this is a runtime assertion only.
  */
-export function isModelId(value: string): value is ModelId {
-  return (MODEL_IDS as readonly string[]).includes(value);
-}
-
+export const assertModelId = (value: string): asserts value is ModelId => {
+  if (!isModelId(value)) throw new Error(`Unknown model id: ${value}`);
+};
 /**
- * Asserts a value is a `ModelId`, otherwise throws with a helpful error.
+ * @deprecated Use `@tokenlens/core/registry` created from your own catalog.
  */
-export function assertModelId(value: string): asserts value is ModelId {
-  if (!isModelId(value)) {
-    throw new Error(`Unknown model id: ${value}`);
-  }
-}
+export const listModels = reg.listModels;
 
+// Back-compat type: union of canonical model IDs
 /**
- * List models with optional filtering by provider and/or status.
+ * @deprecated Model ids are plain `string` in v1.3+. Migrate to `string`.
+ * If you need a literal union, derive it from your own curated catalog
+ * array in application code (not from `createRegistry`).
  */
-export function listModels(filter?: {
-  provider?: Provider;
-  status?: Status;
-}): Model[] {
-  const arr = Object.values(models);
-  return arr.filter((m) => {
-    if (filter?.provider && m.provider !== filter.provider) return false;
-    if (filter?.status && m.status !== filter.status) return false;
-    return true;
-  });
-}
+export type ModelId = (typeof MODEL_IDS)[number];

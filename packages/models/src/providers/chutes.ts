@@ -6,6 +6,29 @@ export const chutesModels = {
   doc: "https://llm.chutes.ai/v1/models",
   env: ["CHUTES_API_KEY"],
   models: {
+    "meituan-longcat/LongCat-Flash-Chat-FP8": {
+      id: "meituan-longcat/LongCat-Flash-Chat-FP8",
+      name: "LongCat Flash Chat FP8",
+      attachment: false,
+      reasoning: false,
+      temperature: true,
+      tool_call: true,
+      release_date: "2025-09-10",
+      last_updated: "2025-09-10",
+      modalities: {
+        input: ["text"],
+        output: ["text"],
+      },
+      open_weights: true,
+      cost: {
+        input: 0.25,
+        output: 1,
+      },
+      limit: {
+        context: 131072,
+        output: 131072,
+      },
+    },
     "deepseek-ai/DeepSeek-R1-Distill-Llama-70B": {
       id: "deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
       name: "DeepSeek R1 Distill Llama 70B",
@@ -475,6 +498,75 @@ export const chutesModels = {
       limit: {
         context: 75000,
         output: 75000,
+      },
+    },
+    "moonshotai/Kimi-VL-A3B-Thinking": {
+      id: "moonshotai/Kimi-VL-A3B-Thinking",
+      name: "Kimi VL A3B Thinking",
+      attachment: false,
+      reasoning: true,
+      temperature: true,
+      tool_call: true,
+      release_date: "2024-12-01",
+      last_updated: "2024-12-01",
+      modalities: {
+        input: ["text", "image"],
+        output: ["text"],
+      },
+      open_weights: false,
+      cost: {
+        input: 0.02499,
+        output: 0.100008,
+      },
+      limit: {
+        context: 131072,
+        output: 131072,
+      },
+    },
+    "moonshotai/Kimi-K2-Instruct-0905": {
+      id: "moonshotai/Kimi-K2-Instruct-0905",
+      name: "Kimi K2 Instruct 0905",
+      attachment: false,
+      reasoning: false,
+      temperature: true,
+      tool_call: true,
+      release_date: "2024-09-05",
+      last_updated: "2024-09-05",
+      modalities: {
+        input: ["text"],
+        output: ["text"],
+      },
+      open_weights: false,
+      cost: {
+        input: 0.296176,
+        output: 1.18528,
+      },
+      limit: {
+        context: 262144,
+        output: 262144,
+      },
+    },
+    "moonshotai/Kimi-Dev-72B": {
+      id: "moonshotai/Kimi-Dev-72B",
+      name: "Kimi Dev 72B",
+      attachment: false,
+      reasoning: false,
+      temperature: true,
+      tool_call: true,
+      release_date: "2024-12-01",
+      last_updated: "2024-12-01",
+      modalities: {
+        input: ["text"],
+        output: ["text"],
+      },
+      open_weights: false,
+      cost: {
+        input: 0.06664,
+        output: 0.266688,
+      },
+      limit: {
+        context: 131072,
+        output: 131072,
       },
     },
   },

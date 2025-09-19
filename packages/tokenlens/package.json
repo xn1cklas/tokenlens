@@ -1,6 +1,6 @@
 {
   "name": "tokenlens",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "A lightweight registry of LLM model information, like name and context sizes, for building AI-powered apps.",
   "files": [
     "dist"
@@ -13,20 +13,46 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./providers/*": {
+      "types": "./dist/exports/providers/*.d.ts",
+      "default": "./dist/exports/providers/*.js"
+    },
+    "./models": {
+      "types": "./dist/exports/models.d.ts",
+      "default": "./dist/exports/models.js"
+    },
+    "./helpers": {
+      "types": "./dist/exports/helpers.d.ts",
+      "default": "./dist/exports/helpers.js"
+    },
+    "./fetch": {
+      "types": "./dist/exports/fetch.d.ts",
+      "default": "./dist/exports/fetch.js"
+    },
+    "./core": {
+      "types": "./dist/exports/core.d.ts",
+      "default": "./dist/exports/core.js"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
+    "prebuild": "pnpm --filter @tokenlens/core run build && pnpm --filter @tokenlens/helpers run build && pnpm --filter @tokenlens/fetch run build && pnpm --filter @tokenlens/models run build && node scripts/gen-providers.mjs",
+    "gen:providers": "node scripts/gen-providers.mjs",
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
     "test": "pnpm run build && vitest",
     "test:run": "pnpm run build && vitest run",
-    "fetch:models": "node scripts/sync-models-dev.mjs",
-    "sync:models": "pnpm run fetch:models && pnpm run build",
     "bench:lookup": "pnpm run build && node scripts/bench-lookup.mjs",
-    "pre-release": "pnpm run bench:lookup && pnpm run test:run && pnpm run sync:models && pnpm run build"
+    "bench:lookup:run": "node scripts/bench-lookup.mjs",
+    "pre-release": "pnpm run bench:lookup && pnpm run test:run && pnpm run build"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/xn1cklas/tokenlens.git"
+    "url": "git+https://github.com/xn1cklas/tokenlens.git",
+    "directory": "packages/tokenlens"
   },
   "keywords": [
     "ai",
@@ -59,9 +85,15 @@
   "bugs": {
     "url": "https://github.com/xn1cklas/tokenlens/issues"
   },
-  "homepage": "https://github.com/xn1cklas/tokenlens#readme",
+  "homepage": "https://github.com/xn1cklas/tokenlens/tree/HEAD/packages/tokenlens#readme",
   "devDependencies": {
     "typescript": "^5.9.2",
     "vitest": "^1.6.1"
+  },
+  "dependencies": {
+    "@tokenlens/core": "workspace:*",
+    "@tokenlens/fetch": "workspace:*",
+    "@tokenlens/helpers": "workspace:*",
+    "@tokenlens/models": "workspace:*"
   }
 }

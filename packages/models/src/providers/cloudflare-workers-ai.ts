@@ -503,6 +503,29 @@ export const cloudflare_workers_aiModels = {
         output: 2048,
       },
     },
+    "phoenix-1.0": {
+      id: "phoenix-1.0",
+      name: "@cf/leonardo/phoenix-1.0",
+      attachment: false,
+      reasoning: false,
+      temperature: false,
+      tool_call: false,
+      release_date: "2025-08-25",
+      last_updated: "2025-08-25",
+      modalities: {
+        input: ["text"],
+        output: ["image"],
+      },
+      open_weights: false,
+      cost: {
+        input: 0.0058,
+        output: 0.0058,
+      },
+      limit: {
+        context: 0,
+        output: 0,
+      },
+    },
     "stable-diffusion-v1-5-inpainting": {
       id: "stable-diffusion-v1-5-inpainting",
       name: "@cf/runwayml/stable-diffusion-v1-5-inpainting",
@@ -894,6 +917,29 @@ export const cloudflare_workers_aiModels = {
         output: 0,
       },
     },
+    "lucid-origin": {
+      id: "lucid-origin",
+      name: "@cf/leonardo/lucid-origin",
+      attachment: false,
+      reasoning: false,
+      temperature: false,
+      tool_call: false,
+      release_date: "2025-08-25",
+      last_updated: "2025-08-05",
+      modalities: {
+        input: ["text"],
+        output: ["image"],
+      },
+      open_weights: false,
+      cost: {
+        input: 0.007,
+        output: 0.007,
+      },
+      limit: {
+        context: 0,
+        output: 0,
+      },
+    },
     "llama-3.1-8b-instruct": {
       id: "llama-3.1-8b-instruct",
       name: "@cf/meta/llama-3.1-8b-instruct",
@@ -1078,6 +1124,29 @@ export const cloudflare_workers_aiModels = {
         output: 4096,
       },
     },
+    "aura-1": {
+      id: "aura-1",
+      name: "@cf/deepgram/aura-1",
+      attachment: false,
+      reasoning: false,
+      temperature: false,
+      tool_call: false,
+      release_date: "2025-08-27",
+      last_updated: "2025-07-07",
+      modalities: {
+        input: ["text"],
+        output: ["audio"],
+      },
+      open_weights: true,
+      cost: {
+        input: 0.015,
+        output: 0.015,
+      },
+      limit: {
+        context: 0,
+        output: 0,
+      },
+    },
     "neural-chat-7b-v3-1-awq": {
       id: "neural-chat-7b-v3-1-awq",
       name: "@hf/thebloke/neural-chat-7b-v3-1-awq",
@@ -1145,6 +1214,29 @@ export const cloudflare_workers_aiModels = {
       limit: {
         context: 32000,
         output: 32000,
+      },
+    },
+    "nova-3": {
+      id: "nova-3",
+      name: "@cf/deepgram/nova-3",
+      attachment: false,
+      reasoning: false,
+      temperature: false,
+      tool_call: false,
+      release_date: "2025-06-05",
+      last_updated: "2025-07-08",
+      modalities: {
+        input: ["audio"],
+        output: ["text"],
+      },
+      open_weights: true,
+      cost: {
+        input: 0.0052,
+        output: 0.0052,
+      },
+      limit: {
+        context: 0,
+        output: 0,
       },
     },
     "llama-4-scout-17b-16e-instruct": {

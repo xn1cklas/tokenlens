@@ -335,7 +335,7 @@ export const syntheticModels = {
         output: 1.2,
       },
       limit: {
-        context: 128000,
+        context: 262144,
         output: 32768,
       },
     },
