@@ -9,6 +9,8 @@ export {
 } from "@tokenlens/helpers";
 // Convenience re-export: pick provider/model metadata from a catalog
 export { getModelMeta } from "@tokenlens/core";
+// Back-compat types previously exported from local ./types
+export type * from "./types.js";
 // Re-export helpers first, then override wrapper names below
 // Intentionally not re-exporting all of @tokenlens/helpers to avoid name conflicts.
 // The public surface is provided via our wrappers below and direct imports
@@ -18,3 +20,5 @@ export * from "./context.js";
 export * from "./conversation.js";
 export * from "./simple.js";
 export * from "./source.js";
+// Back-compat: re-export registry helpers from built-in static catalog
+export * from "./registry.js";
