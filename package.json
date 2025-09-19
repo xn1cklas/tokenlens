@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "dev": "turbo dev",
-    "build": "turbo run build",
+    "build": "turbo run build --filter=@tokenlens/* --filter=tokenlens",
     "typecheck": "turbo run typecheck --filter=@tokenlens/*",
     "test": "turbo run test --filter=@tokenlens/*",
     "test:run": "turbo run test:run --filter=@tokenlens/*",
@@ -20,9 +20,9 @@
     "sync:readme": "node scripts/sync-readmes.mjs root",
     "sync:pkg-readmes": "node scripts/sync-readmes.mjs packages",
     "sync:readmes": "node scripts/sync-readmes.mjs",
-    "pre-release": "pnpm --filter @tokenlens/models run sync:models && pnpm run sync:providers && pnpm format --fix && pnpm run build && pnpm run test:run && pnpm --filter tokenlens run bench:lookup",
+    "pre-release": "pnpm --filter @tokenlens/models run sync:models && pnpm --filter tokenlens run gen:providers && pnpm format --fix && pnpm run build && pnpm run test:run && pnpm --filter tokenlens run bench:lookup:run",
     "prerelease": "pnpm run pre-release",
-    "release": "pnpm -r --filter ./packages/** publish --access public"
+    "release": "pnpm -r publish --access public --filter ./packages/**"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.2",

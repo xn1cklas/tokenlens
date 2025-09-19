@@ -40,11 +40,13 @@
   },
   "scripts": {
     "prebuild": "pnpm --filter @tokenlens/core run build && pnpm --filter @tokenlens/helpers run build && pnpm --filter @tokenlens/fetch run build && pnpm --filter @tokenlens/models run build && node scripts/gen-providers.mjs",
+    "gen:providers": "node scripts/gen-providers.mjs",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "pnpm run build && vitest",
     "test:run": "pnpm run build && vitest run",
     "bench:lookup": "pnpm run build && node scripts/bench-lookup.mjs",
+    "bench:lookup:run": "node scripts/bench-lookup.mjs",
     "pre-release": "pnpm run bench:lookup && pnpm run test:run && pnpm run build"
   },
   "repository": {
