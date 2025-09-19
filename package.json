@@ -22,7 +22,8 @@
     "sync:readmes": "node scripts/sync-readmes.mjs",
     "pre-release": "pnpm --filter @tokenlens/models run sync:models && pnpm --filter tokenlens run gen:providers && pnpm format --fix && pnpm run build && pnpm run test:run && pnpm --filter tokenlens run bench:lookup:run",
     "prerelease": "pnpm run pre-release",
-    "release": "pnpm -r publish --access public --filter ./packages/**"
+    "release": "pnpm -r publish --access public --filter ./packages/**",
+    "release:force": "pnpm -r publish --access public --filter ./packages/** --no-git-checks"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.2",
