@@ -703,8 +703,8 @@ export const openrouterModels = {
       },
       open_weights: true,
       cost: {
-        input: 0.15,
-        output: 0.6,
+        input: 0.072,
+        output: 0.28,
       },
       limit: {
         context: 131072,
@@ -2117,6 +2117,30 @@ export const openrouterModels = {
       limit: {
         context: 262144,
         output: 131072,
+      },
+    },
+    "qwen/qwen3-next-80b-a3b-instruct": {
+      id: "qwen/qwen3-next-80b-a3b-instruct",
+      name: "Qwen3 Next 80B A3B Instruct",
+      attachment: false,
+      reasoning: false,
+      temperature: true,
+      tool_call: true,
+      knowledge: "2025-04",
+      release_date: "2025-09-11",
+      last_updated: "2025-09-11",
+      modalities: {
+        input: ["text"],
+        output: ["text"],
+      },
+      open_weights: true,
+      cost: {
+        input: 0.14,
+        output: 1.4,
+      },
+      limit: {
+        context: 262144,
+        output: 262144,
       },
     },
     "qwen/qwen3-14b:free": {

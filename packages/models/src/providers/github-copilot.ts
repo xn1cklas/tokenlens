@@ -22,8 +22,8 @@ export const github_copilotModels = {
       },
       open_weights: false,
       limit: {
-        context: 1048576,
-        output: 65536,
+        context: 128000,
+        output: 64000,
       },
     },
     "claude-sonnet-4": {
@@ -42,8 +42,8 @@ export const github_copilotModels = {
       },
       open_weights: false,
       limit: {
-        context: 200000,
-        output: 8192,
+        context: 128000,
+        output: 16000,
       },
     },
     "gpt-4.1": {
@@ -142,8 +142,8 @@ export const github_copilotModels = {
       },
       open_weights: false,
       limit: {
-        context: 200000,
-        output: 32000,
+        context: 80000,
+        output: 16000,
       },
     },
     "claude-3.7-sonnet-thought": {
@@ -163,7 +163,7 @@ export const github_copilotModels = {
       open_weights: false,
       limit: {
         context: 200000,
-        output: 8192,
+        output: 16384,
       },
     },
     "gpt-5": {
@@ -183,7 +183,7 @@ export const github_copilotModels = {
       open_weights: false,
       limit: {
         context: 128000,
-        output: 128000,
+        output: 64000,
       },
     },
     o3: {
@@ -223,7 +223,7 @@ export const github_copilotModels = {
       open_weights: false,
       limit: {
         context: 128000,
-        output: 128000,
+        output: 64000,
       },
     },
     "claude-3.7-sonnet": {
@@ -243,7 +243,7 @@ export const github_copilotModels = {
       open_weights: false,
       limit: {
         context: 200000,
-        output: 8192,
+        output: 16384,
       },
     },
     "claude-3.5-sonnet": {
@@ -262,7 +262,7 @@ export const github_copilotModels = {
       },
       open_weights: false,
       limit: {
-        context: 200000,
+        context: 90000,
         output: 8192,
       },
     },
