@@ -1,6 +1,6 @@
 {
   "name": "@tokenlens/models",
-  "version": "1.0.0-beta.2",
+  "version": "1.3.0",
   "private": false,
   "description": "Tree-shakeable static models.dev catalog split by provider for TokenLens.",
   "type": "module",

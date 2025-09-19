@@ -12,12 +12,16 @@
     "test": "turbo run test --filter=@tokenlens/*",
     "test:run": "turbo run test:run --filter=@tokenlens/*",
     "test:live": "turbo run test:live --filter=@tokenlens/*",
-    "format": "biome format",
+    "format": "biome format --write .",
+    "format:fix": "biome format --write --fix .",
     "lint": "biome check .",
     "sync:models": "turbo run sync:models --filter=@tokenlens/models",
+    "sync:providers": "pnpm --filter tokenlens run prebuild",
     "sync:readme": "node scripts/sync-readmes.mjs root",
     "sync:pkg-readmes": "node scripts/sync-readmes.mjs packages",
-    "sync:readmes": "node scripts/sync-readmes.mjs"
+    "sync:readmes": "node scripts/sync-readmes.mjs",
+    "pre-release": "pnpm --filter @tokenlens/models run sync:models && pnpm run sync:providers && pnpm format --fix && pnpm run build && pnpm run test:run && pnpm --filter tokenlens run bench:lookup",
+    "prerelease": "pnpm run pre-release"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.2",
