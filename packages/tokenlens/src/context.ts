@@ -12,6 +12,7 @@ import type {
   NormalizedUsage,
   TokenBreakdown,
   UsageLike,
+  ProviderInfo,
 } from "@tokenlens/core";
 import {
   breakdownTokens as _breakdownTokens,
@@ -210,35 +211,38 @@ export function summarizeUsage(args: {
 export function getTokenCosts(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined;
-  providers?: ModelCatalog;
+  providers?: ModelCatalog | ProviderInfo;
 }) {
   return _getTokenCosts({
     modelId: args.modelId,
     usage: args.usage,
-    providers: args.providers ?? defaultCatalog,
+    providers:
+      (args.providers as ModelCatalog | ProviderInfo) ?? defaultCatalog,
   });
 }
 
 export function getContext(args: {
   modelId: string;
-  providers?: ModelCatalog;
+  providers?: ModelCatalog | ProviderInfo;
 }) {
   return _getContext({
     modelId: args.modelId,
-    providers: args.providers ?? defaultCatalog,
+    providers:
+      (args.providers as ModelCatalog | ProviderInfo) ?? defaultCatalog,
   });
 }
 
 export function getUsage(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined;
-  providers?: ModelCatalog;
+  providers?: ModelCatalog | ProviderInfo;
   reserveOutput?: number;
 }) {
   return _getUsage({
     modelId: args.modelId,
     usage: args.usage,
-    providers: args.providers ?? defaultCatalog,
+    providers:
+      (args.providers as ModelCatalog | ProviderInfo) ?? defaultCatalog,
     reserveOutput: args.reserveOutput,
   });
 }

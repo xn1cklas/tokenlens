@@ -578,13 +578,13 @@ export function getContext(
 export function getUsage(args: {
   modelId: string;
   usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined;
-  providers: ModelCatalog;
+  providers: ModelCatalog | ProviderInfo;
   reserveOutput?: number;
 }): UsageData;
 export function getUsage(
   modelId: string,
   usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined,
-  providers: ModelCatalog,
+  providers: ModelCatalog | ProviderInfo,
   reserveOutput?: number,
 ): UsageData;
 export function getUsage(
@@ -592,17 +592,19 @@ export function getUsage(
     | {
         modelId: string;
         usage: UsageLike | NormalizedUsage | TokenBreakdown | undefined;
-        providers: ModelCatalog;
+        providers: ModelCatalog | ProviderInfo;
         reserveOutput?: number;
       }
     | string,
   b?: UsageLike | NormalizedUsage | TokenBreakdown | undefined,
-  c?: ModelCatalog,
+  c?: ModelCatalog | ProviderInfo,
   _d?: number,
 ): UsageData {
   const modelId = typeof a === "string" ? a : a.modelId;
   const usage = typeof a === "string" ? b : a.usage;
-  const providers = (typeof a === "string" ? c : a.providers) as ModelCatalog;
+  const providers = (typeof a === "string" ? c : a.providers) as
+    | ModelCatalog
+    | ProviderInfo;
   const context = getContext(modelId, providers);
   const costUSD = getTokenCosts(modelId, usage, providers);
   return { context, costUSD };
