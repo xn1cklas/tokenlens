@@ -1,9 +1,9 @@
 {
   "tool": "bench-lookup",
-  "date": "2025-09-16T07:38:03.393Z",
+  "date": "2025-09-19T09:28:23.631Z",
   "package": {
     "name": "tokenlens",
-    "version": "1.3.0-canary.5"
+    "version": "1.3.0"
   },
   "node": "v22.19.0",
   "environment": {
@@ -19,42 +19,42 @@
       "input": "openai:gpt-4o",
       "canonical": "openai:gpt-4o",
       "resolveModel": {
-        "ms": 0.11400000000000432,
-        "nsPerOp": 22.800000000000864,
-        "opsPerSec": 43859649.12280536
+        "ms": 0.10999999999999943,
+        "nsPerOp": 21.999999999999886,
+        "opsPerSec": 45454545.45454569
       },
       "getModelRaw": {
-        "ms": 0.03750000000000142,
-        "nsPerOp": 7.500000000000283,
-        "opsPerSec": 133333333.33332829
+        "ms": 0.039791999999998495,
+        "nsPerOp": 7.958399999999699,
+        "opsPerSec": 125653397.66787769
       }
     },
     {
       "input": "anthropic:claude-3-5-sonnet-20240620",
       "canonical": "anthropic:claude-3-5-sonnet-20240620",
       "resolveModel": {
-        "ms": 0.2947500000000005,
-        "nsPerOp": 58.9500000000001,
-        "opsPerSec": 16963528.413910065
+        "ms": 0.2954170000000005,
+        "nsPerOp": 59.08340000000009,
+        "opsPerSec": 16925227.728939064
       },
       "getModelRaw": {
-        "ms": 0.08962499999999807,
-        "nsPerOp": 17.924999999999613,
-        "opsPerSec": 55788005.57880176
+        "ms": 0.09208300000000236,
+        "nsPerOp": 18.41660000000047,
+        "opsPerSec": 54298839.090818845
       }
     },
     {
       "input": "alibaba:qwen3-coder-plus",
       "canonical": "alibaba:qwen3-coder-plus",
       "resolveModel": {
-        "ms": 0.3164999999999978,
-        "nsPerOp": 63.29999999999956,
-        "opsPerSec": 15797788.309636762
+        "ms": 0.25420799999999844,
+        "nsPerOp": 50.84159999999969,
+        "opsPerSec": 19668932.527693976
       },
       "getModelRaw": {
-        "ms": 0.08995900000000034,
-        "nsPerOp": 17.99180000000007,
-        "opsPerSec": 55580875.732277825
+        "ms": 0.0952920000000006,
+        "nsPerOp": 19.05840000000012,
+        "opsPerSec": 52470301.80917567
       }
     }
   ]
