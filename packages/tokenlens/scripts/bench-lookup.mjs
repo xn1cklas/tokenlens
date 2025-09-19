@@ -137,6 +137,22 @@ const payload = {
 };
 
 const versionTag = `v${pkg.version}`;
+// Skip creating a new benchmark if one already exists for this package version
+// and iteration count. This avoids dirtying the git tree repeatedly during
+// prerelease for the same version.
+const alreadyExists = fs
+  .readdirSync(outDir)
+  .some(
+    (f) =>
+      f.startsWith(`lookup_${versionTag}_`) && f.includes(`_n${iterations}`),
+  );
+if (alreadyExists) {
+  console.log(
+    `\nBenchmark already exists for ${pkg.name}@${pkg.version} (iterations=${iterations}). Skipping.`,
+  );
+  process.exit(0);
+}
+
 const base = `lookup_${versionTag}_${stamp}_n${iterations}`;
 const file = path.join(
   outDir,
