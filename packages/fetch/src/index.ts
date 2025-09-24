@@ -21,7 +21,14 @@ export type FetchLike = (
   text(): Promise<string>;
 }>;
 
-import type { Model, Providers } from "@tokenlens/core/dto";
+import type { SourceModel, SourceProviders } from "@tokenlens/core/dto";
+
+export type {
+  SourceId,
+  SourceModel,
+  SourceProvider,
+  SourceProviders,
+} from "@tokenlens/core/dto";
 
 // ---------------------------------------------
 // v2 API: unified data shape + scoped fetchers
@@ -42,11 +49,11 @@ function getFetch(options?: CommonOptions): FetchLike {
 }
 
 function filterCatalog(
-  catalog: Providers,
+  catalog: SourceProviders,
   provider?: string,
   model?: string,
-): Providers {
-  const out: Providers = {};
+): SourceProviders {
+  const out: SourceProviders = {};
   for (const [provKey, prov] of Object.entries(catalog)) {
     if (provider && provKey !== provider) continue;
     const models = prov.models || {};
@@ -64,7 +71,7 @@ function filterCatalog(
 
 export async function fetchModelsDev(
   options?: CommonOptions,
-): Promise<Providers> {
+): Promise<SourceProviders> {
   const f = getFetch(options);
   const res = await f("https://models.dev/api.json");
   if (!res.ok) {
@@ -79,16 +86,16 @@ export async function fetchModelsDev(
     doc?: string;
     docs?: string;
     env?: readonly string[];
-    models?: Record<string, Model>;
+    models?: Record<string, SourceModel>;
   };
   const raw = (await res.json()) as Record<string, ModelsDevProviderJson>;
   // Normalize to ProviderInfo minimally
-  const catalog: Providers = {};
+  const catalog: SourceProviders = {};
   const entries: Array<[string, ModelsDevProviderJson]> = Object.entries(
     (raw ?? {}) as Record<string, ModelsDevProviderJson>,
   );
   for (const [provKey, prov] of entries) {
-    const models = (prov.models ?? {}) as Record<string, Model>;
+    const models = (prov.models ?? {}) as Record<string, SourceModel>;
     catalog[provKey] = {
       id: prov.id ?? provKey,
       name: prov.name,
@@ -103,7 +110,7 @@ export async function fetchModelsDev(
   return filterCatalog(catalog, options?.provider, options?.model);
 }
 
-function mapOpenrouterModel(m: Record<string, unknown>): Model {
+function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
   const id = String(m.id ?? "");
   const arch = m.architecture as
     | {
@@ -152,7 +159,7 @@ function mapOpenrouterModel(m: Record<string, unknown>): Model {
     last_updated: m.last_updated as string | undefined,
     modalities,
     open_weights: (m.open_weights as boolean | undefined) ?? undefined,
-    cost: cost as Model["cost"],
+    cost: cost as SourceModel["cost"],
     limit:
       limit ??
       (context_length || outputCap
@@ -173,7 +180,7 @@ function mapOpenrouterModel(m: Record<string, unknown>): Model {
 
 export async function fetchOpenrouter(
   options?: CommonOptions,
-): Promise<Providers> {
+): Promise<SourceProviders> {
   const f = getFetch(options);
   const res = await f("https://openrouter.ai/api/v1/models");
   if (!res.ok) {
@@ -186,7 +193,7 @@ export async function fetchOpenrouter(
   };
   const list = Array.isArray(parsed.data) ? parsed.data : [];
 
-  const catalog: Providers = {};
+  const catalog: SourceProviders = {};
   for (const m of list) {
     const id = String(m.id ?? "");
     const provider = id.includes("/") ? id.split("/")[0] : "openrouter";

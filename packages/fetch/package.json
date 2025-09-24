@@ -22,8 +22,8 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "vitest",
-    "test:run": "vitest run",
+    "test": "vitest --config ../../vitest.config.ts --project fetch",
+    "test:run": "vitest run --config ../../vitest.config.ts --project fetch",
     "prepublishOnly": "pnpm run build"
   },
   "repository": {
@@ -51,7 +51,6 @@
     "@tokenlens/core": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.9.2",
-    "vitest": "^1.6.1"
+    "typescript": "^5.9.2"
   }
 }
