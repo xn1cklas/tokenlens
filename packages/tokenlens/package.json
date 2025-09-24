@@ -1,6 +1,6 @@
 {
   "name": "tokenlens",
-  "version": "1.3.1",
+  "version": "2.0.0-alpha.1",
   "description": "A lightweight registry of LLM model information, like name and context sizes, for building AI-powered apps.",
   "files": [
     "dist"
@@ -94,6 +94,7 @@
     "@tokenlens/core": "workspace:*",
     "@tokenlens/fetch": "workspace:*",
     "@tokenlens/helpers": "workspace:*",
-    "@tokenlens/models": "workspace:*"
+    "@tokenlens/models": "workspace:*",
+    "@tokenlens/tokenizer": "workspace:*"
   }
 }

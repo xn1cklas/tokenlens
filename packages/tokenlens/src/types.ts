@@ -1,20 +1,33 @@
-/**
- * Provider identifier. We accept any provider string so we can ingest the full
- * models.dev catalog without maintaining a hardcoded allowlist here.
- */
-export * from "@tokenlens/core/types";
+import type { Providers } from "@tokenlens/core/dto";
 
-// Back-compat type aliases (pre-scoped package names)
-// These mapped to the models.dev schema in v1.2.x
-/**
- * @deprecated Import `ProviderModel` from `@tokenlens/core` instead.
- */
-export type ModelsDevModel = import("@tokenlens/core").ProviderModel;
-/**
- * @deprecated Import `ProviderInfo` from `@tokenlens/core` instead.
- */
-export type ModelsDevProvider = import("@tokenlens/core").ProviderInfo;
-/**
- * @deprecated Import `ModelCatalog` from `@tokenlens/core` instead.
- */
-export type ModelsDevApi = import("@tokenlens/core").ModelCatalog;
+export type FetchLike = (
+  input: string,
+  init?: { signal?: unknown } & Record<string, unknown>,
+) => Promise<{
+  ok: boolean;
+  status: number;
+  statusText: string;
+  json(): Promise<unknown>;
+  text(): Promise<string>;
+}>;
+
+export type SourceId = "openrouter" | "models.dev" | "package";
+
+export type CacheEntry = { value: Providers; expiresAt: number };
+
+export type SourceLoader = (fetchImpl: FetchLike) => Promise<Providers>;
+
+export interface CacheAdapter {
+  get(key: string): Promise<CacheEntry | undefined> | CacheEntry | undefined;
+  set(key: string, entry: CacheEntry): Promise<void> | void;
+  delete?(key: string): Promise<void> | void;
+}
+
+export type TokenlensOptions = {
+  sources?: ReadonlyArray<SourceId>;
+  ttlMs?: number;
+  fetch?: FetchLike;
+  cache?: CacheAdapter;
+  loaders?: Partial<Record<SourceId, SourceLoader>>;
+  cacheKey?: string;
+};
