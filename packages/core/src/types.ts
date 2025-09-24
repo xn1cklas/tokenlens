@@ -2,7 +2,8 @@
  * Provider identifier. We accept any provider string so we can ingest the full
  * models.dev catalog without maintaining a hardcoded allowlist here.
  */
-export type Provider = string;
+export type ProviderId = string;
+export type Provider = ProviderId;
 
 /** Lifecycle status of a model. */
 export type Status = "stable" | "preview" | "deprecated" | "retired";
@@ -30,27 +31,8 @@ export type Modalities = {
   imageIn?: boolean;
 };
 
-/** Canonical model metadata entry */
-export type Model = {
-  id: string;
-  provider: Provider;
-  vendorId?: string;
-  displayName?: string;
-  family?: string;
-  status: Status;
-  context: ContextCaps;
-  modalities?: Modalities;
-  pricing?: Pricing;
-  pricingSource?: string;
-  aliases?: readonly string[];
-  releasedAt?: string;
-  source: string;
-  contextSource?: string;
-  verifiedAt?: string;
-};
-
 /** Usage shapes from various SDKs/providers (union of common fields). */
-export type UsageLike = Partial<
+export type Usage = Partial<
   Record<
     | "prompt_tokens"
     | "completion_tokens"
@@ -86,8 +68,8 @@ export type TokenBreakdown = NormalizedUsage & {
 // Shared catalog types (models.dev-compatible)
 // ------------------------------------------------------------
 
-/** models.dev provider model entry */
-export type ProviderModel = {
+/** Legacy per-model entry shape kept for backwards-compat in v2 dev phase. */
+export type ProviderModelLegacy = {
   id: string;
   name: string;
   attachment?: boolean;
@@ -113,19 +95,21 @@ export type ProviderModel = {
   };
 };
 
-/** models.dev provider info */
-export type ProviderInfo = {
+/** Canonical registry model entry used by registry.ts (v1 compatibility). */
+export type Model = {
   id: string;
-  name?: string;
-  api?: string;
-  npm?: string;
-  doc?: string;
-  env?: readonly string[];
-  models: Record<string, ProviderModel>;
+  provider: Provider;
+  vendorId?: string;
+  displayName?: string;
+  family?: string;
+  status: Status;
+  context: ContextCaps;
+  modalities?: Modalities;
+  pricing?: Pricing;
+  pricingSource?: string;
+  aliases?: readonly string[];
+  releasedAt?: string;
+  source: string;
+  contextSource?: string;
+  verifiedAt?: string;
 };
-
-/** Root catalog keyed by provider */
-export type ProvidersCatalog = Record<string, ProviderInfo>;
-
-// Canonical alias for the root catalog shape
-export type ModelCatalog = ProvidersCatalog;

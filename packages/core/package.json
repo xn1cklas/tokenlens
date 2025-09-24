@@ -12,6 +12,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./dto": {
+      "types": "./dist/dto.d.ts",
+      "default": "./dist/dto.js"
+    },
     "./id": {
       "types": "./dist/id.d.ts",
       "default": "./dist/id.js"
