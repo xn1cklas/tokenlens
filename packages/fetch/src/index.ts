@@ -21,153 +21,189 @@ export type FetchLike = (
   text(): Promise<string>;
 }>;
 
-import type {
-  ModelCatalog,
-  ProviderInfo,
-  ProviderModel,
-} from "@tokenlens/core";
-export { getModelMeta } from "@tokenlens/core";
+import type { Model, Providers } from "@tokenlens/core/dto";
 
-export type FetchModelsOptions = {
-  /** Filter by provider key (e.g. "deepseek", "xai", "vercel"). */
+// ---------------------------------------------
+// v2 API: unified data shape + scoped fetchers
+// ---------------------------------------------
+
+// DTO types are sourced from @tokenlens/core now
+
+type CommonOptions = {
   provider?: string;
-  /** Filter by model id within a provider (or search across providers when provider is omitted). */
   model?: string;
-  /** Inject a custom fetch implementation (e.g. from undici/cross-fetch). */
   fetch?: FetchLike;
-  /** Optional AbortSignal or similar. */
-  signal?: unknown;
-  /** Override base URL for testing. Defaults to https://models.dev/api.json */
-  baseUrl?: string;
 };
 
-/** Coded error for better ergonomics in consumers */
-export class FetchModelsError extends Error {
-  readonly code: "NETWORK" | "HTTP" | "PARSE" | "UNAVAILABLE";
-  readonly status?: number;
-  constructor(opts: {
-    code: FetchModelsError["code"];
-    message: string;
-    status?: number;
-  }) {
-    super(opts.message);
-    this.name = "FetchModelsError";
-    this.code = opts.code;
-    this.status = opts.status;
-  }
+function getFetch(options?: CommonOptions): FetchLike {
+  const f = options?.fetch ?? (globalThis as { fetch?: FetchLike }).fetch;
+  if (!f) throw new Error("No fetch implementation available");
+  return f;
 }
 
-// Overloads for strong return types depending on filters
-export async function fetchModels(): Promise<ModelCatalog>;
-export async function fetchModels(
-  provider: string,
-): Promise<ProviderInfo | undefined>;
-export async function fetchModels(opts: {
-  provider?: undefined;
-  model?: undefined;
-  fetch?: FetchLike;
-  signal?: unknown;
-  baseUrl?: string;
-}): Promise<ModelCatalog>;
-export async function fetchModels(opts: {
-  provider: string;
-  model?: undefined;
-  fetch?: FetchLike;
-  signal?: unknown;
-  baseUrl?: string;
-}): Promise<ProviderInfo | undefined>;
-export async function fetchModels(opts: {
-  provider?: undefined;
-  model: string;
-  fetch?: FetchLike;
-  signal?: unknown;
-  baseUrl?: string;
-}): Promise<Array<{ provider: string; model: ProviderModel }>>;
-export async function fetchModels(opts: {
-  provider: string;
-  model: string;
-  fetch?: FetchLike;
-  signal?: unknown;
-  baseUrl?: string;
-}): Promise<ProviderModel | undefined>;
-
-/**
- * Fetches the models.dev catalog and optionally filters results by provider and/or model.
- *
- * Error handling:
- * - Throws FetchModelsError with code: 'UNAVAILABLE' (no fetch present), 'NETWORK', 'HTTP', or 'PARSE'.
- */
-export async function fetchModels(
-  opts: FetchModelsOptions | string = {},
-): Promise<
-  | ModelCatalog
-  | ProviderInfo
-  | ProviderModel
-  | Array<{ provider: string; model: ProviderModel }>
-  | undefined
-> {
-  if (typeof opts === "string") {
-    return fetchModels({ provider: opts });
-  }
-  const url = opts.baseUrl ?? "https://models.dev/api.json";
-  const fetchImpl: FetchLike | undefined =
-    opts.fetch ?? (globalThis as { fetch?: FetchLike }).fetch;
-
-  if (typeof fetchImpl !== "function") {
-    throw new FetchModelsError({
-      code: "UNAVAILABLE",
-      message:
-        "No fetch implementation found. Pass a custom `fetch` in options or run on a platform with global fetch (Node 18+, modern browsers).",
-    });
-  }
-
-  let res: Awaited<ReturnType<FetchLike>>;
-  try {
-    res = await fetchImpl(
-      url,
-      opts.signal ? { signal: opts.signal } : undefined,
-    );
-  } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Unknown network error";
-    throw new FetchModelsError({ code: "NETWORK", message });
-  }
-
-  if (!res.ok) {
-    let body = "";
-    try {
-      body = await res.text();
-    } catch {}
-    const snippet = body
-      ? ` Body: ${body.slice(0, 256)}${body.length > 256 ? "…" : ""}`
-      : "";
-    throw new FetchModelsError({
-      code: "HTTP",
-      status: res.status,
-      message: `Failed to fetch models.dev API (${res.status} ${res.statusText}).${snippet}`,
-    });
-  }
-
-  let data: unknown;
-  try {
-    data = await res.json();
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Invalid JSON";
-    throw new FetchModelsError({ code: "PARSE", message });
-  }
-
-  const catalog = data as ModelCatalog;
-  const { provider, model } = opts;
-  if (!provider && !model) return catalog;
-  if (provider && !model) return catalog[provider];
-  if (provider && model) return catalog[provider]?.models?.[model];
-
-  // model only: search across providers
-  const matches: Array<{ provider: string; model: ProviderModel }> = [];
-  if (!model) return matches;
+function filterCatalog(
+  catalog: Providers,
+  provider?: string,
+  model?: string,
+): Providers {
+  const out: Providers = {};
   for (const [provKey, prov] of Object.entries(catalog)) {
-    const m = prov?.models?.[model];
-    if (m) matches.push({ provider: provKey, model: m });
+    if (provider && provKey !== provider) continue;
+    const models = prov.models || {};
+    const filteredModels = model
+      ? Object.fromEntries(
+          Object.entries(models).filter(([id]) => id.includes(model)),
+        )
+      : models;
+    if (Object.keys(filteredModels).length > 0 || !model) {
+      out[provKey] = { ...prov, models: filteredModels };
+    }
   }
-  return matches;
+  return out;
+}
+
+export async function fetchModelsDev(
+  options?: CommonOptions,
+): Promise<Providers> {
+  const f = getFetch(options);
+  const res = await f("https://models.dev/api.json");
+  if (!res.ok) {
+    throw new Error(
+      `Failed to fetch models.dev: ${res.status} ${res.statusText}`,
+    );
+  }
+  type ModelsDevProviderJson = {
+    id?: string;
+    name?: string;
+    api?: string;
+    doc?: string;
+    docs?: string;
+    env?: readonly string[];
+    models?: Record<string, Model>;
+  };
+  const raw = (await res.json()) as Record<string, ModelsDevProviderJson>;
+  // Normalize to ProviderInfo minimally
+  const catalog: Providers = {};
+  const entries: Array<[string, ModelsDevProviderJson]> = Object.entries(
+    (raw ?? {}) as Record<string, ModelsDevProviderJson>,
+  );
+  for (const [provKey, prov] of entries) {
+    const models = (prov.models ?? {}) as Record<string, Model>;
+    catalog[provKey] = {
+      id: prov.id ?? provKey,
+      name: prov.name,
+      api: prov.api,
+      doc: prov.doc ?? prov.docs,
+      env: prov.env,
+      source: "models.dev",
+      schemaVersion: 1,
+      models,
+    };
+  }
+  return filterCatalog(catalog, options?.provider, options?.model);
+}
+
+function mapOpenrouterModel(m: Record<string, unknown>): Model {
+  const id = String(m.id ?? "");
+  const arch = m.architecture as
+    | {
+        input_modalities?: string[];
+        output_modalities?: string[];
+        tokenizer?: string;
+        modality?: string;
+      }
+    | undefined;
+  const modalities = arch
+    ? ({ input: arch.input_modalities, output: arch.output_modalities } as {
+        input?: string[];
+        output?: string[];
+      })
+    : undefined;
+  const cost =
+    (m.pricing as Record<string, number> | undefined) ??
+    (m.cost as Record<string, number> | undefined);
+  const limit =
+    (m.limit as
+      | { context?: number; input?: number; output?: number }
+      | undefined) ?? undefined;
+  const context_length = (m as { context_length?: number }).context_length;
+  const topProvider = m.top_provider as
+    | {
+        max_completion_tokens?: number;
+        context_length?: number;
+        is_moderated?: boolean;
+      }
+    | undefined;
+  const outputCap = topProvider?.max_completion_tokens;
+  return {
+    id,
+    name: (m.name as string | undefined) ?? id,
+    description: m.description as string | undefined,
+    attachment: Boolean(m.attachment),
+    reasoning: Boolean(m.reasoning),
+    temperature:
+      (m.temperature as unknown) !== undefined
+        ? Boolean(m.temperature)
+        : undefined,
+    tool_call: Boolean(m.tool_call),
+    knowledge: m.knowledge as string | undefined,
+    created: (m as { created?: number }).created,
+    release_date: m.release_date as string | undefined,
+    last_updated: m.last_updated as string | undefined,
+    modalities,
+    open_weights: (m.open_weights as boolean | undefined) ?? undefined,
+    cost: cost as Model["cost"],
+    limit:
+      limit ??
+      (context_length || outputCap
+        ? { context: context_length, output: outputCap }
+        : undefined),
+    extras: {
+      canonical_slug: (m as { canonical_slug?: string }).canonical_slug,
+      hugging_face_id: (m as { hugging_face_id?: string }).hugging_face_id,
+      architecture: m.architecture,
+      top_provider: m.top_provider,
+      per_request_limits: (m as { per_request_limits?: unknown })
+        .per_request_limits,
+      supported_parameters: (m as { supported_parameters?: unknown })
+        .supported_parameters,
+    },
+  };
+}
+
+export async function fetchOpenrouter(
+  options?: CommonOptions,
+): Promise<Providers> {
+  const f = getFetch(options);
+  const res = await f("https://openrouter.ai/api/v1/models");
+  if (!res.ok) {
+    throw new Error(
+      `Failed to fetch OpenRouter: ${res.status} ${res.statusText}`,
+    );
+  }
+  const parsed = (await res.json()) as {
+    data?: Array<Record<string, unknown>>;
+  };
+  const list = Array.isArray(parsed.data) ? parsed.data : [];
+
+  const catalog: Providers = {};
+  for (const m of list) {
+    const id = String(m.id ?? "");
+    const provider = id.includes("/") ? id.split("/")[0] : "openrouter";
+    if (!catalog[provider]) {
+      catalog[provider] = {
+        id: provider,
+        name: provider,
+        api: "https://openrouter.ai/api/v1",
+        doc: "https://openrouter.ai/models",
+        env: ["OPENROUTER_API_KEY"],
+        source: "openrouter",
+        schemaVersion: 1,
+        models: {},
+      };
+    }
+    catalog[provider].models[id] = mapOpenrouterModel(m);
+  }
+
+  return filterCatalog(catalog, options?.provider, options?.model);
 }
