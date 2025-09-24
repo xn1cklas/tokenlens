@@ -1,8 +1,23 @@
 import "dotenv/config";
 
-import { generateText } from "ai";
+import { generateText, type ModelMessage } from "ai";
 import { createClient } from "tokenlens";
 import { openai } from "@ai-sdk/openai";
+
+const Messages: ModelMessage[] = [
+  {
+    role: "system",
+    content: "You are a concise assistant.",
+  },
+  {
+    role: "user",
+    content: "Explain why tracking token usage matters for AI-driven products.",
+  },
+  {
+    role: "assistant",
+    content: "Token usage helps teams understand cost, performance, and scaling needs.",
+  },
+];
 
 async function main(): Promise<void> {
   const apiKey = process.env.AI_SDK_OPENAI_API_KEY;
@@ -14,10 +29,17 @@ async function main(): Promise<void> {
 
   const tokenlens = createClient();
 
+  const tokenEstimate = await tokenlens.countTokens(
+    "openai",
+    "openai/gpt-5",
+    Messages,
+  );
+
+  console.log("Pre-estimated tokens for preset messages:", tokenEstimate);
+
   const response = await generateText({
     model: openai("gpt-5"),
-    system: "You are a helpful assistant.",
-    prompt: "Summarize why token usage tracking matters for AI apps.",
+    messages: Messages,
   });
 
   const { usage } = response;
