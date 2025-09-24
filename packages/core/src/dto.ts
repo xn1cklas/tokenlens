@@ -1,8 +1,8 @@
 // Unified DTO shared across live fetchers and static generators
 
-export type SourceId = "models.dev" | "openrouter";
+export type SourceId = "models.dev" | "openrouter" | "package";
 
-export type Model = {
+export type SourceModel = {
   id: string;
   name: string;
   description?: string;
@@ -35,7 +35,7 @@ export type Model = {
   extras?: Record<string, unknown>;
 };
 
-export type Provider = {
+export type SourceProvider = {
   id: string; // provider id (e.g., 'openai')
   name?: string;
   api?: string;
@@ -44,9 +44,9 @@ export type Provider = {
   env?: readonly string[];
   source?: SourceId;
   schemaVersion?: number;
-  models: Record<string, Model>; // key is canonical model id (e.g., 'openai/gpt-4o')
+  models: Record<string, SourceModel>; // key is canonical model id (e.g., 'openai/gpt-4o')
   // Source-specific additional fields to avoid losing information
   extras?: Record<string, unknown>;
 };
 
-export type Providers = Record<string, Provider>;
+export type SourceProviders = Record<string, SourceProvider>;

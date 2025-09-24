@@ -39,11 +39,15 @@ export type Usage = Partial<
     | "total_tokens"
     | "input_tokens"
     | "output_tokens"
+    | "cache_read_tokens"
+    | "cache_write_tokens"
     | "reasoning_tokens"
     | "promptTokens"
     | "completionTokens"
     | "totalTokens"
-    | "reasoningTokens",
+    | "reasoningTokens"
+    | "cacheReadTokens"
+    | "cacheWriteTokens",
     number
   >
 >;
@@ -68,39 +72,12 @@ export type TokenBreakdown = NormalizedUsage & {
 // Shared catalog types (models.dev-compatible)
 // ------------------------------------------------------------
 
-/** Legacy per-model entry shape kept for backwards-compat in v2 dev phase. */
-export type ProviderModelLegacy = {
-  id: string;
-  name: string;
-  attachment?: boolean;
-  reasoning?: boolean;
-  temperature?: boolean;
-  tool_call?: boolean;
-  knowledge?: string;
-  release_date?: string;
-  last_updated?: string;
-  modalities?: { input?: readonly string[]; output?: readonly string[] };
-  open_weights?: boolean;
-  cost?: {
-    input?: number;
-    output?: number;
-    reasoning?: number;
-    cache_read?: number;
-    cache_write?: number;
-  };
-  limit?: {
-    context?: number;
-    input?: number;
-    output?: number;
-  };
-};
-
-/** Canonical registry model entry used by registry.ts (v1 compatibility). */
+/** Model entry exported for downstream use, matches glossary definition. */
 export type Model = {
   id: string;
   provider: Provider;
   vendorId?: string;
-  displayName?: string;
+  name?: string;
   family?: string;
   status: Status;
   context: ContextCaps;
