@@ -46,6 +46,8 @@ export type Usage = Partial<
     | "completionTokens"
     | "totalTokens"
     | "reasoningTokens"
+    | "cacheReads"
+    | "cacheWrites"
     | "cacheReadTokens"
     | "cacheWriteTokens",
     number
