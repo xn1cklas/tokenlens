@@ -1,6 +1,6 @@
 {
   "name": "@tokenlens/tokenizer",
-  "version": "0.1.0",
+  "version": "2.0.0-alpha.1",
   "private": false,
   "description": "Tokenizer utilities for Tokenlens.",
   "type": "module",
@@ -28,12 +28,10 @@
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@tokenlens/core": "workspace:*"
-  },
-  "peerDependencies": {
-    "@dqbd/tiktoken": "^1.0.15",
-    "@anthropic-ai/tokenizer": "^0.2.0",
-    "llama-tokenizer-js": "^2.3.0"
+    "@anthropic-ai/tokenizer": "^0.0.4",
+    "@dqbd/tiktoken": "^1.0.22",
+    "@tokenlens/core": "workspace:*",
+    "llama-tokenizer-js": "^1.2.2"
   },
   "devDependencies": {
     "typescript": "^5.9.2",
