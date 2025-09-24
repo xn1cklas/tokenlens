@@ -1,0 +1,16 @@
+{
+  "name": "openai-sdk",
+  "private": true,
+  "scripts": {
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.2",
+    "openai": "^5.23.0",
+    "tokenlens": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "tsx": "^4.20.5"
+  }
+}
