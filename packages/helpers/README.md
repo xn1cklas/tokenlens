@@ -24,14 +24,6 @@ Focused Exports
 - Combined: `getUsage({ modelId, usage, providers, reserveOutput? })`
 - Types: `ContextData`, `TokenCosts`, `UsageData`
 
-Deprecated (use focused exports instead)
-- Context: `getContextWindow`, `remainingContext`, `percentRemaining`, `fitsContext`
-- Usage: `normalizeUsage`, `breakdownTokens`, `consumedTokens`
-- Cost: `estimateCost`
-- Compaction: `shouldCompact`, `contextHealth`, `tokensToCompact`
-- Conversation: `sumUsage`, `estimateConversationCost`, `computeContextRot`, `nextTurnBudget`
-- DI: `sourceFromModels`, `sourceFromCatalog`, `selectStaticModels`
-
 Usage
 ```
 import { fetchModels } from 'tokenlens';

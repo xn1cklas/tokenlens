@@ -1,4 +1,59 @@
-export * from "./context.js";
-export * from "./conversation.js";
-export * from "./simple.js";
-export * from "./source.js";
+import type { SourceModel } from "@tokenlens/core/dto";
+import type { Usage } from "@tokenlens/core/types";
+import { normalizeUsage, perMTokensToUnitCostUSD, round6 } from "./internal.js";
+
+// moved model resolution into @tokenlens/tokenlens core
+
+export type TokenCosts = {
+  inputTokenCostUSD: number;
+  outputTokenCostUSD: number;
+  reasoningTokenCostUSD?: number;
+  cacheReadTokenCostUSD?: number;
+  cacheWriteTokenCostUSD?: number;
+  totalTokenCostUSD: number;
+  ratesUsed: {
+    inputPerMTokens?: number;
+    outputPerMTokens?: number;
+    reasoningPerMTokens?: number;
+    cacheReadPerMTokens?: number;
+    cacheWritePerMTokens?: number;
+  };
+};
+
+export function computeTokenCostsForModel(args: {
+  model?: SourceModel;
+  usage: Usage;
+}): TokenCosts {
+  const { model, usage } = args;
+  const normalized = normalizeUsage(usage);
+  const cost = model?.cost ?? {};
+  const inputUSD = perMTokensToUnitCostUSD(normalized.input, cost.input);
+  const outputUSD = perMTokensToUnitCostUSD(normalized.output, cost.output);
+  const reasoningUSD = normalized.reasoningTokens
+    ? perMTokensToUnitCostUSD(normalized.reasoningTokens, cost.reasoning)
+    : 0;
+  const cacheReadUSD = normalized.cacheReads
+    ? perMTokensToUnitCostUSD(normalized.cacheReads, cost.cache_read)
+    : 0;
+  const cacheWriteUSD = normalized.cacheWrites
+    ? perMTokensToUnitCostUSD(normalized.cacheWrites, cost.cache_write)
+    : 0;
+  const total =
+    inputUSD + outputUSD + reasoningUSD + cacheReadUSD + cacheWriteUSD;
+
+  return {
+    inputTokenCostUSD: round6(inputUSD),
+    outputTokenCostUSD: round6(outputUSD),
+    reasoningTokenCostUSD: reasoningUSD ? round6(reasoningUSD) : undefined,
+    cacheReadTokenCostUSD: cacheReadUSD ? round6(cacheReadUSD) : undefined,
+    cacheWriteTokenCostUSD: cacheWriteUSD ? round6(cacheWriteUSD) : undefined,
+    totalTokenCostUSD: round6(total),
+    ratesUsed: {
+      inputPerMTokens: cost.input,
+      outputPerMTokens: cost.output,
+      reasoningPerMTokens: cost.reasoning,
+      cacheReadPerMTokens: cost.cache_read,
+      cacheWritePerMTokens: cost.cache_write,
+    },
+  };
+}
