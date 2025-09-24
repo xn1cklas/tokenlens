@@ -4,17 +4,16 @@
   "type": "module",
   "scripts": {
     "pretest": "pnpm -w --filter tokenlens build",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:live": "vitest run -t smoke",
+    "test": "vitest --config ../../vitest.config.ts --project provider-tests",
+    "test:run": "vitest run --config ../../vitest.config.ts --project provider-tests",
+    "test:live": "vitest run --config ../../vitest.config.ts --project provider-tests -t smoke",
     "bench": "tsx scripts/benchmark.ts"
   },
   "devDependencies": {
     "@ai-sdk/provider": "^2.0.0",
-    "@vitest/coverage-v8": "^1.6.0",
-    "ai": "^5.0.34",
-    "tsx": "^4.20.5",
-    "vitest": "^1.6.1"
+    "@vitest/coverage-v8": "^3.2.4",
+    "ai": "^5.0.51",
+    "tsx": "^4.20.5"
   },
   "dependencies": {
     "tokenlens": "workspace:*"

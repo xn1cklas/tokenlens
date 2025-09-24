@@ -2,18 +2,21 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
-  defaultCatalog,
-  estimateCost,
-  getContextWindow,
-  modelMeta,
-  percentOfContextUsed,
-  remainingContext,
-  tokensRemaining,
+  createClient,
+  type TokenCosts,
+  type SourceProviders,
+  type SourceModel,
 } from "tokenlens";
+
+type ScenarioUsage = {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens?: number;
+};
 
 type Scenario = {
   name: string;
-  usage: { input: number; output: number; total?: number };
+  usage: ScenarioUsage;
   reserveOutput?: number;
 };
 
@@ -23,91 +26,167 @@ function buildScenarios(maxTokens: number | undefined): Scenario[] {
   return [
     {
       name: "zero",
-      usage: { input: 0, output: 0, total: 0 },
+      usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
       reserveOutput: 256,
     },
     {
       name: "small",
-      usage: { input: 500, output: 100, total: 600 },
+      usage: { inputTokens: 500, outputTokens: 100, totalTokens: 600 },
       reserveOutput: 256,
     },
     {
       name: "medium",
-      usage: { input: 5_000, output: 1_000, total: 6_000 },
+      usage: { inputTokens: 5_000, outputTokens: 1_000, totalTokens: 6_000 },
       reserveOutput: 256,
     },
     {
       name: "near-limit",
-      usage: { input: Math.floor(near * 0.8), output: Math.floor(near * 0.2) },
+      usage: {
+        inputTokens: Math.floor(near * 0.8),
+        outputTokens: Math.floor(near * 0.2),
+      },
       reserveOutput: 256,
     },
     {
       name: "over-limit",
-      usage: { input: cap, output: 1_000, total: cap + 1_000 },
+      usage: {
+        inputTokens: cap,
+        outputTokens: 1_000,
+        totalTokens: cap + 1_000,
+      },
       reserveOutput: 256,
     },
   ];
 }
 
+function toUsagePayload(usage: ScenarioUsage) {
+  return {
+    input_tokens: usage.inputTokens,
+    output_tokens: usage.outputTokens,
+    total_tokens: usage.totalTokens,
+  };
+}
+
+function computeContextStats(args: {
+  contextLimit?: number;
+  inputLimit?: number;
+  outputLimit?: number;
+  usage: ScenarioUsage;
+  reserveOutput?: number;
+}) {
+  const { contextLimit, inputLimit, outputLimit, usage, reserveOutput } = args;
+  const total = usage.totalTokens ?? usage.inputTokens + usage.outputTokens;
+  const reserve = Math.max(0, reserveOutput ?? 0);
+
+  const remainingCombined =
+    contextLimit !== undefined ? Math.max(0, contextLimit - total) : undefined;
+  const remainingInput =
+    inputLimit !== undefined
+      ? Math.max(0, inputLimit - usage.inputTokens)
+      : undefined;
+  const remainingOutput =
+    outputLimit !== undefined
+      ? Math.max(0, outputLimit - usage.outputTokens)
+      : undefined;
+
+  const percentUsedRaw =
+    contextLimit !== undefined && contextLimit > 0
+      ? total / contextLimit
+      : inputLimit !== undefined && inputLimit > 0
+        ? usage.inputTokens / inputLimit
+        : outputLimit !== undefined && outputLimit > 0
+          ? usage.outputTokens / outputLimit
+          : 0;
+  const percentUsed = Number.isFinite(percentUsedRaw)
+    ? Math.min(Math.max(percentUsedRaw, 0), 1)
+    : 0;
+
+  const fitsContext = (() => {
+    if (contextLimit !== undefined) {
+      return total + reserve <= contextLimit;
+    }
+    if (inputLimit !== undefined) {
+      return usage.inputTokens + reserve <= inputLimit;
+    }
+    if (outputLimit !== undefined) {
+      return usage.outputTokens + reserve <= outputLimit;
+    }
+    return true;
+  })();
+
+  return {
+    remainingContext: {
+      remainingCombined,
+      remainingInput,
+      percentUsed: Number(percentUsed.toFixed(6)),
+    },
+    tokensRemaining: {
+      combined: remainingCombined,
+      input: remainingInput,
+      output: remainingOutput,
+    },
+    fitsContext,
+    totalTokens: total,
+  };
+}
+
 async function main() {
+  const tokenlens = createClient();
   const results: Array<Record<string, unknown>> = [];
 
-  for (const [providerKey, provider] of Object.entries(defaultCatalog)) {
-    const modelKeys = Object.keys(provider?.models ?? {});
-    for (const mid of modelKeys) {
-      const id = `${providerKey}:${mid}`;
-      const meta = modelMeta(id);
-      const caps = getContextWindow(id);
-      const scenarios = buildScenarios(meta?.maxTokens);
+  const providers: SourceProviders = await tokenlens.getProviders();
 
-      const scenarioResults = scenarios.map((s) => {
-        const rc = remainingContext({
-          modelId: id,
-          usage: s.usage,
-          reserveOutput: s.reserveOutput,
+  for (const [providerId, provider] of Object.entries(providers) as Array<
+    [string, SourceProviders[string]]
+  >) {
+    const models = provider?.models ?? {};
+    for (const [canonicalId, model] of Object.entries(models) as Array<
+      [string, SourceModel]
+    >) {
+      const limit = model?.limit ?? {};
+      const scenarios = buildScenarios(limit.context);
+
+      const scenarioResults: Array<Record<string, unknown>> = [];
+      for (const scenario of scenarios) {
+        const usagePayload = toUsagePayload(scenario.usage);
+        const cost: TokenCosts = await tokenlens.getTokenCosts({
+          modelId: canonicalId,
+          provider: providerId,
+          usage: usagePayload,
         });
-        const percent = percentOfContextUsed({
-          id,
-          usage: s.usage,
-          reserveOutput: s.reserveOutput,
+
+        const stats = computeContextStats({
+          contextLimit: limit.context,
+          inputLimit: limit.input,
+          outputLimit: limit.output,
+          usage: scenario.usage,
+          reserveOutput: scenario.reserveOutput,
         });
-        const remaining = tokensRemaining({
-          id,
-          usage: s.usage,
-          reserveOutput: s.reserveOutput,
-        });
-        const cost = estimateCost({ modelId: id, usage: s.usage });
-        const total = s.usage.total ?? s.usage.input + s.usage.output;
-        const fits = rc.model
-          ? total + Math.max(0, s.reserveOutput ?? 0) <=
-            (rc.model.context.combinedMax ??
-              rc.model.context.inputMax ??
-              Number.POSITIVE_INFINITY)
-          : false;
-        return {
-          name: s.name,
-          usage: s.usage,
-          reserveOutput: s.reserveOutput,
-          remainingContext: {
-            remainingCombined: rc.remainingCombined,
-            remainingInput: rc.remainingInput,
-            percentUsed: Number(percent.toFixed(6)),
-          },
-          tokensRemaining: remaining,
+
+        scenarioResults.push({
+          name: scenario.name,
+          usage: scenario.usage,
+          reserveOutput: scenario.reserveOutput,
+          remainingContext: stats.remainingContext,
+          tokensRemaining: stats.tokensRemaining,
           estimateCost: cost,
-          fitsContext: fits,
-        };
-      });
+          fitsContext: stats.fitsContext,
+        });
+      }
 
       results.push({
-        id: meta?.id ?? id,
-        provider: meta?.provider ?? providerKey,
-        status: meta?.status,
-        maxTokens: meta?.maxTokens,
-        pricePerTokenIn: meta?.pricePerTokenIn,
-        pricePerTokenOut: meta?.pricePerTokenOut,
-        source: meta?.source,
-        contextWindow: caps,
+        id: model?.id ?? canonicalId,
+        provider: providerId,
+        status: (model?.extras as Record<string, unknown> | undefined)?.status,
+        maxTokens: limit.context,
+        pricePerTokenIn: model?.cost?.input,
+        pricePerTokenOut: model?.cost?.output,
+        source: provider?.source,
+        contextWindow: {
+          combinedMax: limit.context,
+          inputMax: limit.input,
+          outputMax: limit.output,
+        },
         scenarios: scenarioResults,
       });
     }
