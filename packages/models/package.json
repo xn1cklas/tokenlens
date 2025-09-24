@@ -12,9 +12,13 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./*": {
-      "types": "./dist/providers/*.d.ts",
-      "default": "./dist/providers/*.js"
+    "./modelsdev/*": {
+      "types": "./dist/modelsdev/*.d.ts",
+      "default": "./dist/modelsdev/*.js"
+    },
+    "./openrouter/*": {
+      "types": "./dist/openrouter/*.d.ts",
+      "default": "./dist/openrouter/*.js"
     },
     "./api": {
       "types": "./dist/api.d.ts",
