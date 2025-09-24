@@ -15,7 +15,8 @@ const Messages: ModelMessage[] = [
   },
   {
     role: "assistant",
-    content: "Token usage helps teams understand cost, performance, and scaling needs.",
+    content:
+      "Token usage helps teams understand cost, performance, and scaling needs.",
   },
 ];
 
