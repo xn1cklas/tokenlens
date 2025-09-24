@@ -36,8 +36,8 @@
     "typecheck": "tsc --noEmit",
     "fetch:models": "node scripts/sync-models-dev.mjs",
     "sync:models": "pnpm run fetch:models && pnpm run build",
-    "test": "pnpm --filter @tokenlens/core run build && pnpm --filter @tokenlens/helpers run build && vitest",
-    "test:run": "pnpm --filter @tokenlens/core run build && pnpm --filter @tokenlens/helpers run build && vitest run",
+    "test": "pnpm --filter @tokenlens/core run build && pnpm --filter @tokenlens/helpers run build && vitest --config ../../vitest.config.ts --project models",
+    "test:run": "pnpm --filter @tokenlens/core run build && pnpm --filter @tokenlens/helpers run build && vitest run --config ../../vitest.config.ts --project models",
     "prepublishOnly": "pnpm run build"
   },
   "repository": {
@@ -71,7 +71,6 @@
     "@tokenlens/core": "workspace:*"
   },
   "devDependencies": {
-    "vitest": "^1.6.1",
     "typescript": "^5.9.2"
   }
 }

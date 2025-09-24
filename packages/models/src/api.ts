@@ -1,13 +1,17 @@
 import type { Model } from "@tokenlens/core";
-import type { Providers, Provider } from "@tokenlens/core/dto";
+import type {
+  SourceModel,
+  SourceProviders,
+  SourceProvider,
+} from "@tokenlens/core/dto";
 
 export type PickMap = Record<string, ReadonlyArray<string> | undefined>;
 
-export function catalogFromModelArrays(
+export function modelsToSourceProviders(
   providerArrays: ReadonlyArray<ReadonlyArray<Model>>,
   pick?: PickMap,
-): Providers {
-  const out: Providers = {} as Providers;
+): SourceProviders {
+  const out: SourceProviders = {} as SourceProviders;
   for (const arr of providerArrays) {
     for (const m of arr) {
       if (!m?.id || !m?.provider) continue;
@@ -22,9 +26,9 @@ export function catalogFromModelArrays(
         if (!ok) continue;
       }
       if (!out[provKey]) out[provKey] = { id: provKey, models: {} };
-      out[provKey].models[modelShort] = {
+      const sourceModel: SourceModel = {
         id: modelShort,
-        name: m.displayName || modelShort,
+        name: m.name || modelShort,
         modalities: {
           input: [
             ...(m.modalities?.textIn ? ["text"] : []),
@@ -49,15 +53,16 @@ export function catalogFromModelArrays(
         release_date: m.releasedAt,
         last_updated: m.verifiedAt,
       };
+      out[provKey].models[modelShort] = sourceModel;
     }
   }
   return out;
 }
 
-export function catalogFromProviders(
-  providers: ReadonlyArray<Provider>,
-): Providers {
-  const out: Providers = {} as Providers;
+export function sourceProvidersFromArray(
+  providers: ReadonlyArray<SourceProvider>,
+): SourceProviders {
+  const out: SourceProviders = {} as SourceProviders;
   for (const p of providers) {
     if (!p?.id) continue;
     out[p.id] = p;
