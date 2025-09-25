@@ -29,7 +29,7 @@ describe("AI SDK usage integration", () => {
       cachedInputTokens: 100,
     };
 
-    const details = await client.getModelDetails({
+    const details = await client.describeModel({
       modelId: "openai/gpt-5",
       usage: toUsage(usage),
     });
@@ -53,7 +53,7 @@ describe("AI SDK usage integration", () => {
       cachedInputTokens: 0,
     };
 
-    const costs = await client.getTokenCosts({
+    const costs = await client.estimateCostUSD({
       modelId: "openai/o1",
       usage: toUsage(usage),
     });
@@ -73,7 +73,7 @@ describe("AI SDK usage integration", () => {
       cachedInputTokens: 0,
     };
 
-    const details = await client.getModelDetails({
+    const details = await client.describeModel({
       modelId: "openai/gpt-5",
       usage: toUsage(usage),
     });
