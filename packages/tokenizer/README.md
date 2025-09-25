@@ -48,7 +48,9 @@ import { createClient } from "tokenlens";
 import { countTokens } from "@tokenlens/tokenizer";
 
 const tokenlens = createClient();
-const { model } = await tokenlens.getModel({ modelId: "anthropic:claude-3-5-sonnet-20241022" });
+const { model } = await tokenlens.describeModel({
+  modelId: "anthropic:claude-3-5-sonnet-20241022",
+});
 
 const analysis = await countTokens({
   providerId: "anthropic",
