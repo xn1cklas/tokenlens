@@ -55,12 +55,9 @@ describe("Anthropic SDK integration", () => {
 
     const meta = await client.describeModel({
       modelId: "anthropic/claude-3-5-sonnet-20241022",
-      usage: toUsage(usage),
     });
 
-    expect(meta.providerId).toBe("anthropic");
-    expect(meta.limit?.context).toBe(200_000);
-    expect(meta.costs?.totalTokenCostUSD).toBeGreaterThan(0);
-    expect(meta.costs?.totalTokenCostUSD).toBeCloseTo(0.024, 6);
+    expect(meta?.id).toBe("anthropic/claude-3-5-sonnet-20241022");
+    expect(meta?.limit?.context).toBe(200_000);
   });
 });

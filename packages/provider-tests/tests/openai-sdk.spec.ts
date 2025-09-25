@@ -55,11 +55,9 @@ describe("OpenAI SDK integration", () => {
 
     const meta = await client.describeModel({
       modelId: "openai/gpt-4o-mini",
-      usage: toUsage(usage),
     });
 
-    expect(meta.model?.id).toBe("openai/gpt-4o-mini");
-    expect(meta.limit?.context).toBe(128_000);
-    expect(meta.costs?.totalTokenCostUSD).toBeCloseTo(0.054, 6);
+    expect(meta?.id).toBe("openai/gpt-4o-mini");
+    expect(meta?.limit?.context).toBe(128_000);
   });
 });

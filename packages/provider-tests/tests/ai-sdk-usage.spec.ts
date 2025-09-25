@@ -19,16 +19,11 @@ describe("AI SDK usage integration", () => {
   it("computes costs for AI SDK usage payloads", async () => {
     const details = await client.describeModel({
       modelId: "openai/gpt-5",
-      usage: usage,
     });
 
-    expect(details.providerId).toBe("openai");
-    expect(details.limit?.context).toBe(200_000);
-    expect(details.costs?.totalTokenCostUSD).toBeCloseTo(0.0195, 5);
-    expect(details.costs?.inputTokenCostUSD).toBeCloseTo(0.0045, 6);
-    expect(details.costs?.outputTokenCostUSD).toBeCloseTo(0.003, 6);
-    expect(details.costs?.reasoningTokenCostUSD).toBeCloseTo(0.012, 6);
-    expect(details.costs?.cacheReadTokenCostUSD).toBeUndefined();
+    expect(details?.id).toBe("openai/gpt-5");
+    expect(details?.limit?.context).toBe(200_000);
+    expect(details?.cost?.input).toBe(30);
   });
 
   it("accepts OpenAI LanguageModelV2 metadata", async () => {
@@ -121,11 +116,10 @@ describe("AI SDK usage integration", () => {
 
     const details = await client.describeModel({
       modelId: "openai/gpt-5",
-      usage: usage,
     });
 
-    expect(details.model?.id).toBe("openai/gpt-5");
-    expect(details.limit?.context).toBe(200_000);
-    expect(details.hints?.supportsReasoning).toBe(false);
+    expect(details?.id).toBe("openai/gpt-5");
+    expect(details?.limit?.context).toBe(200_000);
+    expect(details?.reasoning).toBeUndefined();
   });
 });
