@@ -44,16 +44,22 @@ export function computeTokenCostsForModel(args: {
   return {
     inputTokenCostUSD: round6(inputUSD),
     outputTokenCostUSD: round6(outputUSD),
-    reasoningTokenCostUSD: reasoningUSD ? round6(reasoningUSD) : undefined,
-    cacheReadTokenCostUSD: cacheReadUSD ? round6(cacheReadUSD) : undefined,
-    cacheWriteTokenCostUSD: cacheWriteUSD ? round6(cacheWriteUSD) : undefined,
+    ...(reasoningUSD ? { reasoningTokenCostUSD: round6(reasoningUSD) } : {}),
+    ...(cacheReadUSD ? { cacheReadTokenCostUSD: round6(cacheReadUSD) } : {}),
+    ...(cacheWriteUSD ? { cacheWriteTokenCostUSD: round6(cacheWriteUSD) } : {}),
     totalTokenCostUSD: round6(total),
     ratesUsed: {
-      inputPerMTokens: cost.input,
-      outputPerMTokens: cost.output,
-      reasoningPerMTokens: cost.reasoning,
-      cacheReadPerMTokens: cost.cache_read,
-      cacheWritePerMTokens: cost.cache_write,
+      ...(cost.input !== undefined ? { inputPerMTokens: cost.input } : {}),
+      ...(cost.output !== undefined ? { outputPerMTokens: cost.output } : {}),
+      ...(cost.reasoning !== undefined
+        ? { reasoningPerMTokens: cost.reasoning }
+        : {}),
+      ...(cost.cache_read !== undefined
+        ? { cacheReadPerMTokens: cost.cache_read }
+        : {}),
+      ...(cost.cache_write !== undefined
+        ? { cacheWritePerMTokens: cost.cache_write }
+        : {}),
     },
   };
 }

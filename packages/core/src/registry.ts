@@ -42,17 +42,18 @@ export function createRegistry(all: readonly Model[]) {
     const out: Model[] = [];
 
     // Try canonical direct match (already lowercase comparisons below)
-    if ((models as Record<string, Model>)[key]) {
-      out.push((models as Record<string, Model>)[key]);
+    const directMatch = (models as Record<string, Model>)[key];
+    if (directMatch) {
+      out.push(directMatch);
     }
 
     // Normalize gateway style ids to canonical for matching
     const normalized = toModelId(input);
     if (normalized) {
       const nkey = normalized.toLowerCase();
-      if ((models as Record<string, Model>)[nkey]) {
-        const m = (models as Record<string, Model>)[nkey];
-        if (!out.includes(m)) out.push(m);
+      const normalizedMatch = (models as Record<string, Model>)[nkey];
+      if (normalizedMatch && !out.includes(normalizedMatch)) {
+        out.push(normalizedMatch);
       }
     }
 

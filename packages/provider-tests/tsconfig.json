@@ -1,13 +1,12 @@
 {
-  "extends": "../tokenlens/tsconfig.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
     "rootDir": ".",
     "noEmit": true,
-    "types": ["vitest/globals"],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext"
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "types": ["vitest/globals"]
   },
-  "include": ["tests", "vitest.setup.ts"],
+  "include": ["tests", "vitest.setup.ts", "scripts"],
   "exclude": ["node_modules", "dist"]
 }

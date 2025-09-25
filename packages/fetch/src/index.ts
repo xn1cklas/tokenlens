@@ -98,10 +98,10 @@ export async function fetchModelsDev(
     const models = (prov.models ?? {}) as Record<string, SourceModel>;
     catalog[provKey] = {
       id: prov.id ?? provKey,
-      name: prov.name,
-      api: prov.api,
-      doc: prov.doc ?? prov.docs,
-      env: prov.env,
+      ...(prov.name !== undefined ? { name: prov.name } : { name: provKey }),
+      ...(prov.api !== undefined ? { api: prov.api } : {}),
+      ...((prov.doc ?? prov.docs) ? { doc: prov.doc ?? prov.docs } : {}),
+      ...(prov.env !== undefined ? { env: prov.env } : {}),
       source: "models.dev",
       schemaVersion: 1,
       models,
@@ -111,8 +111,8 @@ export async function fetchModelsDev(
 }
 
 function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
-  const id = String(m.id ?? "");
-  const arch = m.architecture as
+  const id = String(m["id"] ?? "");
+  const arch = m["architecture"] as
     | {
         input_modalities?: string[];
         output_modalities?: string[];
@@ -127,14 +127,14 @@ function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
       })
     : undefined;
   const cost =
-    (m.pricing as Record<string, number> | undefined) ??
-    (m.cost as Record<string, number> | undefined);
+    (m["pricing"] as Record<string, number> | undefined) ??
+    (m["cost"] as Record<string, number> | undefined);
   const limit =
-    (m.limit as
+    (m["limit"] as
       | { context?: number; input?: number; output?: number }
       | undefined) ?? undefined;
   const context_length = (m as { context_length?: number }).context_length;
-  const topProvider = m.top_provider as
+  const topProvider = m["top_provider"] as
     | {
         max_completion_tokens?: number;
         context_length?: number;
@@ -144,37 +144,61 @@ function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
   const outputCap = topProvider?.max_completion_tokens;
   return {
     id,
-    name: (m.name as string | undefined) ?? id,
-    description: m.description as string | undefined,
-    attachment: Boolean(m.attachment),
-    reasoning: Boolean(m.reasoning),
-    temperature:
-      (m.temperature as unknown) !== undefined
-        ? Boolean(m.temperature)
-        : undefined,
-    tool_call: Boolean(m.tool_call),
-    knowledge: m.knowledge as string | undefined,
-    created: (m as { created?: number }).created,
-    release_date: m.release_date as string | undefined,
-    last_updated: m.last_updated as string | undefined,
-    modalities,
-    open_weights: (m.open_weights as boolean | undefined) ?? undefined,
-    cost: cost as SourceModel["cost"],
-    limit:
-      limit ??
-      (context_length || outputCap
-        ? { context: context_length, output: outputCap }
-        : undefined),
-    extras: {
-      canonical_slug: (m as { canonical_slug?: string }).canonical_slug,
-      hugging_face_id: (m as { hugging_face_id?: string }).hugging_face_id,
-      architecture: m.architecture,
-      top_provider: m.top_provider,
-      per_request_limits: (m as { per_request_limits?: unknown })
-        .per_request_limits,
-      supported_parameters: (m as { supported_parameters?: unknown })
-        .supported_parameters,
-    },
+    name: (m["name"] as string | undefined) ?? id,
+    ...(m["description"] !== undefined
+      ? { description: m["description"] as string }
+      : {}),
+    ...(m["attachment"] !== undefined
+      ? { attachment: Boolean(m["attachment"]) }
+      : {}),
+    ...(m["reasoning"] !== undefined
+      ? { reasoning: Boolean(m["reasoning"]) }
+      : {}),
+    ...(m["temperature"] !== undefined
+      ? { temperature: Boolean(m["temperature"]) }
+      : {}),
+    ...(m["tool_call"] !== undefined
+      ? { tool_call: Boolean(m["tool_call"]) }
+      : {}),
+    ...(m["knowledge"] !== undefined
+      ? { knowledge: m["knowledge"] as string }
+      : {}),
+    ...((m as { created?: number }).created !== undefined
+      ? { created: (m as { created?: number }).created }
+      : {}),
+    ...(m["release_date"] !== undefined
+      ? { release_date: m["release_date"] as string }
+      : {}),
+    ...(m["last_updated"] !== undefined
+      ? { last_updated: m["last_updated"] as string }
+      : {}),
+    ...(modalities ? { modalities } : {}),
+    ...(m["open_weights"] !== undefined
+      ? { open_weights: m["open_weights"] as boolean }
+      : {}),
+    ...(cost !== undefined ? { cost } : {}),
+    ...(limit || context_length || outputCap
+      ? {
+          limit: limit ?? {
+            ...(context_length !== undefined
+              ? { context: context_length }
+              : {}),
+            ...(outputCap !== undefined ? { output: outputCap } : {}),
+          },
+        }
+      : {}),
+    extras: Object.fromEntries(
+      Object.entries({
+        canonical_slug: (m as { canonical_slug?: string }).canonical_slug,
+        hugging_face_id: (m as { hugging_face_id?: string }).hugging_face_id,
+        architecture: m["architecture"],
+        top_provider: m["top_provider"],
+        per_request_limits: (m as { per_request_limits?: unknown })
+          .per_request_limits,
+        supported_parameters: (m as { supported_parameters?: unknown })
+          .supported_parameters,
+      }).filter(([_, v]) => v !== undefined),
+    ),
   };
 }
 
@@ -195,8 +219,9 @@ export async function fetchOpenrouter(
 
   const catalog: SourceProviders = {};
   for (const m of list) {
-    const id = String(m.id ?? "");
-    const provider = id.includes("/") ? id.split("/")[0] : "openrouter";
+    const id = String(m["id"] ?? "");
+    const providerPart = id.includes("/") ? id.split("/")[0] : undefined;
+    const provider = providerPart ?? "openrouter";
     if (!catalog[provider]) {
       catalog[provider] = {
         id: provider,
@@ -209,7 +234,10 @@ export async function fetchOpenrouter(
         models: {},
       };
     }
-    catalog[provider].models[id] = mapOpenrouterModel(m);
+    const existingProvider = catalog[provider];
+    if (existingProvider) {
+      existingProvider.models[id] = mapOpenrouterModel(m);
+    }
   }
 
   return filterCatalog(catalog, options?.provider, options?.model);

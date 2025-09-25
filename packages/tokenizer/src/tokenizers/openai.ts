@@ -71,7 +71,7 @@ async function loadTiktoken(): Promise<TiktokenModule | undefined> {
     const hint = error instanceof Error ? error.message : String(error);
     if (
       typeof process !== "undefined" &&
-      process.env.NODE_ENV !== "production"
+      process.env["NODE_ENV"] !== "production"
     ) {
       console.warn(
         "Tokenlens tokenizer: @dqbd/tiktoken not available, falling back to heuristic",

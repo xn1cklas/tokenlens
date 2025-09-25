@@ -16,7 +16,8 @@ export function modelsToSourceProviders(
     for (const m of arr) {
       if (!m?.id || !m?.provider) continue;
       const provKey = m.provider;
-      const modelShort = m.id.includes(":") ? m.id.split(":")[1] : m.id;
+      const splitId = m.id.split(":");
+      const modelShort = m.id.includes(":") && splitId[1] ? splitId[1] : m.id;
       const allow = pick?.[provKey];
       if (allow && allow.length > 0) {
         const ok =
@@ -25,35 +26,70 @@ export function modelsToSourceProviders(
           allow.includes(modelShort);
         if (!ok) continue;
       }
-      if (!out[provKey]) out[provKey] = { id: provKey, models: {} };
+      if (!out[provKey]) {
+        out[provKey] = {
+          id: provKey,
+          models: {},
+          source: "package" as const,
+          schemaVersion: 1,
+          name: provKey,
+        };
+      }
       const sourceModel: SourceModel = {
         id: modelShort,
-        name: m.name || modelShort,
-        modalities: {
-          input: [
-            ...(m.modalities?.textIn ? ["text"] : []),
-            ...(m.modalities?.imageIn ? ["image"] : []),
-          ],
-          output: [...(m.modalities?.textOut ? ["text"] : [])],
-        },
-        cost: m.pricing
+        name: m.name ?? modelShort,
+        ...(m.modalities?.textIn ||
+        m.modalities?.imageIn ||
+        m.modalities?.textOut
           ? {
-              input: m.pricing.inputPerMTokens,
-              output: m.pricing.outputPerMTokens,
-              reasoning: m.pricing.reasoningPerMTokens,
-              cache_read: m.pricing.cacheReadPerMTokens,
-              cache_write: m.pricing.cacheWritePerMTokens,
+              modalities: {
+                input: [
+                  ...(m.modalities?.textIn ? ["text"] : []),
+                  ...(m.modalities?.imageIn ? ["image"] : []),
+                ],
+                output: [...(m.modalities?.textOut ? ["text"] : [])],
+              },
             }
-          : undefined,
+          : {}),
+        ...(m.pricing
+          ? {
+              cost: {
+                ...(m.pricing.inputPerMTokens !== undefined
+                  ? { input: m.pricing.inputPerMTokens }
+                  : {}),
+                ...(m.pricing.outputPerMTokens !== undefined
+                  ? { output: m.pricing.outputPerMTokens }
+                  : {}),
+                ...(m.pricing.reasoningPerMTokens !== undefined
+                  ? { reasoning: m.pricing.reasoningPerMTokens }
+                  : {}),
+                ...(m.pricing.cacheReadPerMTokens !== undefined
+                  ? { cache_read: m.pricing.cacheReadPerMTokens }
+                  : {}),
+                ...(m.pricing.cacheWritePerMTokens !== undefined
+                  ? { cache_write: m.pricing.cacheWritePerMTokens }
+                  : {}),
+              },
+            }
+          : {}),
         limit: {
-          context: m.context.combinedMax,
-          input: m.context.inputMax,
-          output: m.context.outputMax,
+          ...(m.context.combinedMax !== undefined
+            ? { context: m.context.combinedMax }
+            : {}),
+          ...(m.context.inputMax !== undefined
+            ? { input: m.context.inputMax }
+            : {}),
+          ...(m.context.outputMax !== undefined
+            ? { output: m.context.outputMax }
+            : {}),
         },
-        release_date: m.releasedAt,
-        last_updated: m.verifiedAt,
+        ...(m.releasedAt ? { release_date: m.releasedAt } : {}),
+        ...(m.verifiedAt ? { last_updated: m.verifiedAt } : {}),
       };
-      out[provKey].models[modelShort] = sourceModel;
+      const provider = out[provKey];
+      if (provider) {
+        provider.models[modelShort] = sourceModel;
+      }
     }
   }
   return out;

@@ -124,20 +124,23 @@ function coerceUnknownMessage(value: unknown): TokenizerMessage {
         : undefined;
     const content = (value as { content?: unknown }).content;
     if (typeof content === "string") {
-      return { role, content };
+      return { ...(role !== undefined ? { role } : {}), content };
     }
     if (Array.isArray(content)) {
       const combined = content
         .map((item) => (typeof item === "string" ? item : safeStringify(item)))
         .filter(Boolean)
         .join("\n");
-      return { role, content: combined };
+      return { ...(role !== undefined ? { role } : {}), content: combined };
     }
     if (content !== undefined) {
-      return { role, content: safeStringify(content) };
+      return {
+        ...(role !== undefined ? { role } : {}),
+        content: safeStringify(content),
+      };
     }
     return {
-      role,
+      ...(role !== undefined ? { role } : {}),
       content: safeStringify({ ...value, content: undefined }),
     };
   }

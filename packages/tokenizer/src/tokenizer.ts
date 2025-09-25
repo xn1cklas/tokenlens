@@ -175,7 +175,10 @@ function isLegacyParams(
 }
 
 function warnUnknown(input: TokenizerResolvedInput) {
-  if (typeof process !== "undefined" && process.env.NODE_ENV === "production")
+  if (
+    typeof process !== "undefined" &&
+    process.env["NODE_ENV"] === "production"
+  )
     return;
   const tokenizerFromModel =
     input.model?.extras && typeof input.model.extras === "object"

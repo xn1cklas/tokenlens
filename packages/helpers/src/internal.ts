@@ -48,10 +48,10 @@ export function normalizeUsage(usage: Usage): NormalizedUsage {
   return {
     input: prompt,
     output: completion,
-    total,
-    reasoningTokens,
-    cacheReads,
-    cacheWrites,
+    ...(total !== undefined ? { total } : {}),
+    ...(reasoningTokens !== undefined ? { reasoningTokens } : {}),
+    ...(cacheReads !== undefined ? { cacheReads } : {}),
+    ...(cacheWrites !== undefined ? { cacheWrites } : {}),
   };
 }
 

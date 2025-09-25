@@ -110,11 +110,11 @@ export class Tokenlens {
     const providers = await this.getProviders();
     const resolved = resolveModel({
       providers,
-      providerId: args.provider,
+      ...(args.provider !== undefined ? { providerId: args.provider } : {}),
       modelId: args.modelId,
     });
     return computeTokenCostsForModel({
-      model: resolved.model,
+      ...(resolved.model !== undefined ? { model: resolved.model } : {}),
       usage: args.usage,
     });
   }
@@ -127,7 +127,7 @@ export class Tokenlens {
     const providers = await this.getProviders();
     const resolved = resolveModel({
       providers,
-      providerId: args.provider,
+      ...(args.provider !== undefined ? { providerId: args.provider } : {}),
       modelId: args.modelId,
     });
     return resolved.model;
@@ -142,7 +142,7 @@ export class Tokenlens {
   > {
     const details = await this.describeModel({
       modelId: args.modelId,
-      provider: args.provider,
+      ...(args.provider !== undefined ? { provider: args.provider } : {}),
     });
     return details?.limit;
   }
@@ -159,15 +159,20 @@ export class Tokenlens {
     const providers = await this.getProviders();
     const resolved = resolveModel({
       providers,
-      providerId: provider,
+      ...(provider !== undefined ? { providerId: provider } : {}),
       modelId,
     });
 
     const { model, tokenizerId } = await this.#resolveTokenizerInfo({
       providerId: resolved.providerId,
       modelId: resolved.modelId,
-      tokenizerId:
-        normalizedOptions.tokenizerId ?? normalizedOptions.encodingOverride,
+      ...((normalizedOptions.tokenizerId ?? normalizedOptions.encodingOverride)
+        ? {
+            tokenizerId:
+              normalizedOptions.tokenizerId ??
+              normalizedOptions.encodingOverride,
+          }
+        : {}),
     });
 
     const tokenizer = await import("@tokenlens/tokenizer");
@@ -178,10 +183,18 @@ export class Tokenlens {
       content,
       options: {
         ...normalizedOptions,
-        model: normalizedOptions.model ?? model,
-        tokenizerId: tokenizerId ?? normalizedOptions.tokenizerId,
-        encodingOverride: normalizedOptions.encodingOverride,
-        usage: normalizedOptions.usage,
+        ...((normalizedOptions.model ?? model)
+          ? { model: normalizedOptions.model ?? model }
+          : {}),
+        ...((tokenizerId ?? normalizedOptions.tokenizerId)
+          ? { tokenizerId: tokenizerId ?? normalizedOptions.tokenizerId }
+          : {}),
+        ...(normalizedOptions.encodingOverride !== undefined
+          ? { encodingOverride: normalizedOptions.encodingOverride }
+          : {}),
+        ...(normalizedOptions.usage !== undefined
+          ? { usage: normalizedOptions.usage }
+          : {}),
       },
     };
 
@@ -212,8 +225,8 @@ export class Tokenlens {
         : undefined;
 
     return {
-      model: resolved.model,
-      tokenizerId: inferred,
+      ...(resolved.model !== undefined ? { model: resolved.model } : {}),
+      ...(inferred !== undefined ? { tokenizerId: inferred } : {}),
     };
   }
 }
