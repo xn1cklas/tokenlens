@@ -39,7 +39,7 @@ async function main(): Promise<void> {
 
   const totalTokens = usage.input_tokens + usage.output_tokens;
 
-  const costs = await tokenlens.estimateCostUSD({
+  const costs = await tokenlens.computeCostUSD({
     modelId: "anthropic:claude-3-5-sonnet-20241022",
     usage: {
       input_tokens: usage.input_tokens,

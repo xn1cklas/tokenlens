@@ -129,17 +129,22 @@ export class Tokenlens {
     await this.cache.delete?.(this.cacheKey);
   }
 
-  /** @public Estimate a model's token usage cost in USD. */
-  async estimateCostUSD(args: {
+  /** @public Calculate a model's token usage cost in USD. */
+  async computeCostUSD(args: {
     modelId: string;
     provider?: string;
     usage: Usage;
-  }): Promise<ReturnType<typeof computeTokenCostsForModel>> {
-    const details = await this.describeModel(args);
-    if (!details.costs) {
-      throw new Error("Usage is required to compute token costs");
-    }
-    return details.costs;
+  }): Promise<TokenCosts> {
+    const providers = await this.getProviders();
+    const resolved = resolveModel({
+      providers,
+      providerId: args.provider,
+      modelId: args.modelId,
+    });
+    return computeTokenCostsForModel({
+      model: resolved.model,
+      usage: args.usage,
+    });
   }
 
   /** @public Describe a model's metadata, limits, costs, and hints. */

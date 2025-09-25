@@ -39,7 +39,7 @@ describe("AI SDK usage integration", () => {
       totalTokens: 200,
     };
 
-    const costs = await client.estimateCostUSD({
+    const costs = await client.computeCostUSD({
       modelId: model.modelId,
       provider: model.provider,
       usage: usage,
@@ -59,7 +59,7 @@ describe("AI SDK usage integration", () => {
       totalTokens: 1_500,
     };
 
-    const costs = await client.estimateCostUSD({
+    const costs = await client.computeCostUSD({
       modelId: model.modelId,
       provider: model.provider,
       usage: usage,
@@ -79,7 +79,7 @@ describe("AI SDK usage integration", () => {
       totalTokens: 1_500,
     };
 
-    const costs = await client.estimateCostUSD({
+    const costs = await client.computeCostUSD({
       modelId: model.modelId,
       provider: model.provider,
       usage: usage,
@@ -100,7 +100,7 @@ describe("AI SDK usage integration", () => {
       cachedInputTokens: 0,
     };
 
-    const costs = await client.estimateCostUSD({
+    const costs = await client.computeCostUSD({
       modelId: "openai/o1",
       usage: usage,
     });

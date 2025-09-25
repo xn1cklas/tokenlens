@@ -28,7 +28,7 @@ describe("OpenAI SDK integration", () => {
       },
     };
 
-    const costs = await client.estimateCostUSD({
+    const costs = await client.computeCostUSD({
       modelId: "openai/gpt-4o-mini",
       usage: toUsage(usage),
     });

@@ -15,7 +15,7 @@ Works great with the Vercel AI SDK out of the box, and remains SDK‑agnostic.
 Highlights
 ----------
 - Canonical model registry with alias resolution across multiple data **sources** (OpenRouter by default, models.dev optionally).
-- Minimal helper surface: `estimateCostUSD`, `describeModel`, and `getContextLimits` – each powered by the same cached provider catalog.
+- Minimal helper surface: `computeCostUSD`, `describeModel`, and `getContextLimits` – each powered by the same cached provider catalog.
 - Strong TypeScript surface: exported types for `Usage`, `ModelDetails`, `TokenCosts`, and `TokenlensOptions`.
 - Built-in caching with configurable TTLs and pluggable adapters to avoid repeated network fetches.
 
@@ -30,14 +30,14 @@ Quick Start (standalone helpers)
 ```ts
 import {
   describeModel,
-  estimateCostUSD,
+  computeCostUSD,
   getContextLimits,
 } from "tokenlens";
 
 const usage = { inputTokens: 3_200, outputTokens: 400 };
 
 const [costs, limits, details] = await Promise.all([
-  estimateCostUSD({ modelId: "openai/gpt-4o-mini", usage }),
+  computeCostUSD({ modelId: "openai/gpt-4o-mini", usage }),
   getContextLimits({ modelId: "openai/gpt-4o-mini" }),
   describeModel({ modelId: "openai/gpt-4o-mini", usage }),
 ]);
@@ -53,7 +53,7 @@ How Tokenlens works
 -------------------
 Tokenlens maintains a small cache of provider catalogs. By default it lazily loads the **OpenRouter** dataset and reuses it across helper calls. You can:
 
-1. Use the **standalone helpers** (`estimateCostUSD`, `describeModel`, `getContextLimits`) which share an internal singleton with default settings.
+1. Use the **standalone helpers** (`computeCostUSD`, `describeModel`, `getContextLimits`) which share an internal singleton with default settings.
 2. Create your own **Tokenlens instance** when you need to control sources, caching, loaders, or fetch implementations.
 
 Custom configuration (`createTokenlens`)
@@ -84,7 +84,7 @@ const options: TokenlensOptions = {
 };
 
 const tokenlens = createTokenlens(options);
-const costs = await tokenlens.estimateCostUSD({
+const costs = await tokenlens.computeCostUSD({
   modelId: "demo/chat",
   usage: { input_tokens: 500, output_tokens: 200 },
 });

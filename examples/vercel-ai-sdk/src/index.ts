@@ -57,7 +57,7 @@ async function main(): Promise<void> {
       ? inputTokens + outputTokens
       : undefined);
 
-  const costs = await tokenlens.estimateCostUSD({
+  const costs = await tokenlens.computeCostUSD({
     modelId: "openai:gpt-5",
     usage: {
       input_tokens: inputTokens,

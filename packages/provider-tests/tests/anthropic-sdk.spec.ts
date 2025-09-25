@@ -29,7 +29,7 @@ describe("Anthropic SDK integration", () => {
       service_tier: null,
     };
 
-    const costs = await client.estimateCostUSD({
+    const costs = await client.computeCostUSD({
       modelId: "anthropic/claude-3-5-sonnet-20241022",
       usage: toUsage(usage),
     });

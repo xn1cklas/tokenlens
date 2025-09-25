@@ -45,15 +45,15 @@ export function createTokenlens(
 
 /**
  * @public
- * Estimate a model's token usage cost in USD.
+ * Calculate a model's token usage cost in USD.
  */
-export async function estimateCostUSD(args: {
+export async function computeCostUSD(args: {
   modelId: string;
   provider?: string;
   usage: Usage;
 }) {
   const tokenlens = getTokenlens();
-  return tokenlens.estimateCostUSD(args);
+  return tokenlens.computeCostUSD(args);
 }
 
 /**

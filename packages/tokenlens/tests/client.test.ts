@@ -47,7 +47,7 @@ type Usage = {
 import {
   createTokenlens,
   getContextLimits as apiGetContextLimits,
-  estimateCostUSD as apiEstimateCostUSD,
+  computeCostUSD as apiComputeCostUSD,
   describeModel as apiDescribeModel,
   setSharedTokenlens,
 } from "../src/index.ts";
@@ -368,7 +368,7 @@ describe("Tokenlens core", () => {
     await client.getProviders();
 
     const usage = makeUsage();
-    const costs = await client.estimateCostUSD({
+    const costs = await client.computeCostUSD({
       modelId: "openai/gpt-4o",
       usage,
     });
@@ -469,12 +469,12 @@ describe("module-level helpers", () => {
     expect(limit?.context).toBe(128_000);
   });
 
-  it("estimateCostUSD reuses cached providers", async () => {
+  it("computeCostUSD reuses cached providers", async () => {
     const { tokenlens } = setupSharedInstance();
     await tokenlens.getProviders();
 
     const usage = makeUsage();
-    const costs = await apiEstimateCostUSD({
+    const costs = await apiComputeCostUSD({
       modelId: "openai/gpt-4o",
       usage,
     });

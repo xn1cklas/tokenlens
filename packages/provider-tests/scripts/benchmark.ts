@@ -149,7 +149,7 @@ async function main() {
       const scenarioResults: Array<Record<string, unknown>> = [];
       for (const scenario of scenarios) {
         const usagePayload = toUsagePayload(scenario.usage);
-        const cost: TokenCosts = await tokenlens.estimateCostUSD({
+        const cost: TokenCosts = await tokenlens.computeCostUSD({
           modelId: canonicalId,
           provider: providerId,
           usage: usagePayload,

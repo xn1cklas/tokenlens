@@ -34,7 +34,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const costs = await tokenlens.estimateCostUSD({
+  const costs = await tokenlens.computeCostUSD({
     modelId: "openai:gpt-4o-mini",
     usage: {
       input_tokens: usage.input_tokens,
