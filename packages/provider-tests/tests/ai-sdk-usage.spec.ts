@@ -2,7 +2,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { openai } from "@ai-sdk/openai";
 import { xai } from "@ai-sdk/xai";
 import type { LanguageModelV2Usage as VercelUsage } from "@ai-sdk/provider";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createTestClient } from "./test-catalog.js";
 
