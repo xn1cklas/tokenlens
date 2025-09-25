@@ -6,6 +6,17 @@ export type ResolveModelResult = {
   model: SourceModel | undefined;
 };
 
+function normalizeProviderId(providerId?: string): string | undefined {
+  if (!providerId) return providerId;
+  const lower = providerId.toLowerCase();
+  if (lower.startsWith("openai")) return "openai";
+  if (lower.startsWith("anthropic")) return "anthropic";
+  if (lower.startsWith("xai")) return "xai";
+  if (lower.includes("/")) return lower.split("/")[0];
+  if (lower.includes(".")) return lower.split(".")[0];
+  return lower;
+}
+
 export function resolveModel(args: {
   providers: SourceProviders;
   providerId?: string;
@@ -13,7 +24,9 @@ export function resolveModel(args: {
 }): ResolveModelResult {
   const { providers, providerId, modelId } = args;
   const hasSlash = modelId.includes("/");
-  const provider = providerId || (hasSlash ? modelId.split("/")[0] : undefined);
+  const normalizedProvider = normalizeProviderId(providerId);
+  const provider =
+    normalizedProvider || (hasSlash ? modelId.split("/")[0] : undefined);
   const id = hasSlash ? modelId : provider ? `${provider}/${modelId}` : modelId;
 
   if (provider) {

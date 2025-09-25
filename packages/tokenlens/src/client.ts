@@ -155,7 +155,10 @@ export class Tokenlens {
       modelId: args.modelId,
     });
     const costs = args.usage
-      ? computeTokenCostsForModel({ model: resolved.model, usage: args.usage })
+      ? computeTokenCostsForModel({
+          model: resolved.model,
+          usage: args.usage,
+        })
       : undefined;
     const limit = resolved.model?.limit;
     const hints = buildResultHints(resolved.model);
