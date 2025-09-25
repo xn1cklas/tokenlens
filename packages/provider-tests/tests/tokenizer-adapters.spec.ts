@@ -48,12 +48,12 @@ describe("Tokenizer message adapters", () => {
       },
     ] as ChatCompletionMessageParam[];
 
-    const manual = await client.countTokens(
+    const manual = await client.experimental_countTokens(
       "openai",
       "openai/gpt-5",
       fromOpenAIChatMessages(messages),
     );
-    const automatic = await client.countTokens(
+    const automatic = await client.experimental_countTokens(
       "openai",
       "openai/gpt-5",
       messages,
@@ -93,12 +93,12 @@ describe("Tokenizer message adapters", () => {
       },
     ] as AnthropicMessageParam[];
 
-    const manual = await client.countTokens(
+    const manual = await client.experimental_countTokens(
       "anthropic",
       "anthropic/claude-3-5-sonnet-20241022",
       fromAnthropicMessages(messages),
     );
-    const automatic = await client.countTokens(
+    const automatic = await client.experimental_countTokens(
       "anthropic",
       "anthropic/claude-3-5-sonnet-20241022",
       messages,
@@ -140,12 +140,12 @@ describe("Tokenizer message adapters", () => {
       },
     ];
 
-    const manual = await client.countTokens(
+    const manual = await client.experimental_countTokens(
       "openai",
       "openai/gpt-5",
       fromAiSdkMessages(messages),
     );
-    const automatic = await client.countTokens(
+    const automatic = await client.experimental_countTokens(
       "openai",
       "openai/gpt-5",
       messages,
