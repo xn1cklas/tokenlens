@@ -46,14 +46,13 @@ import {
   describeModel,
   estimateCostUSD,
   getContextLimits,
-  getShared,
 } from "tokenlens";
 
 // optional singleton if you don't need custom loaders
-const tokenlens = getShared();
-const details = await describeModel({ modelId: "openai/gpt-4o", usage });
-const cost = await estimateCostUSD({ modelId: "openai/gpt-4o", usage });
-const context = await getContextLimits({ modelId: "openai/gpt-4o" });
+const tokenlens = createTokenlens();
+const details = await tokenlens.describeModel({ modelId: "openai/gpt-4o", usage });
+const cost = await tokenlens.estimateCostUSD({ modelId: "openai/gpt-4o", usage });
+const context = await tokenlens.getContextLimits({ modelId: "openai/gpt-4o" });
 ```
 
 ## Migration Steps

@@ -12,7 +12,7 @@ This file defines canonical terminology used across the TokenLens v2 codebase an
 
 ## source
 - The upstream dataset Tokenlens can load (`openrouter`, `models.dev`, or `package`).
-- Configured via `TokenlensOptions.sources` or `createClient({ sources })`.
+- Configured via `TokenlensOptions.sources` or `createTokenlens({ sources })`.
 
 ## source loader
 - A function that fetches and normalizes a given source into `SourceProviders`.
@@ -64,7 +64,7 @@ This file defines canonical terminology used across the TokenLens v2 codebase an
 
 ## package source
 - In-memory catalog provided by Tokenlens for tests/examples.
-- Typically wired via `createClient({ sources: ["package"], loaders: { package: async () => ... } })`.
+- Typically wired via `createTokenlens({ sources: ["package"], loaders: { package: async () => ... } })`.
 
 ## context limits
 - Token budget derived from provider metadata.
@@ -92,7 +92,7 @@ This file defines canonical terminology used across the TokenLens v2 codebase an
 - Configurable client responsible for loading sources, caching provider catalogs, and exposing helpers (`estimateCostUSD`, `describeModel`, `getContextLimits`).
 - Instances share a cache unless `cacheKey` is overridden.
 
-## createClient
+## createTokenlens
 - Convenience factory that instantiates `Tokenlens` with sensible defaults (fallback loaders for each source, `DEFAULT_SOURCE` when none provided).
 
 ## MemoryCache
