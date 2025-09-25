@@ -1,9 +1,9 @@
-import type { Model } from "@tokenlens/core";
 import type {
+  Model,
   SourceModel,
   SourceProviders,
   SourceProvider,
-} from "@tokenlens/core/dto";
+} from "@tokenlens/core";
 
 export type PickMap = Record<string, ReadonlyArray<string> | undefined>;
 

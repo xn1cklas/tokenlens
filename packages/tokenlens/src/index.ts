@@ -1,6 +1,6 @@
 export { Tokenlens } from "./client.js";
 import { Tokenlens as TokenlensClient, type ModelDetails } from "./client.js";
-import type { Usage } from "@tokenlens/core/types";
+import type { Usage } from "@tokenlens/core";
 import type {
   CountTokensContent,
   CountTokensOptions,
@@ -105,8 +105,7 @@ export function setSharedTokenlens(tokenlens?: TokenlensClient) {
   sharedTokenlens = tokenlens;
 }
 
-export type { SourceProviders, SourceModel } from "@tokenlens/core/dto";
-export type { Usage } from "@tokenlens/core/types";
+export type { SourceProviders, SourceModel, Usage } from "@tokenlens/core";
 export type { ModelDetails, TokenlensOptions };
 export type { TokenCosts } from "@tokenlens/helpers";
 export type {

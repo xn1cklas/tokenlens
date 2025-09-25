@@ -1,4 +1,4 @@
-import type { SourceProviders } from "@tokenlens/core/dto";
+import type { SourceProviders } from "@tokenlens/core";
 
 export function mergeProviders(
   providerSets: ReadonlyArray<SourceProviders>,

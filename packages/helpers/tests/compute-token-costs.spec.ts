@@ -1,5 +1,4 @@
-import type { SourceModel } from "@tokenlens/core/dto";
-import type { Usage } from "@tokenlens/core/types";
+import type { SourceModel, Usage } from "@tokenlens/core";
 import { describe, expect, it } from "vitest";
 import { computeTokenCostsForModel } from "../src/index.js";
 

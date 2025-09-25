@@ -1,4 +1,4 @@
-import type { Usage } from "@tokenlens/core/types";
+import type { Usage } from "@tokenlens/core";
 
 export type NormalizedUsage = {
   input: number;

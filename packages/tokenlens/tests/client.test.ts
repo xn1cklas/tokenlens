@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { SourceProviders } from "@tokenlens/core/dto";
+import type { SourceProviders } from "@tokenlens/core";
 
 type Usage = {
   input_tokens?: number;

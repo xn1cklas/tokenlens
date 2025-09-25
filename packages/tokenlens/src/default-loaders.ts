@@ -1,4 +1,4 @@
-import type { SourceProviders } from "@tokenlens/core/dto";
+import type { SourceProviders } from "@tokenlens/core";
 import type { SourceId, SourceLoader } from "./types.js";
 
 const openrouterLoader: SourceLoader = async (fetchImpl) =>

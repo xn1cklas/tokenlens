@@ -1,7 +1,7 @@
 import { modelsdevProviders } from "./modelsdev/index.js";
 import { openrouterProviders } from "./openrouter/index.js";
 import { sourceProvidersFromArray } from "./api.js";
-import type { SourceProviders } from "@tokenlens/core/dto";
+import type { SourceProviders } from "@tokenlens/core";
 
 /**
  * Return the models.dev providers catalog as a `SourceProviders` map.

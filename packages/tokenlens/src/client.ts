@@ -1,5 +1,4 @@
-import type { SourceProviders, SourceModel } from "@tokenlens/core/dto";
-import type { Usage } from "@tokenlens/core/types";
+import type { SourceProviders, SourceModel, Usage } from "@tokenlens/core";
 import type { TokenCosts } from "@tokenlens/helpers";
 import { computeTokenCostsForModel } from "@tokenlens/helpers";
 import type {

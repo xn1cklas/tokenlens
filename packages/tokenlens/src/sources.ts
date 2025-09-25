@@ -1,4 +1,4 @@
-import type { SourceProviders } from "@tokenlens/core/dto";
+import type { SourceProviders } from "@tokenlens/core";
 import type { FetchLike, SourceId, SourceLoader } from "./types.js";
 
 export async function loadSources(

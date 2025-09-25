@@ -1,6 +1,6 @@
 {
   "name": "@tokenlens/core",
-  "version": "2.0.0-alpha.1",
+  "version": "2.0.0-alpha.2",
   "private": false,
   "description": "Core types and registry utilities for TokenLens (model metadata).",
   "type": "module",

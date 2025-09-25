@@ -21,14 +21,14 @@ export type FetchLike = (
   text(): Promise<string>;
 }>;
 
-import type { SourceModel, SourceProviders } from "@tokenlens/core/dto";
+import type { SourceModel, SourceProviders } from "@tokenlens/core";
 
 export type {
   SourceId,
   SourceModel,
   SourceProvider,
   SourceProviders,
-} from "@tokenlens/core/dto";
+} from "@tokenlens/core";
 
 // ---------------------------------------------
 // v2 API: unified data shape + scoped fetchers

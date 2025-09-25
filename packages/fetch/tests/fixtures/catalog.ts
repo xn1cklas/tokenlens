@@ -1,4 +1,4 @@
-import type { SourceModel, SourceProviders } from "@tokenlens/core/dto";
+import type { SourceModel, SourceProviders } from "@tokenlens/core";
 
 const OPENAI_GPT4O: SourceModel = {
   id: "openai/gpt-4o",
