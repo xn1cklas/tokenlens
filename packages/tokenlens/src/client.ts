@@ -148,16 +148,24 @@ export class Tokenlens {
   }
 
   /** @public Experimental: count tokens with a model's tokenizer. */
-  async experimental_countTokens(
-    providerId: string,
-    modelId: string,
-    content: CountTokensContent,
-    options?: CountTokensOptions,
-  ): Promise<TokenizerResult> {
+  async experimental_countTokens(args: {
+    modelId: string;
+    provider?: string;
+    content: CountTokensContent;
+    options?: CountTokensOptions;
+  }): Promise<TokenizerResult> {
+    const { modelId, provider, content, options } = args;
     const normalizedOptions = options ?? {};
-    const { model, tokenizerId } = await this.#resolveTokenizerInfo({
-      providerId,
+    const providers = await this.getProviders();
+    const resolved = resolveModel({
+      providers,
+      providerId: provider,
       modelId,
+    });
+
+    const { model, tokenizerId } = await this.#resolveTokenizerInfo({
+      providerId: resolved.providerId,
+      modelId: resolved.modelId,
       tokenizerId:
         normalizedOptions.tokenizerId ?? normalizedOptions.encodingOverride,
     });
@@ -165,8 +173,8 @@ export class Tokenlens {
     const tokenizer = await import("@tokenlens/tokenizer");
 
     const params: CountTokensParams = {
-      providerId,
-      modelId,
+      providerId: resolved.providerId,
+      modelId: resolved.modelId,
       content,
       options: {
         ...normalizedOptions,
@@ -189,12 +197,14 @@ export class Tokenlens {
       return { tokenizerId: args.tokenizerId };
     }
 
-    const details = await this.describeModel({
-      provider: args.providerId,
+    const providers = await this.getProviders();
+    const resolved = resolveModel({
+      providers,
+      providerId: args.providerId,
       modelId: args.modelId,
     });
 
-    const extras = details?.extras;
+    const extras = resolved.model?.extras;
     const inferred =
       extras && typeof extras === "object"
         ? (extras as { architecture?: { tokenizer?: string } }).architecture
@@ -202,7 +212,7 @@ export class Tokenlens {
         : undefined;
 
     return {
-      model: details,
+      model: resolved.model,
       tokenizerId: inferred,
     };
   }

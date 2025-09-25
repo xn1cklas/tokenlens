@@ -1,6 +1,11 @@
 export { Tokenlens } from "./client.js";
 import { Tokenlens as TokenlensClient, type ModelDetails } from "./client.js";
 import type { Usage } from "@tokenlens/core/types";
+import type {
+  CountTokensContent,
+  CountTokensOptions,
+  TokenizerResult,
+} from "@tokenlens/tokenizer";
 import type { SourceLoader, SourceId, TokenlensOptions } from "./types.js";
 import { DEFAULT_SOURCE, getDefaultLoader } from "./default-loaders.js";
 
@@ -76,6 +81,16 @@ export async function describeModel(args: {
   return tokenlens.describeModel(args);
 }
 
+export async function experimental_countTokens(args: {
+  modelId: string;
+  provider?: string;
+  content: CountTokensContent;
+  options?: CountTokensOptions;
+}): Promise<TokenizerResult> {
+  const tokenlens = getTokenlens();
+  return tokenlens.experimental_countTokens(args);
+}
+
 let sharedTokenlens: TokenlensClient | undefined;
 
 function getTokenlens(): TokenlensClient {
@@ -94,3 +109,8 @@ export type { SourceProviders, SourceModel } from "@tokenlens/core/dto";
 export type { Usage } from "@tokenlens/core/types";
 export type { ModelDetails, TokenlensOptions };
 export type { TokenCosts } from "@tokenlens/helpers";
+export type {
+  CountTokensContent,
+  CountTokensOptions,
+  TokenizerResult,
+} from "@tokenlens/tokenizer";
