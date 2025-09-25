@@ -5,8 +5,8 @@
     "start": "tsx src/index.ts"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^2.0.34",
-    "ai": "^5.0.51",
+    "@ai-sdk/openai": "^2.0.35",
+    "ai": "^5.0.52",
     "dotenv": "^17.2.2",
     "tokenlens": "workspace:*"
   },

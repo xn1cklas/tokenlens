@@ -58,8 +58,8 @@
   },
   "devDependencies": {
     "@ai-sdk/provider": "^2.0.0",
-    "ai": "^5.0.51",
-    "msw": "^2.4.9",
+    "ai": "^5.0.52",
+    "msw": "^2.11.3",
     "typescript": "^5.9.2"
   }
 }

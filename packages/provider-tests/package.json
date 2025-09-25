@@ -12,7 +12,7 @@
   "devDependencies": {
     "@ai-sdk/provider": "^2.0.0",
     "@vitest/coverage-v8": "^3.2.4",
-    "ai": "^5.0.51",
+    "ai": "^5.0.52",
     "tsx": "^4.20.5"
   },
   "dependencies": {
