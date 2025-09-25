@@ -48,16 +48,16 @@ describe("Tokenizer message adapters", () => {
       },
     ] as ChatCompletionMessageParam[];
 
-    const manual = await client.experimental_countTokens(
-      "openai",
-      "openai/gpt-5",
-      fromOpenAIChatMessages(messages),
-    );
-    const automatic = await client.experimental_countTokens(
-      "openai",
-      "openai/gpt-5",
-      messages,
-    );
+    const manual = await client.experimental_countTokens({
+      provider: "openai",
+      modelId: "openai/gpt-5",
+      content: fromOpenAIChatMessages(messages),
+    });
+    const automatic = await client.experimental_countTokens({
+      provider: "openai",
+      modelId: "openai/gpt-5",
+      content: messages,
+    });
 
     expect(automatic.total).toBe(manual.total);
     expect(automatic.estimated).toBe(manual.estimated);
@@ -93,16 +93,16 @@ describe("Tokenizer message adapters", () => {
       },
     ] as AnthropicMessageParam[];
 
-    const manual = await client.experimental_countTokens(
-      "anthropic",
-      "anthropic/claude-3-5-sonnet-20241022",
-      fromAnthropicMessages(messages),
-    );
-    const automatic = await client.experimental_countTokens(
-      "anthropic",
-      "anthropic/claude-3-5-sonnet-20241022",
-      messages,
-    );
+    const manual = await client.experimental_countTokens({
+      provider: "anthropic",
+      modelId: "anthropic/claude-3-5-sonnet-20241022",
+      content: fromAnthropicMessages(messages),
+    });
+    const automatic = await client.experimental_countTokens({
+      provider: "anthropic",
+      modelId: "anthropic/claude-3-5-sonnet-20241022",
+      content: messages,
+    });
 
     expect(automatic.total).toBe(manual.total);
     expect(automatic.estimated).toBe(manual.estimated);
@@ -140,16 +140,16 @@ describe("Tokenizer message adapters", () => {
       },
     ];
 
-    const manual = await client.experimental_countTokens(
-      "openai",
-      "openai/gpt-5",
-      fromAiSdkMessages(messages),
-    );
-    const automatic = await client.experimental_countTokens(
-      "openai",
-      "openai/gpt-5",
-      messages,
-    );
+    const manual = await client.experimental_countTokens({
+      provider: "openai",
+      modelId: "openai/gpt-5",
+      content: fromAiSdkMessages(messages),
+    });
+    const automatic = await client.experimental_countTokens({
+      provider: "openai",
+      modelId: "openai/gpt-5",
+      content: messages,
+    });
 
     expect(automatic.total).toBe(manual.total);
     expect(automatic.estimated).toBe(manual.estimated);
