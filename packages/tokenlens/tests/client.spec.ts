@@ -195,6 +195,7 @@ describe("Tokenlens core", () => {
     const packageCtrl = makeLoader(makePackageCatalog());
 
     const client = new Tokenlens({
+      sources: ["openrouter", "models.dev", "package"],
       fetch: noopFetch,
       ttlMs: 60_000,
       loaders: {
@@ -221,6 +222,7 @@ describe("Tokenlens core", () => {
     const packageCtrl = makeLoader(makePackageCatalog());
 
     const client = new Tokenlens({
+      sources: ["openrouter", "models.dev", "package"],
       fetch: noopFetch,
       ttlMs: 60_000,
       loaders: {
@@ -236,8 +238,8 @@ describe("Tokenlens core", () => {
 
     const fallback = await client.getProviders();
     expect(fallback).toBe(baseline);
-    expect(openrouterCtrl.getCalls()).toBe(2);
-    expect(modelsDevCtrl.getCalls()).toBe(2);
+    expect(openrouterCtrl.getCalls()).toBe(1);
+    expect(modelsDevCtrl.getCalls()).toBe(1);
   });
 
   it("refresh(true) reloads providers and updates cache", async () => {
@@ -246,6 +248,7 @@ describe("Tokenlens core", () => {
     const packageCtrl = makeLoader(makePackageCatalog());
 
     const client = new Tokenlens({
+      sources: ["openrouter", "models.dev", "package"],
       fetch: noopFetch,
       ttlMs: 60_000,
       loaders: {
@@ -280,6 +283,7 @@ describe("Tokenlens core", () => {
     const packageCtrl = makeLoader(makePackageCatalog());
 
     const client = new Tokenlens({
+      sources: ["openrouter", "models.dev", "package"],
       fetch: noopFetch,
       ttlMs: 60_000,
       loaders: {

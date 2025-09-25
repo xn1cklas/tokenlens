@@ -1,5 +1,9 @@
 export { Tokenlens, getShared } from "./client.js";
-import { Tokenlens as Client, type ModelDetails } from "./client.js";
+import {
+  Tokenlens as Client,
+  type ModelDetails,
+  type ModelHints,
+} from "./client.js";
 import type { Usage } from "@tokenlens/core/types";
 import type { SourceLoader, SourceId } from "./types.js";
 import { DEFAULT_SOURCE, getDefaultLoader } from "./default-loaders.js";
@@ -74,5 +78,7 @@ export async function describeModel(args: {
   return (await import("./client.js")).getShared().describeModel(args);
 }
 
-export * from "@tokenlens/helpers";
 export type { SourceProviders, SourceModel } from "@tokenlens/core/dto";
+export type { Usage } from "@tokenlens/core/types";
+export type { ModelDetails, ModelHints };
+export type { TokenCosts } from "@tokenlens/helpers";
