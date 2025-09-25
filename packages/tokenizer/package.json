@@ -23,8 +23,8 @@
     "prebuild": "rm -rf dist",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "vitest",
-    "test:run": "vitest run",
+    "test": "vitest --config ../../vitest.config.ts --project tokenizer",
+    "test:run": "vitest run --config ../../vitest.config.ts --project tokenizer",
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
@@ -34,7 +34,6 @@
     "llama-tokenizer-js": "^1.2.2"
   },
   "devDependencies": {
-    "typescript": "^5.9.2",
-    "vitest": "^1.6.1"
+    "typescript": "^5.9.2"
   }
 }

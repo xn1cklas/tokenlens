@@ -24,8 +24,9 @@ export const openaiTokenizerProvider = {
         try {
           const tokens = encoder.encode(resolved.text);
           encoder.free();
+          const total = tokens.length;
           return {
-            count: tokens.length,
+            total,
             estimated: false,
             tokenizerId: encoding,
           };
@@ -43,7 +44,7 @@ export const openaiTokenizerProvider = {
 function resolveEncoding(
   resolved: TokenizerResolvedInput,
 ): KnownEncoding | undefined {
-  const override = resolved.encodingOverride;
+  const override = resolved.tokenizerId;
   if (override) {
     if (isKnownEncoding(override)) return override;
     return undefined;

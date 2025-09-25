@@ -8,9 +8,9 @@ export const anthropicTokenizerProvider = {
     return {
       estimate: async (resolved) => {
         try {
-          const count = await countTokensAsync(resolved.text);
+          const total = await countTokensAsync(resolved.text);
           return {
-            count,
+            total,
             estimated: false,
             tokenizerId: "claude-v1",
           };
