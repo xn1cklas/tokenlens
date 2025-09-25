@@ -105,3 +105,78 @@ export function sourceProvidersFromArray(
   }
   return out;
 }
+
+export type GetModelMetaArgs = {
+  providers: SourceProviders;
+  provider?: string;
+  model?: string;
+  models?: ReadonlyArray<string>;
+  id?: string; // accepts "provider:model" or "provider/model"
+};
+
+/**
+ * Flexible accessor for provider or model metadata from a `SourceProviders` catalog.
+ *
+ * Supports the following shapes:
+ * - { providers, provider } -> returns SourceProvider
+ * - { providers, provider, model } -> returns SourceModel
+ * - { providers, provider, models: string[] } -> returns Record<string, SourceModel>
+ * - { providers, id: "provider:model" | "provider/model" } -> returns SourceModel
+ */
+export function getModelMeta(
+  args: GetModelMetaArgs,
+): SourceProvider | SourceModel | Record<string, SourceModel> | undefined {
+  const { providers } = args;
+  if (!providers || typeof providers !== "object") return undefined;
+
+  // Normalize input into provider/model/models
+  let provider = args.provider?.trim();
+  let model = args.model?.trim();
+  const models = args.models?.map((m) => m.trim());
+
+  if (!provider && args.id) {
+    const id = args.id.trim();
+    const delimIndex = Math.max(id.indexOf(":"), id.indexOf("/"));
+    if (delimIndex > 0) {
+      provider = id.slice(0, delimIndex);
+      model = id.slice(delimIndex + 1);
+    }
+  }
+
+  if (!provider) return undefined;
+  const prov = providers[provider];
+  if (!prov || !prov.models) return undefined;
+
+  // Only provider requested
+  if (!model && !models) {
+    return prov;
+  }
+
+  // If model id comes as provider-prefixed, strip provider
+  const toShortId = (m: string): string => {
+    const idx = Math.max(m.indexOf(":"), m.indexOf("/"));
+    if (idx > 0) {
+      const maybeProv = m.slice(0, idx);
+      const short = m.slice(idx + 1);
+      return maybeProv === provider ? short : m;
+    }
+    return m;
+  };
+
+  if (model) {
+    const short = toShortId(model);
+    return prov.models[short];
+  }
+
+  if (models && models.length > 0) {
+    const out: Record<string, SourceModel> = {};
+    for (const m of models) {
+      const short = toShortId(m);
+      const found = prov.models[short];
+      if (found) out[short] = found;
+    }
+    return out;
+  }
+
+  return undefined;
+}

@@ -1,41 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-
-type TestModel = {
-  id: string;
-  name: string;
-  reasoning?: boolean;
-  tool_call?: boolean;
-  attachment?: boolean;
-  open_weights?: boolean;
-  knowledge?: string;
-  limit?: {
-    context?: number;
-    input?: number;
-    output?: number;
-  };
-  cost?: {
-    input?: number;
-    output?: number;
-    reasoning?: number;
-    cache_read?: number;
-    cache_write?: number;
-  };
-};
-
-type Providers = Record<
-  string,
-  {
-    id: string;
-    name?: string;
-    api?: string;
-    doc?: string;
-    env?: readonly string[];
-    source?: string;
-    schemaVersion?: number;
-    models: Record<string, TestModel>;
-    [extra: string]: unknown;
-  }
->;
+import type { SourceProviders } from "@tokenlens/core/dto";
 
 type Usage = {
   input_tokens?: number;
@@ -53,6 +17,13 @@ import {
 } from "../src/index.ts";
 import { Tokenlens } from "../src/client.ts";
 import type { FetchLike, SourceLoader } from "../src/types.ts";
+import {
+  createModelsDevProvidersFixture,
+  createOpenrouterProvidersFixture,
+  createPackageProvidersFixture,
+} from "./fixtures/providers.ts";
+
+type Providers = SourceProviders;
 
 type LoaderController = {
   loader: SourceLoader;
@@ -98,83 +69,6 @@ function makeLoader(initialData: Providers): LoaderController {
   };
 }
 
-function makeOpenrouterCatalog(): Providers {
-  return {
-    openai: {
-      id: "openai",
-      name: "OpenAI",
-      api: "https://openrouter.ai/api/v1",
-      doc: "https://openrouter.ai/models",
-      env: ["OPENROUTER_API_KEY"],
-      source: "openrouter",
-      schemaVersion: 1,
-      models: {
-        "openai/gpt-4o": {
-          id: "openai/gpt-4o",
-          name: "GPT-4o",
-          reasoning: true,
-          tool_call: true,
-          attachment: false,
-          open_weights: false,
-          knowledge: "2024-06",
-          limit: { context: 128_000, output: 4096 },
-          cost: {
-            input: 30,
-            output: 60,
-            reasoning: 120,
-            cache_read: 6,
-          },
-        },
-      },
-    },
-  } satisfies Providers;
-}
-
-function makeModelsDevCatalog(): Providers {
-  return {
-    anthropic: {
-      id: "anthropic",
-      name: "Anthropic",
-      source: "models.dev",
-      schemaVersion: 1,
-      models: {
-        "anthropic/claude-3.5": {
-          id: "anthropic/claude-3.5",
-          name: "Claude 3.5",
-          reasoning: true,
-          tool_call: false,
-          attachment: true,
-          open_weights: false,
-          knowledge: "2024-03",
-          limit: { context: 200_000, output: 4096 },
-          cost: {
-            input: 15,
-            output: 75,
-          },
-        },
-      },
-    },
-  } satisfies Providers;
-}
-
-function makePackageCatalog(): Providers {
-  return {
-    local: {
-      id: "local",
-      name: "Local Catalog",
-      source: "package",
-      schemaVersion: 1,
-      models: {
-        "local/demo": {
-          id: "local/demo",
-          name: "Local Demo",
-          open_weights: true,
-        },
-      },
-    },
-  } satisfies Providers;
-}
-
 function makeUsage(): Usage {
   return {
     input_tokens: 2000,
@@ -190,9 +84,9 @@ describe("Tokenlens core", () => {
   });
 
   it("merges provider sets, caches results, and reuses cache", async () => {
-    const openrouterCtrl = makeLoader(makeOpenrouterCatalog());
-    const modelsDevCtrl = makeLoader(makeModelsDevCatalog());
-    const packageCtrl = makeLoader(makePackageCatalog());
+    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
+    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
+    const packageCtrl = makeLoader(createPackageProvidersFixture());
 
     const client = new Tokenlens({
       sources: ["openrouter", "models.dev", "package"],
@@ -218,9 +112,9 @@ describe("Tokenlens core", () => {
   });
 
   it("falls back to cached providers when loaders fail", async () => {
-    const openrouterCtrl = makeLoader(makeOpenrouterCatalog());
-    const modelsDevCtrl = makeLoader(makeModelsDevCatalog());
-    const packageCtrl = makeLoader(makePackageCatalog());
+    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
+    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
+    const packageCtrl = makeLoader(createPackageProvidersFixture());
 
     const client = new Tokenlens({
       sources: ["openrouter", "models.dev", "package"],
@@ -245,9 +139,9 @@ describe("Tokenlens core", () => {
   });
 
   it("refresh(true) reloads providers and updates cache", async () => {
-    const openrouterCtrl = makeLoader(makeOpenrouterCatalog());
-    const modelsDevCtrl = makeLoader(makeModelsDevCatalog());
-    const packageCtrl = makeLoader(makePackageCatalog());
+    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
+    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
+    const packageCtrl = makeLoader(createPackageProvidersFixture());
 
     const client = new Tokenlens({
       sources: ["openrouter", "models.dev", "package"],
@@ -263,7 +157,7 @@ describe("Tokenlens core", () => {
 
     await client.getProviders();
 
-    const updatedOpenrouter = makeOpenrouterCatalog();
+    const updatedOpenrouter = createOpenrouterProvidersFixture();
     updatedOpenrouter.openai.models["openai/gpt-4o-mini"] = {
       id: "openai/gpt-4o-mini",
       name: "GPT-4o Mini",
@@ -281,9 +175,9 @@ describe("Tokenlens core", () => {
   });
 
   it("invalidate clears cache forcing loaders to run again", async () => {
-    const openrouterCtrl = makeLoader(makeOpenrouterCatalog());
-    const modelsDevCtrl = makeLoader(makeModelsDevCatalog());
-    const packageCtrl = makeLoader(makePackageCatalog());
+    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
+    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
+    const packageCtrl = makeLoader(createPackageProvidersFixture());
 
     const client = new Tokenlens({
       sources: ["openrouter", "models.dev", "package"],
@@ -300,7 +194,7 @@ describe("Tokenlens core", () => {
     const initial = await client.getProviders();
     await client.invalidate();
 
-    const updatedPackage = makePackageCatalog();
+    const updatedPackage = createPackageProvidersFixture();
     updatedPackage.local.models["local/second"] = {
       id: "local/second",
       name: "Local Second",
@@ -315,9 +209,9 @@ describe("Tokenlens core", () => {
   });
 
   it("returns the resolved source model", async () => {
-    const openrouterCtrl = makeLoader(makeOpenrouterCatalog());
-    const modelsDevCtrl = makeLoader(makeModelsDevCatalog());
-    const packageCtrl = makeLoader(makePackageCatalog());
+    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
+    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
+    const packageCtrl = makeLoader(createPackageProvidersFixture());
 
     const client = new Tokenlens({
       sources: ["openrouter", "models.dev", "package"],
@@ -343,9 +237,9 @@ describe("Tokenlens core", () => {
   });
 
   it("computes token costs via helper", async () => {
-    const openrouterCtrl = makeLoader(makeOpenrouterCatalog());
-    const modelsDevCtrl = makeLoader(makeModelsDevCatalog());
-    const packageCtrl = makeLoader(makePackageCatalog());
+    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
+    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
+    const packageCtrl = makeLoader(createPackageProvidersFixture());
 
     const client = new Tokenlens({
       sources: ["openrouter", "models.dev", "package"],
@@ -375,9 +269,9 @@ describe("Tokenlens core", () => {
   });
 
   it("returns limit information when available", async () => {
-    const openrouterCtrl = makeLoader(makeOpenrouterCatalog());
-    const modelsDevCtrl = makeLoader(makeModelsDevCatalog());
-    const packageCtrl = makeLoader(makePackageCatalog());
+    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
+    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
+    const packageCtrl = makeLoader(createPackageProvidersFixture());
 
     const client = new Tokenlens({
       sources: ["openrouter", "models.dev", "package"],
@@ -406,7 +300,7 @@ describe("Tokenlens core", () => {
   });
 
   it("createTokenlens wires loader overrides and uses provided fetch", async () => {
-    const openrouterCtrl = makeLoader(makeOpenrouterCatalog());
+    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
 
     const tokenlens = createTokenlens({
       fetch: noopFetch,
@@ -430,9 +324,9 @@ describe("module-level helpers", () => {
   });
 
   function setupSharedInstance() {
-    const openrouterCtrl = makeLoader(makeOpenrouterCatalog());
-    const modelsDevCtrl = makeLoader(makeModelsDevCatalog());
-    const packageCtrl = makeLoader(makePackageCatalog());
+    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
+    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
+    const packageCtrl = makeLoader(createPackageProvidersFixture());
 
     const tokenlens = createTokenlens({
       sources: ["openrouter", "models.dev", "package"],

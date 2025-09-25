@@ -3,7 +3,10 @@ import { describe, expect, it, beforeEach } from "vitest";
 import { MemoryCache, jitter } from "../src/cache.js";
 import type { CacheAdapter, CacheEntry } from "../src/types.js";
 
-function makeEntry(value: unknown, expiresInMs: number): CacheEntry {
+function makeEntry(
+  value: CacheEntry["value"],
+  expiresInMs: number,
+): CacheEntry {
   return {
     value,
     expiresAt: Date.now() + expiresInMs,
