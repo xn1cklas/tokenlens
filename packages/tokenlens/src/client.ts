@@ -21,35 +21,7 @@ import type {
 import { resolveModel } from "./resolve.js";
 import { DEFAULT_SOURCE, buildLoaderMap } from "./default-loaders.js";
 
-export type ModelHints = {
-  modalities?: SourceModel["modalities"];
-  supportsReasoning: boolean;
-  supportsToolCall: boolean;
-  supportsAttachments: boolean;
-  knowledge?: string;
-  openWeights: boolean;
-};
-
-export type ModelDetails = {
-  providerId: string;
-  modelId: string;
-  model: SourceModel | undefined;
-  limit?: { context?: number; input?: number; output?: number };
-  costs: TokenCosts | undefined;
-  hints: ModelHints | undefined;
-};
-
-function buildResultHints(model?: SourceModel): ModelHints | undefined {
-  if (!model) return undefined;
-  return {
-    modalities: model.modalities,
-    supportsReasoning: Boolean(model.reasoning),
-    supportsToolCall: Boolean(model.tool_call),
-    supportsAttachments: Boolean(model.attachment),
-    knowledge: model.knowledge,
-    openWeights: Boolean(model.open_weights),
-  };
-}
+export type ModelDetails = SourceModel | undefined;
 
 function getDefaultFetch(): FetchLike {
   const f = (globalThis as unknown as { fetch?: FetchLike }).fetch;
@@ -147,11 +119,10 @@ export class Tokenlens {
     });
   }
 
-  /** @public Describe a model's metadata, limits, costs, and hints. */
+  /** @public Describe a model's metadata as stored in the source catalog. */
   async describeModel(args: {
     modelId: string;
     provider?: string;
-    usage?: Usage;
   }): Promise<ModelDetails> {
     const providers = await this.getProviders();
     const resolved = resolveModel({
@@ -159,22 +130,7 @@ export class Tokenlens {
       providerId: args.provider,
       modelId: args.modelId,
     });
-    const costs = args.usage
-      ? computeTokenCostsForModel({
-          model: resolved.model,
-          usage: args.usage,
-        })
-      : undefined;
-    const limit = resolved.model?.limit;
-    const hints = buildResultHints(resolved.model);
-    return {
-      providerId: resolved.providerId,
-      modelId: resolved.modelId,
-      model: resolved.model,
-      limit,
-      costs,
-      hints,
-    };
+    return resolved.model;
   }
 
   /** @public Fetch context, input, and output token limits for a model. */
@@ -188,7 +144,7 @@ export class Tokenlens {
       modelId: args.modelId,
       provider: args.provider,
     });
-    return details.limit;
+    return details?.limit;
   }
 
   /** @public Experimental: count tokens with a model's tokenizer. */
@@ -238,14 +194,15 @@ export class Tokenlens {
       modelId: args.modelId,
     });
 
+    const extras = details?.extras;
     const inferred =
-      details.model?.extras && typeof details.model.extras === "object"
-        ? (details.model.extras as { architecture?: { tokenizer?: string } })
-            .architecture?.tokenizer
+      extras && typeof extras === "object"
+        ? (extras as { architecture?: { tokenizer?: string } }).architecture
+            ?.tokenizer
         : undefined;
 
     return {
-      model: details.model,
+      model: details,
       tokenizerId: inferred,
     };
   }

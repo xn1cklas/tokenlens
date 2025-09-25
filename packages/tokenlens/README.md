@@ -132,7 +132,6 @@ The package re-exports the most common types so you can stay on the root import:
 import type {
   Usage,
   ModelDetails,
-  ModelHints,
   TokenCosts,
   TokenlensOptions,
 } from "tokenlens";

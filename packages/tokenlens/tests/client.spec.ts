@@ -310,7 +310,7 @@ describe("Tokenlens core", () => {
     expect(next.local.models["local/second"]).toBeTruthy();
   });
 
-  it("returns detailed model info with limits, costs, and hints", async () => {
+  it("returns the resolved source model", async () => {
     const openrouterCtrl = makeLoader(makeOpenrouterCatalog());
     const modelsDevCtrl = makeLoader(makeModelsDevCatalog());
     const packageCtrl = makeLoader(makePackageCatalog());
@@ -327,19 +327,13 @@ describe("Tokenlens core", () => {
 
     await client.getProviders();
 
-    const usage = makeUsage();
     const details = await client.describeModel({
       modelId: "openai/gpt-4o",
-      usage,
     });
 
-    expect(details.providerId).toBe("openai");
-    expect(details.limit?.context).toBe(128_000);
-    expect(details.costs?.totalTokenCostUSD).toBeCloseTo(0.1023, 6);
-    expect(details.hints?.supportsReasoning).toBe(true);
-    expect(details.hints?.supportsToolCall).toBe(true);
-    expect(details.hints?.supportsAttachments).toBe(false);
-    expect(details.hints?.openWeights).toBe(false);
+    expect(details?.id).toBe("openai/gpt-4o");
+    expect(details?.limit?.context).toBe(128_000);
+    expect(details?.cost?.input).toBe(30);
   });
 
   it("computes token costs via helper", async () => {
@@ -479,16 +473,11 @@ describe("module-level helpers", () => {
     const { tokenlens } = setupSharedInstance();
     await tokenlens.getProviders();
 
-    const usage = makeUsage();
     const metadata = await apiDescribeModel({
       modelId: "openai/gpt-4o",
-      usage,
     });
 
-    expect(metadata.providerId).toBe("openai");
-    expect(metadata.model?.id).toBe("openai/gpt-4o");
-    expect(metadata.costs?.totalTokenCostUSD).toBeCloseTo(0.1023, 6);
-    expect(metadata.limit?.context).toBe(128_000);
-    expect(metadata.hints?.supportsReasoning).toBe(true);
+    expect(metadata?.id).toBe("openai/gpt-4o");
+    expect(metadata?.limit?.context).toBe(128_000);
   });
 });

@@ -1,9 +1,5 @@
 export { Tokenlens } from "./client.js";
-import {
-  Tokenlens as TokenlensClient,
-  type ModelDetails,
-  type ModelHints,
-} from "./client.js";
+import { Tokenlens as TokenlensClient, type ModelDetails } from "./client.js";
 import type { Usage } from "@tokenlens/core/types";
 import type { SourceLoader, SourceId, TokenlensOptions } from "./types.js";
 import { DEFAULT_SOURCE, getDefaultLoader } from "./default-loaders.js";
@@ -70,12 +66,11 @@ export async function getContextLimits(args: {
 
 /**
  * @public
- * Describe a model's metadata, limits, cost hints, and capabilities.
+ * Describe a model's metadata exactly as stored in the active sources.
  */
 export async function describeModel(args: {
   modelId: string;
   provider?: string;
-  usage?: Usage;
 }): Promise<ModelDetails> {
   const tokenlens = getTokenlens();
   return tokenlens.describeModel(args);
@@ -97,5 +92,5 @@ export function setSharedTokenlens(tokenlens?: TokenlensClient) {
 
 export type { SourceProviders, SourceModel } from "@tokenlens/core/dto";
 export type { Usage } from "@tokenlens/core/types";
-export type { ModelDetails, ModelHints, TokenlensOptions };
+export type { ModelDetails, TokenlensOptions };
 export type { TokenCosts } from "@tokenlens/helpers";
