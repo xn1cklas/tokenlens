@@ -3,14 +3,14 @@
 Tokenlens v2 replaces the all-in-one helper bundle with a focused client that loads real-time provider data, handles caching, and exposes a minimal helper surface. This guide maps each common v1 pattern to its v2 counterpart, explains the rationale, and lists the precise migration steps.
 
 ## Quick Checklist
-- Replace legacy helpers with `describeModel`, `estimateCostUSD`, and `getContextLimits` (either via dedicated `Tokenlens` instances or top-level helpers that reuse the shared instance internally).
+- Replace legacy helpers with `describeModel`, `computeCostUSD`, and `getContextLimits` (either via dedicated `Tokenlens` instances or top-level helpers that reuse the shared instance internally).
 - Swap static catalog imports for your own `Tokenlens` instance when you need custom sources/loaders.
 - Remove conversation/compaction helpers (`shouldCompact`, `contextHealth`, etc.) from production code; re-implement app-specific logic on top of `describeModel`.
 - Delete usages of registry globals (`MODEL_IDS`, `resolveModel`, etc.); rely on `Tokenlens#getProviders()` if you truly need the raw catalog.
 - Update docs/README snippets to use the new API names and the default OpenRouter source.
 
 ## The Tokenlens class at a glance
-- **Single responsibility**: load provider data from one or more *sources* (OpenRouter by default) and expose consistent helpers (`estimateCostUSD`, `describeModel`, `getContextLimits`).
+- **Single responsibility**: load provider data from one or more *sources* (OpenRouter by default) and expose consistent helpers (`computeCostUSD`, `describeModel`, `getContextLimits`).
 - **Lazy shared instance**: module-level helpers create a default instance on first use so you can call them without setup.
 - **Custom instances**: `createTokenlens(options)` lets you choose sources, provide custom loaders, tweak TTL, or plug in your own cache adapter.
 - **Caching**: by default, provider catalogs are cached in-memory for 24 hours with jitter. Control this via `ttlMs` or a custom `cache`. Errors fall back to the last cached value when possible.
@@ -20,13 +20,13 @@ See the README for end-to-end examples of both standalone helpers and configured
 
 ## What Changed and Why
 
-| Area                 | v1 pattern                                                                                                                       | v2 replacement                                                                                                                                                                                       | Why it changed / Benefit                                                                    |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| API surface          | Root module re-exported most scoped packages plus legacy sync helpers.                                                           | Root module exports `Tokenlens`, `createTokenlens`, `describeModel`, `estimateCostUSD`, `getContextLimits`, and type-only exports (`Usage`, `ModelDetails`, `TokenCosts`, `TokenlensOptions`, etc.). | Smaller surface, clear entry point, no accidental coupling to internals.                    |
-| Source data          | Bundled static catalog (`defaultCatalog`, registry wrappers).                                                                    | Sources are loaded via configurable loaders; `openrouter` is the default.                                                                                                                            | Avoids stale data, shrinks bundle size, lets apps decide which datasets to load.            |
-| Cost/context helpers | Sync helpers that implicitly read the bundled catalog (`getContext`, `estimateCost`, `remainingContext`, `shouldCompact`, etc.). | Use `describeModel`, `getContextLimits`, `estimateCostUSD`; implement conversation heuristics yourself.                                                                                              | Ensures helpers operate on the same resolved metadata and encourages app-specific policies. |
-| Registry helpers     | Global listings (`MODEL_IDS`, `resolveModel`, `listModels`).                                                                     | Access provider catalogs through `Tokenlens#getProviders()` or via `@tokenlens/core` if you need the raw DTOs.                                                                                       | Keeps v2 runtime lean and makes registry logic explicit.                                    |
-| Fetch utilities      | Dedicated `fetchModels` helper.                                                                                                  | Call `tokenlens.getProviders()` (auto loads default source) or configure `createTokenlens({ sources: [...] })`.                                                                                      | One code path handles loading, caching, retries.                                            |
+| Area                 | v1 pattern                                                                                                                       | v2 replacement                                                                                                                                                                                      | Why it changed / Benefit                                                                    |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| API surface          | Root module re-exported most scoped packages plus legacy sync helpers.                                                           | Root module exports `Tokenlens`, `createTokenlens`, `describeModel`, `computeCostUSD`, `getContextLimits`, and type-only exports (`Usage`, `ModelDetails`, `TokenCosts`, `TokenlensOptions`, etc.). | Smaller surface, clear entry point, no accidental coupling to internals.                    |
+| Source data          | Bundled static catalog (`defaultCatalog`, registry wrappers).                                                                    | Sources are loaded via configurable loaders; `openrouter` is the default.                                                                                                                           | Avoids stale data, shrinks bundle size, lets apps decide which datasets to load.            |
+| Cost/context helpers | Sync helpers that implicitly read the bundled catalog (`getContext`, `estimateCost`, `remainingContext`, `shouldCompact`, etc.). | Use `describeModel`, `getContextLimits`, `computeCostUSD`; implement conversation heuristics yourself.                                                                                              | Ensures helpers operate on the same resolved metadata and encourages app-specific policies. |
+| Registry helpers     | Global listings (`MODEL_IDS`, `resolveModel`, `listModels`).                                                                     | Access provider catalogs through `Tokenlens#getProviders()` or via `@tokenlens/core` if you need the raw DTOs.                                                                                      | Keeps v2 runtime lean and makes registry logic explicit.                                    |
+| Fetch utilities      | Dedicated `fetchModels` helper.                                                                                                  | Call `tokenlens.getProviders()` (auto loads default source) or configure `createTokenlens({ sources: [...] })`.                                                                                     | One code path handles loading, caching, retries.                                            |
 
 ## Side-by-Side Imports
 
@@ -44,14 +44,14 @@ import {
 import {
   createTokenlens,
   describeModel,
-  estimateCostUSD,
+  computeCostUSD,
   getContextLimits,
 } from "tokenlens";
 
 // optional singleton if you don't need custom loaders
 const tokenlens = createTokenlens();
 const details = await tokenlens.describeModel({ modelId: "openai/gpt-4o", usage });
-const cost = await tokenlens.estimateCostUSD({ modelId: "openai/gpt-4o", usage });
+const cost = await tokenlens.computeCostUSD({ modelId: "openai/gpt-4o", usage });
 const context = await tokenlens.getContextLimits({ modelId: "openai/gpt-4o" });
 ```
 
@@ -74,7 +74,7 @@ import { createTokenlens } from "tokenlens";
 const tokenlens = createTokenlens();
 const details = await tokenlens.describeModel({ modelId: "openai/gpt-4o", usage });
 const context = await tokenlens.getContextLimits({ modelId: "openai/gpt-4o" });
-const cost = await tokenlens.estimateCostUSD({ modelId: "openai/gpt-4o", usage });
+const cost = await tokenlens.computeCostUSD({ modelId: "openai/gpt-4o", usage });
 ```
 
 **Why**: The client keeps provider catalogs in sync, enforces loader availability, and caches responses so all helper calls share the same data. If you don't need custom options and are comfortable with defaults, the module-level helpers will reuse a shared instance automatically.
@@ -97,7 +97,7 @@ const totalTokens = usage.prompt_tokens! + usage.completion_tokens!;
 const remainingCombined = limit?.context ? Math.max(0, limit.context - totalTokens) : undefined;
 const percentUsed = limit?.context ? totalTokens / limit.context : 1;
 const compact = percentUsed >= 0.85;
-const totalUsd = costs?.totalTokenCostUSD ?? 0;
+const totalUsd = costs?.totalTokenCostUSD ?? 0; // `costs` is defined because usage was provided
 ```
 
 **Why**: v2 intentionally drops opinionated compaction/budgeting helpers. Consumers own the heuristics; Tokenlens supplies accurate metadata and costs.
@@ -149,7 +149,7 @@ Tokenlens no longer ships replacements for these helpers. This is intentional: t
 
 - **Smaller install & clearer API**: No more accidental pulls of scoped packages or large static catalogs.
 - **Explicit data ownership**: Apps decide which sources load and when they refresh, reducing surprise updates.
-- **Consistent helper behaviour**: `describeModel`, `estimateCostUSD`, and `getContextLimits` all operate on the same cached provider data.
+- **Consistent helper behaviour**: `describeModel`, `computeCostUSD`, and `getContextLimits` all operate on the same cached provider data.
 - **Easier customization**: With opinionated conversation helpers removed, you can tailor budgeting, compaction, and reporting to your product.
 
 ## FAQ
@@ -158,7 +158,7 @@ Tokenlens no longer ships replacements for these helpers. This is intentional: t
 No. Creating a client, inspecting models, and estimating costs are all exposed directly from `tokenlens` v2. Additional DTO types (`Usage`, `ModelDetails`, `TokenlensOptions`, etc.) are re-exported for convenience.
 
 **Can I keep a singleton?**
-Yes. The module helpers (`estimateCostUSD`, etc.) reuse a shared client internally. If you need custom options, create your own `createTokenlens()` factory and reuse that instance.
+Yes. The module helpers (`computeCostUSD`, etc.) reuse a shared client internally. If you need custom options, create your own `createTokenlens()` factory and reuse that instance.
 
 **How do I seed tests without hitting the network?**
 Pass `sources: ["package"]` and provide a `package` loader that returns your fixture catalog.

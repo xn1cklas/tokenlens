@@ -28,18 +28,14 @@ This file defines canonical terminology used across the TokenLens v2 codebase an
 - Fields include `id`, `name`, `limit`, `cost`, `modalities`, capability flags, and source-specific `extras`.
 
 ## ModelDetails
-- The DTO returned by `describeModel`.
-- Contains the resolved `providerId`, canonical `modelId`, optional `model` (the `SourceModel`), token `limit`, computed `costs`, and `hints`.
-
-## ModelHints
-- Helper object derived from a `SourceModel` summarizing capabilities (`supportsReasoning`, `supportsToolCall`, `supportsAttachments`, `openWeights`, optional knowledge cutoff).
+- Alias for the `SourceModel` returned by `describeModel` (or `undefined` when not found).
 
 ## Usage
 - Union type capturing usage counters from common SDKs (e.g., `input_tokens`, `outputTokens`, `reasoning_tokens`).
-- Passed to `estimateCostUSD` or `describeModel` to compute cost breakdowns.
+- Passed to `computeCostUSD` or `describeModel` to compute cost breakdowns.
 
 ## TokenCosts
-- Normalized USD cost breakdown calculated by `estimateCostUSD` / `computeTokenCostsForModel`.
+- Normalized USD cost breakdown calculated by `computeCostUSD` / `computeTokenCostsForModel`.
 - Fields: `inputTokenCostUSD`, `outputTokenCostUSD`, optional `reasoningTokenCostUSD`, caching costs, and `totalTokenCostUSD` plus the `ratesUsed`.
 
 ## DEFAULT_SOURCE
@@ -72,13 +68,13 @@ This file defines canonical terminology used across the TokenLens v2 codebase an
 
 ## pricing
 - Approximate USD cost per 1M tokens as supplied by the source catalog (`cost.input`, `cost.output`, etc.).
-- Tokenlens converts these to per-request USD using `estimateCostUSD`.
+- Tokenlens converts these to per-request USD using `computeCostUSD`.
 
 ## modalities
 - Supported input/output modalities of a model (`modalities.input`, `modalities.output`).
 - Used to derive hints returned from `describeModel`.
 
-## estimateCostUSD
+## computeCostUSD
 - Stand-alone helper (and class method) that resolves a model, normalizes usage, and returns `TokenCosts`.
 
 ## describeModel
@@ -89,7 +85,7 @@ This file defines canonical terminology used across the TokenLens v2 codebase an
 - Stand-alone helper returning `{ context?, input?, output? }` for a resolved model.
 
 ## Tokenlens (class)
-- Configurable client responsible for loading sources, caching provider catalogs, and exposing helpers (`estimateCostUSD`, `describeModel`, `getContextLimits`).
+- Configurable client responsible for loading sources, caching provider catalogs, and exposing helpers (`computeCostUSD`, `describeModel`, `getContextLimits`).
 - Instances share a cache unless `cacheKey` is overridden.
 
 ## createTokenlens
