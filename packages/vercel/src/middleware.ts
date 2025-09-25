@@ -11,13 +11,13 @@ import type { Tokenlens } from "tokenlens";
  * @returns The middleware.
  */
 export const tokenlensMiddleware = (
-  tokenlens: Pick<Tokenlens, "getTokenCosts">,
+  tokenlens: Pick<Tokenlens, "estimateCostUSD">,
 ): LanguageModelV2Middleware => ({
   wrapGenerate: async ({ doGenerate, model }) => {
     const result = await doGenerate();
     if (!result.usage) return result;
 
-    const costs = await tokenlens.getTokenCosts({
+    const costs = await tokenlens.estimateCostUSD({
       modelId: model.modelId,
       provider: model.provider,
       usage: result.usage,

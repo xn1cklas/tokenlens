@@ -14,7 +14,7 @@ const outputTokens = 20;
 const totalTokens = 30;
 
 class MockTokenlens extends TokenlensClient {
-  public readonly getTokenCostsMock = vi.fn(
+  public readonly estimateCostUSDMock = vi.fn(
     async ({ modelId, provider, usage }) => ({
       inputTokenCostUSD: inputTokenCostUSD * inputTokens,
       outputTokenCostUSD: outputTokenCostUSD * outputTokens,
@@ -48,10 +48,10 @@ class MockTokenlens extends TokenlensClient {
     });
   }
 
-  override async getTokenCosts(
-    args: Parameters<TokenlensClient["getTokenCosts"]>[0],
-  ): ReturnType<TokenlensClient["getTokenCosts"]> {
-    return this.getTokenCostsMock(args);
+  override async estimateCostUSD(
+    args: Parameters<TokenlensClient["estimateCostUSD"]>[0],
+  ): ReturnType<TokenlensClient["estimateCostUSD"]> {
+    return this.estimateCostUSDMock(args);
   }
 }
 
@@ -76,7 +76,7 @@ const sampleCosts = {
 
 test("wrapVercelLanguageModel", async () => {
   const tokenlens = new MockTokenlens();
-  tokenlens.getTokenCostsMock.mockImplementation(
+  tokenlens.estimateCostUSDMock.mockImplementation(
     async ({ modelId, provider, usage }) => {
       expect(modelId).toBe(mockModel.modelId);
       expect(provider).toBe(mockModel.provider);
@@ -117,5 +117,5 @@ test("wrapVercelLanguageModel", async () => {
     sampleCosts.totalTokenCostUSD,
   );
 
-  expect(tokenlens.getTokenCostsMock).toHaveBeenCalledTimes(1);
+  expect(tokenlens.estimateCostUSDMock).toHaveBeenCalledTimes(1);
 });

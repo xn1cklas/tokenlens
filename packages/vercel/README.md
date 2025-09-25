@@ -46,7 +46,7 @@ console.log({
 
 How it works
 - Wrap any `LanguageModelV2` with `withTokenlens(model, tokenlens)`.
-- The middleware calls `tokenlens.getTokenCosts()` after each generation.
+- The middleware calls `tokenlens.estimateCostUSD()` after each generation.
 - Token cost fields (`inputTokenCostUSD`, `outputTokenCostUSD`, `totalTokenCostUSD`) are merged directly onto the SDK response alongside the existing `usage` information.
 - Providers and pricing come from your Tokenlens loaders (package data, remote API, etc.).
 
