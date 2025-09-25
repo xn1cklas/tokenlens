@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import Anthropic from "@anthropic-ai/sdk";
-import { createClient } from "tokenlens";
+import { createTokenlens } from "tokenlens";
 
 async function main(): Promise<void> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -12,7 +12,7 @@ async function main(): Promise<void> {
   }
 
   const client = new Anthropic({ apiKey });
-  const tokenlens = createClient();
+  const tokenlens = createTokenlens();
 
   const response = await client.messages.create({
     model: "claude-3-5-sonnet-20241022",

@@ -2,7 +2,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
-  createClient,
+  createTokenlens,
   type TokenCosts,
   type SourceProviders,
   type SourceModel,
@@ -131,7 +131,7 @@ function computeContextStats(args: {
 }
 
 async function main() {
-  const tokenlens = createClient();
+  const tokenlens = createTokenlens();
   const results: Array<Record<string, unknown>> = [];
 
   const providers: SourceProviders = await tokenlens.getProviders();

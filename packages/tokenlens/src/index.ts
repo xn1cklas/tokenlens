@@ -1,24 +1,24 @@
-export { Tokenlens, getShared } from "./client.js";
+export { Tokenlens } from "./client.js";
 import {
-  Tokenlens as Client,
+  Tokenlens as TokenlensClient,
   type ModelDetails,
   type ModelHints,
 } from "./client.js";
 import type { Usage } from "@tokenlens/core/types";
-import type { SourceLoader, SourceId } from "./types.js";
+import type { SourceLoader, SourceId, TokenlensOptions } from "./types.js";
 import { DEFAULT_SOURCE, getDefaultLoader } from "./default-loaders.js";
 
 /**
- * Create a new Tokenlens client with the given options.
- * @param options - The options for the Tokenlens client.
- * @returns A new Tokenlens client.
+ * Create a new Tokenlens instance with the given options.
+ * @param options - The options for the Tokenlens instance.
+ * @returns A new Tokenlens instance.
  */
 /**
  * @public
- * Create a Tokenlens client with optional source/loaders overrides.
+ * Create a Tokenlens instance with optional source/loaders overrides.
  */
-export function createClient(
-  options?: ConstructorParameters<typeof Client>[0],
+export function createTokenlens(
+  options?: ConstructorParameters<typeof TokenlensClient>[0],
 ) {
   const { sources, loaders, ...rest } = options ?? {};
   const resolvedSources = [...(sources?.length ? sources : [DEFAULT_SOURCE])];
@@ -36,7 +36,7 @@ export function createClient(
     }
   }
 
-  return new Client({
+  return new TokenlensClient({
     ...rest,
     sources: resolvedSources,
     loaders: resolvedLoaders,
@@ -52,7 +52,8 @@ export async function estimateCostUSD(args: {
   provider?: string;
   usage: Usage;
 }) {
-  return (await import("./client.js")).getShared().estimateCostUSD(args);
+  const tokenlens = getTokenlens();
+  return tokenlens.estimateCostUSD(args);
 }
 
 /**
@@ -63,7 +64,8 @@ export async function getContextLimits(args: {
   modelId: string;
   provider?: string;
 }) {
-  return (await import("./client.js")).getShared().getContextLimits(args);
+  const tokenlens = getTokenlens();
+  return tokenlens.getContextLimits(args);
 }
 
 /**
@@ -75,10 +77,25 @@ export async function describeModel(args: {
   provider?: string;
   usage?: Usage;
 }): Promise<ModelDetails> {
-  return (await import("./client.js")).getShared().describeModel(args);
+  const tokenlens = getTokenlens();
+  return tokenlens.describeModel(args);
+}
+
+let sharedTokenlens: TokenlensClient | undefined;
+
+function getTokenlens(): TokenlensClient {
+  sharedTokenlens ??= new TokenlensClient();
+  return sharedTokenlens;
+}
+
+/**
+ * @internal Utility for tests to override the shared Tokenlens instance.
+ */
+export function setSharedTokenlens(tokenlens?: TokenlensClient) {
+  sharedTokenlens = tokenlens;
 }
 
 export type { SourceProviders, SourceModel } from "@tokenlens/core/dto";
 export type { Usage } from "@tokenlens/core/types";
-export type { ModelDetails, ModelHints };
+export type { ModelDetails, ModelHints, TokenlensOptions };
 export type { TokenCosts } from "@tokenlens/helpers";

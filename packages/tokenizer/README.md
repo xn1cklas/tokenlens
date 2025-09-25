@@ -44,10 +44,10 @@ console.log(result);
 
 With TokenLens metadata
 ```ts
-import { createClient } from "tokenlens";
+import { createTokenlens } from "tokenlens";
 import { countTokens } from "@tokenlens/tokenizer";
 
-const tokenlens = createClient();
+const tokenlens = createTokenlens();
 const { model } = await tokenlens.describeModel({
   modelId: "anthropic:claude-3-5-sonnet-20241022",
 });

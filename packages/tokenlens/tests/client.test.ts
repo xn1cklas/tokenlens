@@ -45,14 +45,14 @@ type Usage = {
 };
 
 import {
-  createClient,
+  createTokenlens,
   getContextLimits as apiGetContextLimits,
   estimateCostUSD as apiEstimateCostUSD,
   describeModel as apiDescribeModel,
+  setSharedTokenlens,
 } from "../src/index.ts";
 import { Tokenlens } from "../src/client.ts";
 import type { FetchLike, SourceLoader } from "../src/types.ts";
-import * as clientModule from "../src/client.ts";
 
 type LoaderController = {
   loader: SourceLoader;
@@ -411,10 +411,10 @@ describe("Tokenlens core", () => {
     expect(missing).toBeUndefined();
   });
 
-  it("createClient wires loader overrides and uses provided fetch", async () => {
+  it("createTokenlens wires loader overrides and uses provided fetch", async () => {
     const openrouterCtrl = makeLoader(makeOpenrouterCatalog());
 
-    const client = createClient({
+    const tokenlens = createTokenlens({
       fetch: noopFetch,
       loaders: {
         openrouter: openrouterCtrl.loader,
@@ -423,7 +423,7 @@ describe("Tokenlens core", () => {
       ttlMs: 10,
     });
 
-    await client.getProviders();
+    await tokenlens.getProviders();
     expect(openrouterCtrl.getCalls()).toBe(1);
     expect(openrouterCtrl.getLastFetch()).toBe(noopFetch);
   });
@@ -432,6 +432,7 @@ describe("Tokenlens core", () => {
 describe("module-level helpers", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    setSharedTokenlens(undefined);
   });
 
   function setupSharedInstance() {
@@ -439,7 +440,7 @@ describe("module-level helpers", () => {
     const modelsDevCtrl = makeLoader(makeModelsDevCatalog());
     const packageCtrl = makeLoader(makePackageCatalog());
 
-    const client = new Tokenlens({
+    const tokenlens = createTokenlens({
       sources: ["openrouter", "models.dev", "package"],
       fetch: noopFetch,
       ttlMs: 60_000,
@@ -450,28 +451,27 @@ describe("module-level helpers", () => {
       },
     });
 
+    setSharedTokenlens(tokenlens);
+
     return {
-      client,
+      tokenlens,
       openrouterCtrl,
       modelsDevCtrl,
       packageCtrl,
     };
   }
 
-  it("getContextLimits delegates to shared instance", async () => {
-    const { client } = setupSharedInstance();
-    await client.getProviders();
-    const spy = vi.spyOn(clientModule, "getShared").mockReturnValue(client);
+  it("getContextLimits returns cached context information", async () => {
+    const { tokenlens } = setupSharedInstance();
+    await tokenlens.getProviders();
 
     const limit = await apiGetContextLimits({ modelId: "openai/gpt-4o" });
     expect(limit?.context).toBe(128_000);
-    expect(spy).toHaveBeenCalled();
   });
 
-  it("estimateCostUSD delegates to shared instance", async () => {
-    const { client } = setupSharedInstance();
-    await client.getProviders();
-    const spy = vi.spyOn(clientModule, "getShared").mockReturnValue(client);
+  it("estimateCostUSD reuses cached providers", async () => {
+    const { tokenlens } = setupSharedInstance();
+    await tokenlens.getProviders();
 
     const usage = makeUsage();
     const costs = await apiEstimateCostUSD({
@@ -479,13 +479,11 @@ describe("module-level helpers", () => {
       usage,
     });
     expect(costs.totalTokenCostUSD).toBeCloseTo(0.1023, 6);
-    expect(spy).toHaveBeenCalled();
   });
 
-  it("describeModel returns composed metadata", async () => {
-    const { client } = setupSharedInstance();
-    await client.getProviders();
-    const spy = vi.spyOn(clientModule, "getShared").mockReturnValue(client);
+  it("describeModel returns composed metadata without reloading", async () => {
+    const { tokenlens } = setupSharedInstance();
+    await tokenlens.getProviders();
 
     const usage = makeUsage();
     const metadata = await apiDescribeModel({
@@ -498,6 +496,5 @@ describe("module-level helpers", () => {
     expect(metadata.costs?.totalTokenCostUSD).toBeCloseTo(0.1023, 6);
     expect(metadata.limit?.context).toBe(128_000);
     expect(metadata.hints?.supportsReasoning).toBe(true);
-    expect(spy).toHaveBeenCalled();
   });
 });

@@ -245,9 +245,3 @@ export class Tokenlens {
     };
   }
 }
-
-let shared: Tokenlens | undefined;
-export function getShared(): Tokenlens {
-  shared ??= new Tokenlens();
-  return shared;
-}

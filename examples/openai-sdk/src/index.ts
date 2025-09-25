@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import OpenAI from "openai";
-import { createClient } from "tokenlens";
+import { createTokenlens } from "tokenlens";
 
 async function main(): Promise<void> {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -12,7 +12,7 @@ async function main(): Promise<void> {
   }
 
   const client = new OpenAI({ apiKey });
-  const tokenlens = createClient();
+  const tokenlens = createTokenlens();
 
   const completion = await client.responses.create({
     model: "gpt-4o-mini",
