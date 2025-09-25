@@ -1,9 +1,9 @@
-import type { Providers } from "@tokenlens/core/dto";
+import type { SourceProviders } from "@tokenlens/core/dto";
 
 export function mergeProviders(
-  providerSets: ReadonlyArray<Providers>,
-): Providers {
-  const out: Providers = {};
+  providerSets: ReadonlyArray<SourceProviders>,
+): SourceProviders {
+  const out: SourceProviders = {};
   for (const providers of providerSets) {
     for (const [provId, prov] of Object.entries(providers || {})) {
       const existing = out[provId];

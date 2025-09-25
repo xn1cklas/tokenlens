@@ -1,13 +1,13 @@
-import type { Providers, Model } from "@tokenlens/core/dto";
+import type { SourceProviders, SourceModel } from "@tokenlens/core/dto";
 
 export type ResolveModelResult = {
   providerId: string;
   modelId: string; // canonical provider/model
-  model: Model | undefined;
+  model: SourceModel | undefined;
 };
 
 export function resolveModel(args: {
-  providers: Providers;
+  providers: SourceProviders;
   providerId?: string;
   modelId: string; // may be provider/model or bare model id
 }): ResolveModelResult {

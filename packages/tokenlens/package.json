@@ -43,8 +43,8 @@
     "gen:providers": "node scripts/gen-providers.mjs",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "pnpm run build && vitest",
-    "test:run": "pnpm run build && vitest run",
+    "test": "pnpm run build && vitest --config ../../vitest.config.ts --project tokenlens",
+    "test:run": "pnpm run build && vitest run --config ../../vitest.config.ts --project tokenlens",
     "bench:lookup": "pnpm run build && node scripts/bench-lookup.mjs",
     "bench:lookup:run": "node scripts/bench-lookup.mjs",
     "pre-release": "pnpm run bench:lookup && pnpm run test:run && pnpm run build"
@@ -87,8 +87,7 @@
   },
   "homepage": "https://github.com/xn1cklas/tokenlens/tree/HEAD/packages/tokenlens#readme",
   "devDependencies": {
-    "typescript": "^5.9.2",
-    "vitest": "^1.6.1"
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "@tokenlens/core": "workspace:*",

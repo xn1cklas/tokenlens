@@ -1,4 +1,4 @@
-import type { Providers } from "@tokenlens/core/dto";
+import type { SourceProviders } from "@tokenlens/core/dto";
 import type { SourceId, SourceLoader } from "./types.js";
 
 const openrouterLoader: SourceLoader = async (fetchImpl) =>
@@ -7,7 +7,7 @@ const openrouterLoader: SourceLoader = async (fetchImpl) =>
 const modelsDevLoader: SourceLoader = async (fetchImpl) =>
   (await import("@tokenlens/fetch")).fetchModelsDev({ fetch: fetchImpl });
 
-const packageLoader: SourceLoader = async () => ({}) as Providers;
+const packageLoader: SourceLoader = async () => ({}) as SourceProviders;
 
 const defaultLoaders: Record<SourceId, SourceLoader> = {
   openrouter: openrouterLoader,
@@ -15,7 +15,7 @@ const defaultLoaders: Record<SourceId, SourceLoader> = {
   package: packageLoader,
 };
 
-export const DEFAULT_SOURCE: SourceId = "models.dev";
+export const DEFAULT_SOURCE: SourceId = "openrouter";
 
 export function getDefaultLoader(source: SourceId): SourceLoader | undefined {
   return defaultLoaders[source];

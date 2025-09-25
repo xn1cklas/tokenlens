@@ -46,11 +46,9 @@ type Usage = {
 
 import {
   createClient,
-  getLimit as apiGetLimit,
-  getModel as apiGetModel,
-  getProviders as apiGetProviders,
-  getResultMetadata,
-  getTokenCosts as apiGetTokenCosts,
+  getContextLimits as apiGetContextLimits,
+  estimateCostUSD as apiEstimateCostUSD,
+  describeModel as apiDescribeModel,
 } from "../src/index.ts";
 import { Tokenlens } from "../src/client.ts";
 import type { FetchLike, SourceLoader } from "../src/types.ts";
@@ -308,32 +306,6 @@ describe("Tokenlens core", () => {
     expect(next.local.models["local/second"]).toBeTruthy();
   });
 
-  it("resolves canonical model ids with or without provider", async () => {
-    const openrouterCtrl = makeLoader(makeOpenrouterCatalog());
-    const modelsDevCtrl = makeLoader(makeModelsDevCatalog());
-    const packageCtrl = makeLoader(makePackageCatalog());
-
-    const client = new Tokenlens({
-      fetch: noopFetch,
-      ttlMs: 60_000,
-      loaders: {
-        openrouter: openrouterCtrl.loader,
-        "models.dev": modelsDevCtrl.loader,
-        package: packageCtrl.loader,
-      },
-    });
-
-    await client.getProviders();
-
-    const direct = await client.getModel({ modelId: "openai/gpt-4o" });
-    expect(direct.providerId).toBe("openai");
-    expect(direct.model?.id).toBe("openai/gpt-4o");
-
-    const inferred = await client.getModel({ modelId: "claude-3.5" });
-    expect(inferred.providerId).toBe("anthropic");
-    expect(inferred.modelId).toBe("anthropic/claude-3.5");
-  });
-
   it("returns detailed model info with limits, costs, and hints", async () => {
     const openrouterCtrl = makeLoader(makeOpenrouterCatalog());
     const modelsDevCtrl = makeLoader(makeModelsDevCatalog());
@@ -352,7 +324,7 @@ describe("Tokenlens core", () => {
     await client.getProviders();
 
     const usage = makeUsage();
-    const details = await client.getModelDetails({
+    const details = await client.describeModel({
       modelId: "openai/gpt-4o",
       usage,
     });
@@ -384,7 +356,7 @@ describe("Tokenlens core", () => {
     await client.getProviders();
 
     const usage = makeUsage();
-    const costs = await client.getTokenCosts({
+    const costs = await client.estimateCostUSD({
       modelId: "openai/gpt-4o",
       usage,
     });
@@ -413,11 +385,15 @@ describe("Tokenlens core", () => {
 
     await client.getProviders();
 
-    const limit = await client.getLimit({ modelId: "openai/gpt-4o" });
+    const limit = await client.getContextLimits({
+      modelId: "openai/gpt-4o",
+    });
     expect(limit?.context).toBe(128_000);
     expect(limit?.output).toBe(4096);
 
-    const missing = await client.getLimit({ modelId: "does-not-exist" });
+    const missing = await client.getContextLimits({
+      modelId: "does-not-exist",
+    });
     expect(missing).toBeUndefined();
   });
 
@@ -472,54 +448,37 @@ describe("module-level helpers", () => {
     };
   }
 
-  it("getProviders delegates to shared instance", async () => {
-    const { client } = setupSharedInstance();
-    const expected = await client.getProviders();
-    const spy = vi.spyOn(clientModule, "getShared").mockReturnValue(client);
-
-    const actual = await apiGetProviders();
-    expect(actual).toBe(expected);
-    expect(spy).toHaveBeenCalled();
-  });
-
-  it("getModel delegates to shared instance", async () => {
+  it("getContextLimits delegates to shared instance", async () => {
     const { client } = setupSharedInstance();
     await client.getProviders();
     const spy = vi.spyOn(clientModule, "getShared").mockReturnValue(client);
 
-    const result = await apiGetModel({ modelId: "openai/gpt-4o" });
-    expect(result?.model?.id).toBe("openai/gpt-4o");
-    expect(spy).toHaveBeenCalled();
-  });
-
-  it("getLimit delegates to shared instance", async () => {
-    const { client } = setupSharedInstance();
-    await client.getProviders();
-    const spy = vi.spyOn(clientModule, "getShared").mockReturnValue(client);
-
-    const limit = await apiGetLimit({ modelId: "openai/gpt-4o" });
+    const limit = await apiGetContextLimits({ modelId: "openai/gpt-4o" });
     expect(limit?.context).toBe(128_000);
     expect(spy).toHaveBeenCalled();
   });
 
-  it("getTokenCosts delegates to shared instance", async () => {
+  it("estimateCostUSD delegates to shared instance", async () => {
     const { client } = setupSharedInstance();
     await client.getProviders();
     const spy = vi.spyOn(clientModule, "getShared").mockReturnValue(client);
 
     const usage = makeUsage();
-    const costs = await apiGetTokenCosts({ modelId: "openai/gpt-4o", usage });
+    const costs = await apiEstimateCostUSD({
+      modelId: "openai/gpt-4o",
+      usage,
+    });
     expect(costs.totalTokenCostUSD).toBeCloseTo(0.1023, 6);
     expect(spy).toHaveBeenCalled();
   });
 
-  it("getResultMetadata returns composed metadata", async () => {
+  it("describeModel returns composed metadata", async () => {
     const { client } = setupSharedInstance();
     await client.getProviders();
     const spy = vi.spyOn(clientModule, "getShared").mockReturnValue(client);
 
     const usage = makeUsage();
-    const metadata = await getResultMetadata({
+    const metadata = await apiDescribeModel({
       modelId: "openai/gpt-4o",
       usage,
     });

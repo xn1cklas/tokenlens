@@ -1,7 +1,13 @@
-import type { Providers } from "@tokenlens/core/dto";
+import type { SourceProviders, SourceModel } from "@tokenlens/core/dto";
 import type { Usage } from "@tokenlens/core/types";
+import type { TokenCosts } from "@tokenlens/helpers";
 import { computeTokenCostsForModel } from "@tokenlens/helpers";
-import type { Model } from "@tokenlens/core/dto";
+import type {
+  CountTokensContent,
+  CountTokensOptions,
+  CountTokensParams,
+  TokenizerResult,
+} from "@tokenlens/tokenizer";
 import { mergeProviders } from "./merge.js";
 import { loadSources } from "./sources.js";
 import { MemoryCache, jitter } from "./cache.js";
@@ -13,9 +19,10 @@ import type {
   SourceLoader,
 } from "./types.js";
 import { resolveModel } from "./resolve.js";
+import { DEFAULT_SOURCE, buildLoaderMap } from "./default-loaders.js";
 
 export type ModelHints = {
-  modalities?: Model["modalities"];
+  modalities?: SourceModel["modalities"];
   supportsReasoning: boolean;
   supportsToolCall: boolean;
   supportsAttachments: boolean;
@@ -23,7 +30,16 @@ export type ModelHints = {
   openWeights: boolean;
 };
 
-function buildResultHints(model?: Model): ModelHints | undefined {
+export type ModelDetails = {
+  providerId: string;
+  modelId: string;
+  model: SourceModel | undefined;
+  limit?: { context?: number; input?: number; output?: number };
+  costs: TokenCosts | undefined;
+  hints: ModelHints | undefined;
+};
+
+function buildResultHints(model?: SourceModel): ModelHints | undefined {
   if (!model) return undefined;
   return {
     modalities: model.modalities,
@@ -50,26 +66,28 @@ export class Tokenlens {
   private readonly loaders: Record<SourceId, SourceLoader>;
 
   constructor(options?: TokenlensOptions) {
-    if (!options?.sources || options.sources.length === 0) {
-      throw new Error("Tokenlens requires at least one source");
-    }
-    this.sources = options.sources;
+    const sources =
+      options?.sources && options.sources.length > 0
+        ? options.sources
+        : [DEFAULT_SOURCE];
+
+    this.sources = sources;
     this.ttlMs = options?.ttlMs ?? 24 * 60 * 60 * 1000;
     this.fetchImpl = options?.fetch ?? getDefaultFetch();
     this.cache = options?.cache ?? new MemoryCache();
     this.cacheKey =
       options?.cacheKey ?? `tokenlens:v2:${this.sources.join(",")}`;
-    this.loaders = {} as Record<SourceId, SourceLoader>;
+
+    const loaderMap = buildLoaderMap(this.sources, options?.loaders);
     for (const source of this.sources) {
-      const loader = options?.loaders?.[source];
-      if (!loader) {
-        throw new Error(`No loader provided for source "${source}"`);
+      if (!loaderMap[source]) {
+        throw new Error(`No loader available for source "${source}"`);
       }
-      this.loaders[source] = loader;
     }
+    this.loaders = loaderMap;
   }
 
-  async getProviders(): Promise<Providers> {
+  async getProviders(): Promise<SourceProviders> {
     const now = Date.now();
     const cached = await this.cache.get(this.cacheKey);
     if (cached && cached.expiresAt > now) return cached.value;
@@ -90,7 +108,7 @@ export class Tokenlens {
     }
   }
 
-  async refresh(force?: boolean): Promise<Providers> {
+  async refresh(force?: boolean): Promise<SourceProviders> {
     const now = Date.now();
     if (!force) {
       const cached = await this.cache.get(this.cacheKey);
@@ -111,43 +129,25 @@ export class Tokenlens {
     await this.cache.delete?.(this.cacheKey);
   }
 
-  async getTokenCosts(args: {
+  /** @public Estimate a model's token usage cost in USD. */
+  async estimateCostUSD(args: {
     modelId: string;
     provider?: string;
     usage: Usage;
   }): Promise<ReturnType<typeof computeTokenCostsForModel>> {
-    const details = await this.getModelDetails(args);
+    const details = await this.describeModel(args);
     if (!details.costs) {
       throw new Error("Usage is required to compute token costs");
     }
     return details.costs;
   }
 
-  async getModel(args: { modelId: string; provider?: string }): Promise<{
-    providerId: string;
-    modelId: string;
-    model: import("@tokenlens/core/dto").Model | undefined;
-  }> {
-    const providers = await this.getProviders();
-    return resolveModel({
-      providers,
-      providerId: args.provider,
-      modelId: args.modelId,
-    });
-  }
-
-  async getModelDetails(args: {
+  /** @public Describe a model's metadata, limits, costs, and hints. */
+  async describeModel(args: {
     modelId: string;
     provider?: string;
     usage?: Usage;
-  }): Promise<{
-    providerId: string;
-    modelId: string;
-    model: Model | undefined;
-    limit?: { context?: number; input?: number; output?: number };
-    costs: ReturnType<typeof computeTokenCostsForModel> | undefined;
-    hints: ModelHints | undefined;
-  }> {
+  }): Promise<ModelDetails> {
     const providers = await this.getProviders();
     const resolved = resolveModel({
       providers,
@@ -169,17 +169,77 @@ export class Tokenlens {
     };
   }
 
-  async getLimit(args: {
+  /** @public Fetch context, input, and output token limits for a model. */
+  async getContextLimits(args: {
     modelId: string;
     provider?: string;
   }): Promise<
     { context?: number; input?: number; output?: number } | undefined
   > {
-    const details = await this.getModelDetails({
+    const details = await this.describeModel({
       modelId: args.modelId,
       provider: args.provider,
     });
     return details.limit;
+  }
+
+  /** @public Experimental: count tokens with a model's tokenizer. */
+  async experimental_countTokens(
+    providerId: string,
+    modelId: string,
+    content: CountTokensContent,
+    options?: CountTokensOptions,
+  ): Promise<TokenizerResult> {
+    const normalizedOptions = options ?? {};
+    const { model, tokenizerId } = await this.#resolveTokenizerInfo({
+      providerId,
+      modelId,
+      tokenizerId:
+        normalizedOptions.tokenizerId ?? normalizedOptions.encodingOverride,
+    });
+
+    const tokenizer = await import("@tokenlens/tokenizer");
+
+    const params: CountTokensParams = {
+      providerId,
+      modelId,
+      content,
+      options: {
+        ...normalizedOptions,
+        model: normalizedOptions.model ?? model,
+        tokenizerId: tokenizerId ?? normalizedOptions.tokenizerId,
+        encodingOverride: normalizedOptions.encodingOverride,
+        usage: normalizedOptions.usage,
+      },
+    };
+
+    return tokenizer.countTokens(params);
+  }
+
+  async #resolveTokenizerInfo(args: {
+    providerId: string;
+    modelId: string;
+    tokenizerId?: string;
+  }): Promise<{ model?: SourceModel; tokenizerId?: string }> {
+    if (args.tokenizerId) {
+      return { tokenizerId: args.tokenizerId };
+    }
+
+    const details = await this.describeModel({
+      provider: args.providerId,
+      modelId: args.modelId,
+    });
+
+    const inferred =
+      details.model?.extras && typeof details.model.extras === "object"
+        ? (details.model.extras as { architecture?: { tokenizer?: string } })
+            .architecture?.tokenizer
+        : undefined;
+
+    return {
+      model: details.model,
+      tokenizerId: inferred,
+    };
   }
 }
 

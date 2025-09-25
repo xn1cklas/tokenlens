@@ -1,88 +1,78 @@
 export { Tokenlens, getShared } from "./client.js";
-import { Tokenlens as Client } from "./client.js";
-import type { Providers, Model } from "@tokenlens/core/dto";
+import { Tokenlens as Client, type ModelDetails } from "./client.js";
 import type { Usage } from "@tokenlens/core/types";
-import type { TokenizerResult } from "@tokenlens/tokenizer";
-import type { TokenCosts } from "@tokenlens/helpers";
-import type { SourceLoader, SourceId, FetchLike } from "./types.js";
+import type { SourceLoader, SourceId } from "./types.js";
 import { DEFAULT_SOURCE, getDefaultLoader } from "./default-loaders.js";
 
+/**
+ * Create a new Tokenlens client with the given options.
+ * @param options - The options for the Tokenlens client.
+ * @returns A new Tokenlens client.
+ */
+/**
+ * @public
+ * Create a Tokenlens client with optional source/loaders overrides.
+ */
 export function createClient(
-    options?: ConstructorParameters<typeof Client>[0],
+  options?: ConstructorParameters<typeof Client>[0],
 ) {
-    const { sources, loaders, ...rest } = options ?? {};
-    const resolvedSources = [...(sources?.length ? sources : [DEFAULT_SOURCE])];
-    const resolvedLoaders: Partial<Record<SourceId, SourceLoader>> = {
-        ...(loaders ?? {}),
-    };
+  const { sources, loaders, ...rest } = options ?? {};
+  const resolvedSources = [...(sources?.length ? sources : [DEFAULT_SOURCE])];
+  const resolvedLoaders: Partial<Record<SourceId, SourceLoader>> = {
+    ...(loaders ?? {}),
+  };
 
-    for (const source of resolvedSources) {
-        if (!resolvedLoaders[source]) {
-            const fallback = getDefaultLoader(source);
-            if (!fallback) {
-                throw new Error(`No loader available for source "${source}"`);
-            }
-            resolvedLoaders[source] = fallback;
-        }
+  for (const source of resolvedSources) {
+    if (!resolvedLoaders[source]) {
+      const fallback = getDefaultLoader(source);
+      if (!fallback) {
+        throw new Error(`No loader available for source "${source}"`);
+      }
+      resolvedLoaders[source] = fallback;
     }
+  }
 
-    return new Client({
-        ...rest,
-        sources: resolvedSources,
-        loaders: resolvedLoaders,
-    });
+  return new Client({
+    ...rest,
+    sources: resolvedSources,
+    loaders: resolvedLoaders,
+  });
 }
 
-export async function getTokenCosts(args: {
-    modelId: string;
-    provider?: string;
-    usage: Usage;
+/**
+ * @public
+ * Estimate a model's token usage cost in USD.
+ */
+export async function estimateCostUSD(args: {
+  modelId: string;
+  provider?: string;
+  usage: Usage;
 }) {
-    return (await import("./client.js")).getShared().getTokenCosts(args);
+  return (await import("./client.js")).getShared().estimateCostUSD(args);
 }
 
-export async function getProviders() {
-    return (await import("./client.js")).getShared().getProviders();
+/**
+ * @public
+ * Read the context, input, and output token limits for a model.
+ */
+export async function getContextLimits(args: {
+  modelId: string;
+  provider?: string;
+}) {
+  return (await import("./client.js")).getShared().getContextLimits(args);
 }
 
-export async function getModel(args: { modelId: string; provider?: string }) {
-    return (await import("./client.js")).getShared().getModel(args);
+/**
+ * @public
+ * Describe a model's metadata, limits, cost hints, and capabilities.
+ */
+export async function describeModel(args: {
+  modelId: string;
+  provider?: string;
+  usage?: Usage;
+}): Promise<ModelDetails> {
+  return (await import("./client.js")).getShared().describeModel(args);
 }
 
-export async function getLimit(args: { modelId: string; provider?: string }) {
-    return (await import("./client.js")).getShared().getLimit(args);
-}
-
-export type ResultMetadata = {
-    providerId: string;
-    modelId: string;
-    model?: Model;
-    usage?: Usage;
-    costs?: TokenCosts;
-    limit?: Model["limit"];
-    hints?: import("./client.js").ModelHints;
-    tokenizer?: TokenizerResult;
-};
-
-export async function getResultMetadata(args: {
-    modelId: string;
-    provider?: string;
-    usage?: Usage;
-}): Promise<ResultMetadata> {
-    const client = (await import("./client.js")).getShared();
-    const details = await client.getModelDetails(args);
-
-    return {
-        providerId: details.providerId,
-        modelId: details.modelId,
-        model: details.model,
-        usage: args.usage,
-        costs: details.costs,
-        limit: details.limit,
-        hints: details.hints,
-    };
-}
-
-export type { TokenCosts } from "@tokenlens/helpers";
-export type { Providers, Model } from "@tokenlens/core/dto";
-export { countTokens as experimental_tokenizer } from "./exports/tokenizer.js";
+export * from "@tokenlens/helpers";
+export type { SourceProviders, SourceModel } from "@tokenlens/core/dto";

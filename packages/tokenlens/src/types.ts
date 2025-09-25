@@ -1,4 +1,4 @@
-import type { Providers } from "@tokenlens/core/dto";
+import type { SourceProviders } from "@tokenlens/core/dto";
 
 export type FetchLike = (
   input: string,
@@ -13,9 +13,9 @@ export type FetchLike = (
 
 export type SourceId = "openrouter" | "models.dev" | "package";
 
-export type CacheEntry = { value: Providers; expiresAt: number };
+export type CacheEntry = { value: SourceProviders; expiresAt: number };
 
-export type SourceLoader = (fetchImpl: FetchLike) => Promise<Providers>;
+export type SourceLoader = (fetchImpl: FetchLike) => Promise<SourceProviders>;
 
 export interface CacheAdapter {
   get(key: string): Promise<CacheEntry | undefined> | CacheEntry | undefined;
