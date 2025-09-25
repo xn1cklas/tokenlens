@@ -26,7 +26,7 @@ import { openai } from '@ai-sdk/openai';
 
 
 const tokenlens = new Tokenlens({
-  sources: ['models-dev'],
+  sources: ['models.dev'],
 });
 
 const openai = withTokenlens(openai.languageModel('gpt-5'), tokenlens);
