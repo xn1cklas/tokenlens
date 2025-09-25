@@ -16,6 +16,10 @@
     "tsx": "^4.20.5"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^2.0.18",
+    "@ai-sdk/gateway": "^1.0.29",
+    "@ai-sdk/openai": "^2.0.35",
+    "@ai-sdk/xai": "^2.0.22",
     "tokenlens": "workspace:*"
   }
 }

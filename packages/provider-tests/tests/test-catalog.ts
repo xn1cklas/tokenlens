@@ -58,6 +58,23 @@ export const testProviders: SourceProviders = {
       },
     },
   },
+  xai: {
+    id: "xai",
+    name: "xAI",
+    source: "package",
+    schemaVersion: 1,
+    models: {
+      "xai/grok-4": {
+        id: "xai/grok-4",
+        name: "grok-4",
+        limit: { context: 128_000, input: 128_000, output: 4_096 },
+        cost: {
+          input: 20,
+          output: 20,
+        },
+      },
+    },
+  },
 } as const;
 
 export function createTestClient(
