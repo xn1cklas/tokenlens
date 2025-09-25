@@ -57,7 +57,7 @@ async function main(): Promise<void> {
       ? inputTokens + outputTokens
       : undefined);
 
-  const costs = await tokenlens.getTokenCosts({
+  const costs = await tokenlens.estimateCostUSD({
     modelId: "openai:gpt-5",
     usage: {
       input_tokens: inputTokens,
@@ -67,7 +67,9 @@ async function main(): Promise<void> {
     },
   });
 
-  const limit = await tokenlens.getLimit({ modelId: "openai:gpt-4o-mini" });
+  const limit = await tokenlens.getContextLimits({
+    modelId: "openai:gpt-4o-mini",
+  });
   const remainingContext =
     typeof limit?.context === "number" && typeof totalTokens === "number"
       ? Math.max(limit.context - totalTokens, 0)

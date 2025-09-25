@@ -34,7 +34,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const costs = await tokenlens.getTokenCosts({
+  const costs = await tokenlens.estimateCostUSD({
     modelId: "openai:gpt-4o-mini",
     usage: {
       input_tokens: usage.input_tokens,
@@ -45,7 +45,9 @@ async function main(): Promise<void> {
     },
   });
 
-  const limit = await tokenlens.getLimit({ modelId: "openai:gpt-4o-mini" });
+  const limit = await tokenlens.getContextLimits({
+    modelId: "openai:gpt-4o-mini",
+  });
   const combinedMax = limit?.context;
   const remainingContext =
     typeof combinedMax === "number" && typeof usage.total_tokens === "number"
