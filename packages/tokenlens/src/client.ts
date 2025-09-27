@@ -100,7 +100,7 @@ export class Tokenlens {
     await this.cache.delete?.(this.cacheKey);
   }
 
-  /** @public Calculate a model's token usage cost in USD. */
+  /** Calculate a model's token usage cost in USD. */
   async computeCostUSD(args: {
     modelId: string;
     provider?: string;
@@ -118,7 +118,7 @@ export class Tokenlens {
     });
   }
 
-  /** @public Describe a model's metadata as stored in the source catalog. */
+  /** Describe a model's metadata as stored in the source catalog. */
   async describeModel(args: {
     modelId: string;
     provider?: string;
@@ -132,7 +132,7 @@ export class Tokenlens {
     return resolved.model;
   }
 
-  /** @public Fetch context, input, and output token limits for a model. */
+  /** Fetch context, input, and output token limits for a model. */
   async getContextLimits(args: {
     modelId: string;
     provider?: string;
@@ -146,7 +146,7 @@ export class Tokenlens {
     return details?.limit;
   }
 
-  /** @public Experimental: count tokens with a model's tokenizer. */
+  /** Experimental: count tokens with a model's tokenizer. */
   async experimental_countTokens(args: {
     modelId: string;
     provider?: string;

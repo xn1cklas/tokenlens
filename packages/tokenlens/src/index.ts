@@ -14,10 +14,6 @@ import { DEFAULT_SOURCE, getDefaultLoader } from "./default-loaders.js";
  * @param options - The options for the Tokenlens instance.
  * @returns A new Tokenlens instance.
  */
-/**
- * @public
- * Create a Tokenlens instance with optional source/loaders overrides.
- */
 export function createTokenlens(
   options?: ConstructorParameters<typeof TokenlensClient>[0],
 ) {
@@ -45,7 +41,6 @@ export function createTokenlens(
 }
 
 /**
- * @public
  * Calculate a model's token usage cost in USD.
  */
 export async function computeCostUSD(args: {
@@ -58,7 +53,6 @@ export async function computeCostUSD(args: {
 }
 
 /**
- * @public
  * Read the context, input, and output token limits for a model.
  */
 export async function getContextLimits(args: {
@@ -70,7 +64,6 @@ export async function getContextLimits(args: {
 }
 
 /**
- * @public
  * Describe a model's metadata exactly as stored in the active sources.
  */
 export async function describeModel(args: {
@@ -93,6 +86,10 @@ export async function experimental_countTokens(args: {
 
 let sharedTokenlens: TokenlensClient | undefined;
 
+/**
+ * @internal
+ * Lazily creates or returns the shared Tokenlens instance.
+ */
 function getTokenlens(): TokenlensClient {
   sharedTokenlens ??= new TokenlensClient();
   return sharedTokenlens;

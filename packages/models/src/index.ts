@@ -5,7 +5,6 @@ import type { SourceProviders } from "@tokenlens/core";
 
 /**
  * Return the models.dev providers catalog as a `SourceProviders` map.
- * @public
  */
 export function getModels(): SourceProviders {
   return sourceProvidersFromArray(Object.values(modelsdevProviders));
@@ -13,7 +12,6 @@ export function getModels(): SourceProviders {
 
 /**
  * Return the OpenRouter providers catalog as a `SourceProviders` map.
- * @public
  */
 export function getOpenrouterModels(): SourceProviders {
   return sourceProvidersFromArray(Object.values(openrouterProviders));
