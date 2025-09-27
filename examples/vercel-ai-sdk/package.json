@@ -1,0 +1,16 @@
+{
+  "name": "vercel-ai-sdk",
+  "private": true,
+  "scripts": {
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^2.0.35",
+    "ai": "^5.0.52",
+    "dotenv": "^17.2.2",
+    "tokenlens": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.5"
+  }
+}

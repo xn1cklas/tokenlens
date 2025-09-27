@@ -1,0 +1,16 @@
+{
+  "name": "anthopic-sdk",
+  "private": true,
+  "scripts": {
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.63.1",
+    "dotenv": "^17.2.2",
+    "tokenlens": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "tsx": "^4.20.5"
+  }
+}

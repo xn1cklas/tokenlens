@@ -5,12 +5,23 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Resolve the providers directory from @tokenlens/models (prefer dist, fallback to src)
+// Resolve provider directories from @tokenlens/models (prefer dist, fallback to src)
 const repoRoot = resolve(__dirname, "../../..");
-const modelsProvidersDir = resolve(repoRoot, "packages/models/dist/providers");
-const modelsProvidersSrcDir = resolve(
+const modelsDevProvidersDir = resolve(
   repoRoot,
-  "packages/models/src/providers",
+  "packages/models/dist/modelsdev/providers",
+);
+const modelsDevProvidersSrcDir = resolve(
+  repoRoot,
+  "packages/models/src/modelsdev/providers",
+);
+const openrouterProvidersDir = resolve(
+  repoRoot,
+  "packages/models/dist/openrouter/providers",
+);
+const openrouterProvidersSrcDir = resolve(
+  repoRoot,
+  "packages/models/src/openrouter/providers",
 );
 
 function ensureDir(dir) {
@@ -19,25 +30,9 @@ function ensureDir(dir) {
   } catch {}
 }
 
-function main() {
-  let baseDir = modelsProvidersDir;
-  try {
-    if (!statSync(baseDir).isDirectory()) throw new Error("no dist/providers");
-  } catch {
-    baseDir = modelsProvidersSrcDir;
-    try {
-      if (!statSync(baseDir).isDirectory()) throw new Error("no src/providers");
-    } catch {
-      console.error(
-        `Providers dir not found in dist or src: \n - ${modelsProvidersDir}\n - ${modelsProvidersSrcDir}`,
-      );
-      process.exit(0);
-    }
-  }
-
-  const outDir = resolve(__dirname, "../src/exports/providers");
+function emitForBaseDir(baseDir, subpath) {
+  const outDir = resolve(__dirname, `../src/exports/providers/${subpath}`);
   ensureDir(outDir);
-
   const files = readdirSync(baseDir).filter((f) =>
     /\.(js|ts|mts|cts)$/.test(f),
   );
@@ -48,14 +43,11 @@ function main() {
         .filter((n) => !n.startsWith("index")),
     ),
   );
-
   for (const name of names) {
     const outPath = join(outDir, `${name}.ts`);
-    const contents = `export * from "@tokenlens/models/${name}";\n`;
+    const contents = `export * from "@tokenlens/models/${subpath}/${name}";\n`;
     writeFileSync(outPath, contents, "utf8");
   }
-
-  // Also generate an index for convenience (not exported by subpath)
   const indexPath = join(outDir, `index.ts`);
   const index = `${names
     .map(
@@ -64,6 +56,37 @@ function main() {
     )
     .join("\n")}\n`;
   writeFileSync(indexPath, index, "utf8");
+}
+
+function resolveExistingDir(primary, fallback) {
+  try {
+    if (statSync(primary).isDirectory()) return primary;
+  } catch {}
+  try {
+    if (statSync(fallback).isDirectory()) return fallback;
+  } catch {}
+  return null;
+}
+
+function main() {
+  const modelsDevBase = resolveExistingDir(
+    modelsDevProvidersDir,
+    modelsDevProvidersSrcDir,
+  );
+  const openrouterBase = resolveExistingDir(
+    openrouterProvidersDir,
+    openrouterProvidersSrcDir,
+  );
+
+  if (!modelsDevBase && !openrouterBase) {
+    console.error(
+      `Providers dir not found in dist or src:\n - ${modelsDevProvidersDir}\n - ${modelsDevProvidersSrcDir}\n - ${openrouterProvidersDir}\n - ${openrouterProvidersSrcDir}`,
+    );
+    process.exit(0);
+  }
+
+  if (modelsDevBase) emitForBaseDir(modelsDevBase, "modelsdev/providers");
+  if (openrouterBase) emitForBaseDir(openrouterBase, "openrouter/providers");
 }
 
 main();

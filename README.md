@@ -10,6 +10,8 @@ Typed model metadata and context/cost utilities that help AI apps answer: Does t
 
 Works great with the Vercel AI SDK out of the box, and remains SDK‑agnostic.
 
+See the central terminology in [docs/glossary.md](docs/glossary.md).
+
 ![TokenLens overview](https://raw.githubusercontent.com/xn1cklas/tokenlens/HEAD/assets/tokenlens.png)
 
 Highlights
