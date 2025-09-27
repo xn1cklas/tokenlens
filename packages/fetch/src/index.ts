@@ -59,8 +59,8 @@ function filterCatalog(
     const models = prov.models || {};
     const filteredModels = model
       ? Object.fromEntries(
-          Object.entries(models).filter(([id]) => id.includes(model)),
-        )
+        Object.entries(models).filter(([id]) => id.includes(model)),
+      )
       : models;
     if (Object.keys(filteredModels).length > 0 || !model) {
       out[provKey] = { ...prov, models: filteredModels };
@@ -114,21 +114,49 @@ function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
   const id = String(m["id"] ?? "");
   const arch = m["architecture"] as
     | {
-        input_modalities?: string[];
-        output_modalities?: string[];
-        tokenizer?: string;
-        modality?: string;
-      }
+      input_modalities?: string[];
+      output_modalities?: string[];
+      tokenizer?: string;
+      modality?: string;
+    }
     | undefined;
   const modalities = arch
     ? ({ input: arch.input_modalities, output: arch.output_modalities } as {
-        input?: string[];
-        output?: string[];
-      })
+      input?: string[];
+      output?: string[];
+    })
     : undefined;
-  const cost =
-    (m["pricing"] as Record<string, number> | undefined) ??
-    (m["cost"] as Record<string, number> | undefined);
+  const rawCost = (m["pricing"] as Record<string, string | number> | undefined) ??
+    (m["cost"] as Record<string, string | number> | undefined);
+
+  // Convert OpenRouter per-token costs to per-million-token costs
+  const cost = rawCost ? {
+    ...(rawCost['prompt'] !== undefined ? {
+      input: typeof rawCost['prompt'] === 'string' ?
+        parseFloat(rawCost['prompt']) :
+        rawCost['prompt']
+    } : {}),
+    ...(rawCost['completion'] !== undefined ? {
+      output: typeof rawCost['completion'] === 'string' ?
+        parseFloat(rawCost['completion']) :
+        rawCost['completion']
+    } : {}),
+    ...(rawCost['internal_reasoning'] !== undefined ? {
+      reasoning: typeof rawCost['internal_reasoning'] === 'string' ?
+        parseFloat(rawCost['internal_reasoning']) :
+        rawCost['internal_reasoning']
+    } : {}),
+    ...(rawCost['input_cache_read'] !== undefined ? {
+      cache_read: typeof rawCost['input_cache_read'] === 'string' ?
+        parseFloat(rawCost['input_cache_read']) :
+        rawCost['input_cache_read']
+    } : {}),
+    ...(rawCost['input_cache_write'] !== undefined ? {
+      cache_write: typeof rawCost['input_cache_write'] === 'string' ?
+        parseFloat(rawCost['input_cache_write']) :
+        rawCost['input_cache_write']
+    } : {}),
+  } : undefined;
   const limit =
     (m["limit"] as
       | { context?: number; input?: number; output?: number }
@@ -136,10 +164,10 @@ function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
   const context_length = (m as { context_length?: number }).context_length;
   const topProvider = m["top_provider"] as
     | {
-        max_completion_tokens?: number;
-        context_length?: number;
-        is_moderated?: boolean;
-      }
+      max_completion_tokens?: number;
+      context_length?: number;
+      is_moderated?: boolean;
+    }
     | undefined;
   const outputCap = topProvider?.max_completion_tokens;
   return {
@@ -179,13 +207,13 @@ function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
     ...(cost !== undefined ? { cost } : {}),
     ...(limit || context_length || outputCap
       ? {
-          limit: limit ?? {
-            ...(context_length !== undefined
-              ? { context: context_length }
-              : {}),
-            ...(outputCap !== undefined ? { output: outputCap } : {}),
-          },
-        }
+        limit: limit ?? {
+          ...(context_length !== undefined
+            ? { context: context_length }
+            : {}),
+          ...(outputCap !== undefined ? { output: outputCap } : {}),
+        },
+      }
       : {}),
     extras: Object.fromEntries(
       Object.entries({
