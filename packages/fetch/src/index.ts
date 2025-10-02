@@ -126,37 +126,40 @@ function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
       output?: string[];
     })
     : undefined;
-  const rawCost = (m["pricing"] as Record<string, string | number> | undefined) ??
-    (m["cost"] as Record<string, string | number> | undefined);
+    const cost =
+    (m["pricing"] as Record<string, number> | undefined) ??
+    (m["cost"] as Record<string, number> | undefined);
+  // const rawCost = (m["pricing"] as Record<string, string | number> | undefined) ??
+  //   (m["cost"] as Record<string, string | number> | undefined);
 
-  // Convert OpenRouter per-token costs to per-million-token costs
-  const cost = rawCost ? {
-    ...(rawCost['prompt'] !== undefined ? {
-      input: typeof rawCost['prompt'] === 'string' ?
-        parseFloat(rawCost['prompt']) :
-        rawCost['prompt']
-    } : {}),
-    ...(rawCost['completion'] !== undefined ? {
-      output: typeof rawCost['completion'] === 'string' ?
-        parseFloat(rawCost['completion']) :
-        rawCost['completion']
-    } : {}),
-    ...(rawCost['internal_reasoning'] !== undefined ? {
-      reasoning: typeof rawCost['internal_reasoning'] === 'string' ?
-        parseFloat(rawCost['internal_reasoning']) :
-        rawCost['internal_reasoning']
-    } : {}),
-    ...(rawCost['input_cache_read'] !== undefined ? {
-      cache_read: typeof rawCost['input_cache_read'] === 'string' ?
-        parseFloat(rawCost['input_cache_read']) :
-        rawCost['input_cache_read']
-    } : {}),
-    ...(rawCost['input_cache_write'] !== undefined ? {
-      cache_write: typeof rawCost['input_cache_write'] === 'string' ?
-        parseFloat(rawCost['input_cache_write']) :
-        rawCost['input_cache_write']
-    } : {}),
-  } : undefined;
+  // // Convert OpenRouter per-token costs to per-million-token costs
+  // const cost = rawCost ? {
+  //   ...(rawCost['prompt'] !== undefined ? {
+  //     input: typeof rawCost['prompt'] === 'string' ?
+  //       parseFloat(rawCost['prompt']) :
+  //       rawCost['prompt']
+  //   } : {}),
+  //   ...(rawCost['completion'] !== undefined ? {
+  //     output: typeof rawCost['completion'] === 'string' ?
+  //       parseFloat(rawCost['completion']) :
+  //       rawCost['completion']
+  //   } : {}),
+  //   ...(rawCost['internal_reasoning'] !== undefined ? {
+  //     reasoning: typeof rawCost['internal_reasoning'] === 'string' ?
+  //       parseFloat(rawCost['internal_reasoning']) :
+  //       rawCost['internal_reasoning']
+  //   } : {}),
+  //   ...(rawCost['input_cache_read'] !== undefined ? {
+  //     cache_read: typeof rawCost['input_cache_read'] === 'string' ?
+  //       parseFloat(rawCost['input_cache_read']) :
+  //       rawCost['input_cache_read']
+  //   } : {}),
+  //   ...(rawCost['input_cache_write'] !== undefined ? {
+  //     cache_write: typeof rawCost['input_cache_write'] === 'string' ?
+  //       parseFloat(rawCost['input_cache_write']) :
+  //       rawCost['input_cache_write']
+  //   } : {}),
+  // } : undefined;
   const limit =
     (m["limit"] as
       | { context?: number; input?: number; output?: number }

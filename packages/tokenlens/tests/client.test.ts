@@ -78,6 +78,15 @@ function makeUsage(): Usage {
   } satisfies Usage;
 }
 
+function makeUsageWithSmallValues(): Usage {
+  return {
+    input_tokens: 5160,
+    output_tokens: 14,
+    reasoning_tokens: 0,
+    cache_read_tokens: 4918,
+  } satisfies Usage;
+}
+
 describe("Tokenlens core", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -101,7 +110,7 @@ describe("Tokenlens core", () => {
     });
 
     const first = await client.getProviders();
-    expect(Object.keys(first)).toEqual(["openai", "anthropic", "local"]);
+    expect(Object.keys(first)).toEqual(["openai", "google", "anthropic", "local"]);
     expect(openrouterCtrl.getCalls()).toBe(1);
     expect(modelsDevCtrl.getCalls()).toBe(1);
 
@@ -368,6 +377,22 @@ describe("module-level helpers", () => {
     });
     expect(costs.totalTokenCostUSD).toBeCloseTo(0.1023, 6);
   });
+
+
+  it("computeCostUSD for google gemini flash", async () => {
+    const { tokenlens } = setupSharedInstance();
+    const usage = makeUsageWithSmallValues();
+    const costs = await tokenlens.computeCostUSD({
+      modelId: "google/gemini-2.5-flash-lite-preview-09-2025",
+      usage,
+    });
+    console.log("costs for small values", costs);
+    console.log("usage in method", usage);
+    expect(costs.inputTokenCostUSD).toBe(0);
+    expect(costs.outputTokenCostUSD).toBe(0);
+    expect(costs.totalTokenCostUSD).toBe(0);
+  });
+
 
   it("describeModel reuses cached providers", async () => {
     const { tokenlens } = setupSharedInstance();

@@ -16,6 +16,23 @@ const OPENAI_GPT4O_MODEL: SourceModel = {
     cache_read: 6,
   },
 };
+const GOOGLE_GEMINI_FLASH_LITE_MODEL: SourceModel = {
+  id: "google/gemini-2.5-flash-lite-preview-09-2025",
+  name: "Google: Gemini 2.5 Flash Lite Preview 09-2025",
+  reasoning: false,
+  tool_call: true,
+  attachment: true,
+  open_weights: false,
+  knowledge: "2025-01",
+  limit: { context: 1_048_576, output: 65_536 },
+  cost: {
+    input: 0.0000003,
+    output: 0.0000025,
+    reasoning: 0,
+    cache_read: 0.000000075,
+    cache_write: 0.0000003833,
+  },
+};
 
 const OPENROUTER_PROVIDERS: SourceProviders = {
   openai: {
@@ -28,6 +45,18 @@ const OPENROUTER_PROVIDERS: SourceProviders = {
     schemaVersion: 1,
     models: {
       [OPENAI_GPT4O_MODEL.id]: OPENAI_GPT4O_MODEL,
+    },
+  },
+  google: {
+    id: "google",
+    name: "Google",
+    api: "https://openrouter.ai/api/v1",
+    doc: "https://openrouter.ai/models",
+    env: ["OPENROUTER_API_KEY"],
+    source: "openrouter",
+    schemaVersion: 1,
+    models: {
+      [GOOGLE_GEMINI_FLASH_LITE_MODEL.id]: GOOGLE_GEMINI_FLASH_LITE_MODEL,
     },
   },
 };
@@ -74,6 +103,7 @@ const PACKAGE_PROVIDERS: SourceProviders = {
     },
   },
 };
+
 
 function cloneProviders(providers: SourceProviders): SourceProviders {
   return JSON.parse(JSON.stringify(providers)) as SourceProviders;

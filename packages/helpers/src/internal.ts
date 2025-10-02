@@ -64,6 +64,10 @@ export function perMTokensToUnitCostUSD(
   return (tokens * ratePerMTokens) / 1_000_000;
 }
 
-export function round6(n: number): number {
+export function round12(n: number): number {
   return Math.round(n * 1_000_00000000) / 1_000_00000000;
+}
+
+export function round6(n: number): number {
+  return Math.round(n * 1_000_000) / 1_000_000;
 }
