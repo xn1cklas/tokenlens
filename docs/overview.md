@@ -17,7 +17,7 @@ A `Tokenlens` instance encapsulates:
 - A **cache**, with configurable TTL, used to avoid repeated network requests during a process lifecycle.
 
 The instance exposes three primary methods:
-- `describeModel({ modelId, provider?, usage? })`
+- `describeModel({ modelId, provider? })`
 - `computeCostUSD({ modelId, provider?, usage })`
 - `getContextLimits({ modelId, provider? })`
 
