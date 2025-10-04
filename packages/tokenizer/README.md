@@ -1,5 +1,3 @@
-
-
 @tokenlens/tokenizer
 =====================
 
@@ -8,69 +6,94 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../../LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 
+
 ![TokenLens overview](https://raw.githubusercontent.com/xn1cklas/tokenlens/HEAD/assets/tokenlens.png)
 
-Tokenizer orchestration utilities for TokenLens. Detect provider/tokenizer combos, count tokens with provider-specific implementations, and fall back to heuristic estimates when exact tokenizers are unavailable.
+Count tokens for any LLM. Auto-detects provider from model name.
 
-Highlights
-- Provider-aware tokenizer dispatch with automatic fallback heuristics.
-- Works standalone or with TokenLens metadata (pass `model`, `usage`, or both).
-- Safe defaults: exposes `{ estimated: boolean }` so you can surface heuristics in tooling.
-
-Install
-- npm: `npm i @tokenlens/tokenizer`
-- pnpm: `pnpm add @tokenlens/tokenizer`
-- yarn: `yarn add @tokenlens/tokenizer`
-
-Tokenizers are optional peer dependencies. Install the engines you need, for example:
+## Install
 
 ```bash
-pnpm add @tokenlens/tokenizer @dqbd/tiktoken @anthropic-ai/tokenizer llama-tokenizer-js
+npm install @tokenlens/tokenizer
 ```
 
-Usage
+Peer dependencies
+- OpenAI: `@dqbd/tiktoken` (local, no API key)
+- Anthropic: `@anthropic-ai/sdk` (requires `ANTHROPIC_API_KEY`)
+- Google: `@google/genai` (requires `GOOGLE_API_KEY`)
+
+## Environment variables
+
+When using Anthropic or Google models, the package tries to parse the API keys to access the provider endpoints.
+
+## Usage
+
+Simple token counting:
+
 ```ts
 import { countTokens } from "@tokenlens/tokenizer";
 
-const result = await countTokens({
-  providerId: "openai",
-  modelId: "openai/gpt-4o",
-  text: "Hello world",
-});
+// Auto-detects provider from model name
+await countTokens("gpt-4o", "Hello world");
+// => 2
 
-console.log(result);
-// ⇒ { count: 2, estimated: false, tokenizerId: "openai-tiktoken" }
+await countTokens("claude-sonnet-4-5", "Hello world");  
+// => 3
+
+await countTokens("gemini-2.5-pro", "Hello world");
+// => 2
 ```
 
-With TokenLens metadata
+Prefixed model IDs work too:
+
 ```ts
-import { createTokenlens } from "tokenlens";
-import { countTokens } from "@tokenlens/tokenizer";
-
-const tokenlens = createTokenlens();
-const { model } = await tokenlens.describeModel({
-  modelId: "anthropic:claude-3-5-sonnet-20241022",
-});
-
-const analysis = await countTokens({
-  providerId: "anthropic",
-  modelId: "anthropic/claude-3-5-sonnet-20241022",
-  model,
-  text: "Summarize TokenLens in two sentences.",
-});
-
-if (analysis.estimated) {
-  console.warn("Tokenizer fallback used", analysis);
-}
+await countTokens("openai/gpt-4o", "Hello world");
+await countTokens("anthropic/claude-opus-4", "Hello world");
+await countTokens("google/gemini-2.5-flash", "Hello world");
 ```
 
-Integration tips
-- Provide `model` (from TokenLens) so provider-specific tokenizers can inspect metadata like `extras.architecture.tokenizer`.
-- Include `usage` payloads when recounting transcripts; the tokenizer can use cached inputs where available.
-- Use `encodingOverride` to force a specific tokenizer when heuristics aren’t sufficient.
-- Watch the `{ estimated: true }` flag to surface heuristics in UI/logs.
+Unknown models fall back to GPT-5 tokenizer:
 
-Status
+```ts
+await countTokens("future-model-xyz", "Hello world");
+// => 2 (uses o200k_base encoding)
+```
 
-This package is experimental. Interfaces and behavior can change while we gather feedback.
+## How it works
 
+Routes to correct tokenizer based on model name:
+- `gpt-*` or `openai/*` → OpenAI tiktoken (local)
+- `claude-*` or `anthropic/*` → Anthropic API
+- `gemini-*` or `google/*` → Google API  
+- Unknown → Falls back to GPT-5 tiktoken
+
+## Supported Models
+
+**OpenAI**: `gpt-4o`, `gpt-4o-mini`, `gpt-5`, `gpt-4`
+
+**Anthropic**: `claude-sonnet-4-5`, `claude-sonnet-4-0`, `claude-3-7-sonnet-latest`, `claude-opus-4-1`, `claude-opus-4`, `claude-3-5-haiku-latest`
+
+**Google**: `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`
+
+## TypeScript
+
+Fully type-safe with autocomplete for all model IDs:
+
+```ts
+import { countTokens, type ModelId } from "@tokenlens/tokenizer";
+
+const modelId: ModelId = "gpt-4o"; // ✅ autocomplete works
+const tokens = await countTokens(modelId, "text");
+```
+
+## API
+
+### `countTokens(modelId, data)`
+
+**Parameters:**
+- `modelId`: Model name (e.g., `"gpt-4o"`, `"claude-sonnet-4-5"`) or string
+- `data`: Text to count tokens for
+
+**Returns:** `Promise<number | undefined>`
+
+Returns token count or `undefined` if counting fails.
