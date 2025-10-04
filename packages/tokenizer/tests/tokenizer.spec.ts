@@ -1,245 +1,185 @@
-import { describe, expect, it, vi } from "vitest";
-import {
-  estimateTokens,
-  fromOpenAIChatMessages,
-  fromAnthropicMessages,
-  fromAiSdkMessages,
-} from "../src/index.js";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
-import type { MessageParam as AnthropicMessageParam } from "@anthropic-ai/sdk/resources/messages/messages";
-import type { ModelMessage } from "ai";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import { countTokens, type Provider } from "../src/index.js";
 
-vi.mock("../src/tokenizers/openai.js", async () => {
-  const actual = await vi.importActual<
-    typeof import("../src/tokenizers/openai.js")
-  >("../src/tokenizers/openai.js");
-  return {
-    ...actual,
-    openaiTokenizerProvider: {
-      match: (
-        input: Parameters<typeof actual.openaiTokenizerProvider.match>[0],
-      ) => {
-        if (input.providerId !== "openai") return undefined;
-        return {
-          estimate: async (resolved) => {
-            const total = resolved.text.split(/\s+/).filter(Boolean).length;
-            return {
-              total,
-              estimated: false,
-              tokenizerId: resolved.tokenizerId ?? "mock-openai",
-            };
-          },
-        };
-      },
-    },
-  } satisfies typeof actual;
-});
+// Mock the provider modules
+vi.mock("../src/tokenizers/google.js", () => ({
+  google: vi.fn().mockResolvedValue(15),
+}));
 
 vi.mock("../src/tokenizers/anthropic.js", () => ({
-  anthropicTokenizerProvider: {
-    match: (input: { providerId: string }) => {
-      if (input.providerId !== "anthropic") return undefined;
-      return {
-        estimate: async (resolved: { text: string; tokenizerId?: string }) => {
-          const total = resolved.text.split(/\s+/).filter(Boolean).length;
-          return {
-            total,
-            estimated: false,
-            tokenizerId: resolved.tokenizerId ?? "mock-anthropic",
-          } as const;
-        },
-      };
-    },
-  },
+  anthropic: vi.fn().mockResolvedValue(25),
 }));
 
-vi.mock("../src/tokenizers/fallback.js", () => ({
-  fallbackTokenizer: {
-    estimate: () => ({
-      total: 42,
-      estimated: true,
-    }),
-  },
+vi.mock("../src/tokenizers/openai.js", () => ({
+  openai: vi.fn().mockResolvedValue(10),
 }));
 
-describe("estimateTokens", () => {
-  it("supports positional overload with text", async () => {
-    const result = await estimateTokens(
-      "openai",
-      "openai/gpt-4o",
-      "hello world",
-    );
-    expect(result).toMatchObject({
-      total: 2,
-      count: 2,
-      estimated: false,
-      tokenizerId: "mock-openai",
+describe("countTokens", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("provider routing", () => {
+    it("routes to Google tokenizer", async () => {
+      const result = await countTokens(
+        "gemini-2.5-pro",
+        "google",
+        "Hello world",
+      );
+      expect(result).toBe(15);
+    });
+
+    it("routes to Anthropic tokenizer", async () => {
+      const result = await countTokens(
+        "claude-sonnet-4-5",
+        "anthropic",
+        "Hello world",
+      );
+      expect(result).toBe(25);
+    });
+
+    it("routes to OpenAI tokenizer", async () => {
+      const result = await countTokens("gpt-4o", "openai", "Hello world");
+      expect(result).toBe(10);
+    });
+
+    it("falls back to OpenAI GPT-5 for unknown providers", async () => {
+      // Cast to bypass TypeScript checking for testing purposes
+      const result = await countTokens(
+        "unknown-model",
+        "unknown" as Provider,
+        "Hello world",
+      );
+      expect(result).toBe(10);
     });
   });
 
-  it("supports positional overload with messages", async () => {
-    const result = await estimateTokens("openai", "openai/gpt-4o", [
-      { role: "user", content: "hello" },
-      { role: "assistant", content: "world" },
-    ]);
-    expect(result).toMatchObject({
-      total: 4,
-      count: 4,
-      estimated: false,
-      tokenizerId: "mock-openai",
+  describe("model ID handling", () => {
+    it("handles model IDs with provider prefix", async () => {
+      const result = await countTokens(
+        "google/gemini-2.5-pro",
+        "google",
+        "Test",
+      );
+      expect(result).toBe(15);
+    });
+
+    it("handles model IDs without provider prefix", async () => {
+      const result = await countTokens("gemini-2.5-pro", "google", "Test");
+      expect(result).toBe(15);
+    });
+
+    it("handles OpenAI model IDs with prefix", async () => {
+      const result = await countTokens("openai/gpt-4o", "openai", "Test");
+      expect(result).toBe(10);
+    });
+
+    it("handles Anthropic model IDs with prefix", async () => {
+      const result = await countTokens(
+        "anthropic/claude-sonnet-4-5",
+        "anthropic",
+        "Test",
+      );
+      expect(result).toBe(25);
     });
   });
 
-  it("prefers explicit tokenizerId option", async () => {
-    const result = await estimateTokens("openai", "openai/gpt-4o", "hello", {
-      tokenizerId: "o200k_base",
-    });
-    expect(result.tokenizerId).toBe("o200k_base");
-  });
+  describe("input validation", () => {
+    it("accepts all valid provider types", async () => {
+      const testCases: Array<{
+        provider: Provider;
+        modelId: string;
+        expected: number;
+      }> = [
+        { provider: "openai", modelId: "gpt-4o", expected: 10 },
+        { provider: "anthropic", modelId: "claude-sonnet-4-5", expected: 25 },
+        { provider: "google", modelId: "gemini-2.5-pro", expected: 15 },
+      ];
 
-  it("infers tokenizer from model extras when available", async () => {
-    const result = await estimateTokens({
-      providerId: "openai",
-      modelId: "openai/gpt-4o",
-      text: "hello world",
-      model: {
-        id: "openai/gpt-4o",
-        name: "GPT-4o",
-        models: {} as never,
-        extras: {
-          architecture: {
-            tokenizer: "o200k_base",
-          },
-        },
-      } as never,
+      for (const { provider, modelId, expected } of testCases) {
+        const result = await countTokens(modelId as any, provider, "Test text");
+        expect(result).toBe(expected);
+      }
     });
-    expect(result.tokenizerId).toBe("o200k_base");
-  });
 
-  it("falls back when no provider matches", async () => {
-    const result = await estimateTokens({
-      providerId: "unknown",
-      modelId: "foo",
-      text: "hello world",
-    });
-    expect(result).toMatchObject({
-      total: 42,
-      count: 42,
-      estimated: true,
+    it("accepts different text lengths", async () => {
+      const texts = [
+        "",
+        "Single word",
+        "Multiple words in a sentence",
+        "A much longer text with many words that spans multiple lines and includes various punctuation marks.",
+      ];
+
+      for (const text of texts) {
+        const result = await countTokens("gpt-4o", "openai", text);
+        expect(typeof result).toBe("number");
+      }
     });
   });
 
-  it("converts OpenAI chat message payloads", async () => {
-    const openaiMessages: ChatCompletionMessageParam[] = [
-      { role: "system", content: "You are helpful." },
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: "Hello world",
-          },
-        ],
-      },
-    ];
-
-    const manual = await estimateTokens({
-      providerId: "openai",
-      modelId: "openai/gpt-4o",
-      messages: fromOpenAIChatMessages(openaiMessages),
+  describe("return types", () => {
+    it("returns number for all implemented providers", async () => {
+      const result = await countTokens("gpt-4o", "openai", "Hello");
+      expect(typeof result).toBe("number");
+      expect(result).toBeGreaterThan(0);
     });
 
-    const automatic = await estimateTokens(
-      "openai",
-      "openai/gpt-4o",
-      openaiMessages,
-    );
+    it("always returns a number (including fallback)", async () => {
+      const openai = await countTokens("gpt-4o", "openai", "Hello");
+      const anthropic = await countTokens(
+        "claude-sonnet-4-5",
+        "anthropic",
+        "Hello",
+      );
+      const google = await countTokens("gemini-2.5-pro", "google", "Hello");
 
-    expect(automatic.total).toBe(manual.total);
-    expect(automatic.total).toBeGreaterThan(0);
+      expect(typeof openai).toBe("number");
+      expect(typeof anthropic).toBe("number");
+      expect(typeof google).toBe("number");
+    });
   });
 
-  it("converts Anthropic message payloads", async () => {
-    const anthropicMessages: AnthropicMessageParam[] = [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: "How many tokens are used?",
-          },
-        ],
-      },
-      {
-        role: "assistant",
-        content: [
-          {
-            type: "text",
-            text: "Not too many!",
-          },
-        ],
-      },
-    ];
-
-    const manual = await estimateTokens({
-      providerId: "anthropic",
-      modelId: "anthropic/claude-3-5-sonnet",
-      messages: fromAnthropicMessages(anthropicMessages),
+  describe("edge cases", () => {
+    it("handles empty string", async () => {
+      const result = await countTokens("gpt-4o", "openai", "");
+      expect(result).toBeDefined();
     });
 
-    const automatic = await estimateTokens({
-      providerId: "anthropic",
-      modelId: "anthropic/claude-3-5-sonnet",
-      messages: anthropicMessages,
+    it("handles special characters", async () => {
+      const result = await countTokens("gpt-4o", "openai", "Hello! @#$%^&*()");
+      expect(result).toBeDefined();
     });
 
-    expect(automatic.total).toBe(manual.total);
-    expect(automatic.total).toBeGreaterThan(0);
+    it("handles unicode characters", async () => {
+      const result = await countTokens("gpt-4o", "openai", "Hello 世界 🌍");
+      expect(result).toBeDefined();
+    });
+
+    it("handles multiline text", async () => {
+      const text = `Line 1
+Line 2
+Line 3`;
+      const result = await countTokens("gpt-4o", "openai", text);
+      expect(result).toBeDefined();
+    });
+
+    it("handles very long text", async () => {
+      const longText = "Lorem ipsum ".repeat(1000);
+      const result = await countTokens("gpt-4o", "openai", longText);
+      expect(result).toBeDefined();
+      expect(typeof result).toBe("number");
+    });
   });
 
-  it("converts AI SDK model messages", async () => {
-    const aiSdkMessages: ModelMessage[] = [
-      {
-        role: "system",
-        content: "Stay concise.",
-      },
-      {
-        role: "user",
-        content: [
-          { type: "text", text: "Search for tokenization guidance." },
-          {
-            type: "image",
-            image: { url: "https://example.com/token.png" },
-          },
-        ],
-      },
-      {
-        role: "assistant",
-        content: [
-          {
-            type: "tool-call",
-            toolCallId: "tool-1",
-            toolName: "search",
-            args: { query: "token usage" },
-          },
-          { type: "text", text: "Tool executed." },
-        ],
-      },
-    ];
-
-    const manual = await estimateTokens({
-      providerId: "openai",
-      modelId: "openai/gpt-4o",
-      messages: fromAiSdkMessages(aiSdkMessages),
+  describe("type safety", () => {
+    it("accepts provider-specific model IDs", async () => {
+      // These should all be type-safe
+      await countTokens("gpt-4o", "openai", "test");
+      await countTokens("openai/gpt-5", "openai", "test");
+      await countTokens("gemini-2.5-pro", "google", "test");
+      await countTokens("google/gemini-2.5-flash", "google", "test");
+      await countTokens("claude-sonnet-4-5", "anthropic", "test");
+      await countTokens("anthropic/claude-opus-4", "anthropic", "test");
     });
-
-    const automatic = await estimateTokens({
-      providerId: "openai",
-      modelId: "openai/gpt-4o",
-      messages: aiSdkMessages,
-    });
-
-    expect(automatic.total).toBe(manual.total);
-    expect(automatic.total).toBeGreaterThan(0);
   });
 });

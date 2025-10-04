@@ -261,6 +261,9 @@ importers:
 
   packages/tokenizer:
     dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.63.1
+        version: 0.63.1(zod@4.1.5)
       '@anthropic-ai/tokenizer':
         specifier: ^0.0.4
         version: 0.0.4
@@ -277,6 +280,9 @@ importers:
         specifier: ^1.2.2
         version: 1.2.2
     devDependencies:
+      dotenv:
+        specifier: ^17.2.2
+        version: 17.2.2
       typescript:
         specifier: ^5.9.2
         version: 5.9.2

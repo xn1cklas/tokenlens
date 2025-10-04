@@ -1,83 +1,61 @@
-import type { TokenizerDispatch, TokenizerResolvedInput } from "../types.js";
-import { estimateWithCharHeuristic } from "./fallback.js";
+import { get_encoding } from "@dqbd/tiktoken";
 
-const ENCODING_GPT4O = "o200k_base" as const;
-const ENCODING_CL100K = "cl100k_base" as const;
-type KnownEncoding = typeof ENCODING_GPT4O | typeof ENCODING_CL100K;
+const OPENAI_MODELS_O200K = ["gpt-4o", "gpt-4o-mini", "gpt-5"] as const;
 
-export const openaiTokenizerProvider = {
-  match(input: TokenizerResolvedInput): TokenizerDispatch | undefined {
-    if (input.providerId !== "openai") return undefined;
-    return {
-      estimate: async (resolved) => {
-        const encoding = resolveEncoding(resolved);
-        if (!encoding) {
-          return estimateWithCharHeuristic(resolved, "unknown-openai-encoding");
-        }
+const OPENAI_MODELS_CL100K = ["gpt-4"] as const;
 
-        const tiktoken = await loadTiktoken();
-        if (!tiktoken) {
-          return estimateWithCharHeuristic(resolved, "tiktoken-missing");
-        }
+const OPENAI_MODELS = [
+  ...OPENAI_MODELS_O200K,
+  ...OPENAI_MODELS_CL100K,
+] as const;
 
-        const encoder = tiktoken.get_encoding(encoding);
-        try {
-          const tokens = encoder.encode(resolved.text);
-          encoder.free();
-          const total = tokens.length;
-          return {
-            total,
-            estimated: false,
-            tokenizerId: encoding,
-          };
-        } catch (error) {
-          encoder.free();
-          const message =
-            error instanceof Error ? error.message : String(error);
-          return estimateWithCharHeuristic(resolved, "tiktoken-error", message);
-        }
-      },
-    } satisfies TokenizerDispatch;
-  },
-};
+export type OpenAIModelName = (typeof OPENAI_MODELS)[number];
+export type OpenAIModelId = OpenAIModelName | `openai/${OpenAIModelName}`;
 
-function resolveEncoding(
-  resolved: TokenizerResolvedInput,
-): KnownEncoding | undefined {
-  const override = resolved.tokenizerId;
-  if (override) {
-    if (isKnownEncoding(override)) return override;
-    return undefined;
+type EncodingType = "o200k_base" | "cl100k_base";
+
+function getEncodingForModel(modelId: string): EncodingType {
+  // Strip prefix if present
+  const cleanModelId = modelId.replace(/^openai\//, "");
+
+  // Check o200k_base models (newer models)
+  if (OPENAI_MODELS_O200K.some((m) => cleanModelId.startsWith(m))) {
+    return "o200k_base";
   }
-  return inferOpenAIEncoding(resolved.modelId);
+
+  // Check cl100k_base models (older models)
+  if (OPENAI_MODELS_CL100K.some((m) => cleanModelId.startsWith(m))) {
+    return "cl100k_base";
+  }
+
+  // Default to o200k_base for unknown models
+  return "o200k_base";
 }
 
-function inferOpenAIEncoding(modelId: string): KnownEncoding | undefined {
-  if (/gpt-4o|gpt-4\.1|gpt-5/.test(modelId)) return ENCODING_GPT4O;
-  if (/gpt-3\.5|gpt-4|text-davinci/.test(modelId)) return ENCODING_CL100K;
-  return undefined;
-}
+export async function openai(
+  modelId: OpenAIModelId,
+  data: string,
+): Promise<number> {
+  const cleanModelId = modelId.replace(/^openai\//, "");
 
-function isKnownEncoding(value: string): value is KnownEncoding {
-  return value === ENCODING_GPT4O || value === ENCODING_CL100K;
-}
+  if (!OPENAI_MODELS.some((m) => cleanModelId.startsWith(m))) {
+    throw new Error(
+      `Unknown OpenAI model: ${cleanModelId}. Supported models: ${OPENAI_MODELS.join(", ")}`,
+    );
+  }
 
-type TiktokenModule = typeof import("@dqbd/tiktoken");
+  const encodingType = getEncodingForModel(cleanModelId);
+  const encoding = get_encoding(encodingType);
 
-async function loadTiktoken(): Promise<TiktokenModule | undefined> {
   try {
-    return await import("@dqbd/tiktoken");
+    const tokens = encoding.encode(data);
+    const count = tokens.length;
+    encoding.free();
+    return count;
   } catch (error) {
-    const hint = error instanceof Error ? error.message : String(error);
-    if (
-      typeof process !== "undefined" &&
-      process.env["NODE_ENV"] !== "production"
-    ) {
-      console.warn(
-        "Tokenlens tokenizer: @dqbd/tiktoken not available, falling back to heuristic",
-        hint,
-      );
-    }
-    return undefined;
+    encoding.free();
+    throw new Error(
+      `Failed to encode text with ${encodingType}: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }

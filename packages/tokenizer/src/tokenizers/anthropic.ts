@@ -1,34 +1,41 @@
-import type { TokenizerDispatch, TokenizerResolvedInput } from "../types.js";
-import { countTokens } from "@anthropic-ai/tokenizer";
-import { estimateWithCharHeuristic } from "./fallback.js";
+import Anthropic from "@anthropic-ai/sdk";
 
-export const anthropicTokenizerProvider = {
-  match(input: TokenizerResolvedInput): TokenizerDispatch | undefined {
-    if (input.providerId !== "anthropic") return undefined;
-    return {
-      estimate: async (resolved) => {
-        try {
-          const total = await countTokensAsync(resolved.text);
-          return {
-            total,
-            estimated: false,
-            tokenizerId: "claude-v1",
-          };
-        } catch (error) {
-          const message =
-            error instanceof Error ? error.message : String(error);
-          return estimateWithCharHeuristic(
-            resolved,
-            "anthropic-tokenizer-error",
-            message,
-          );
-        }
+const ANTHROPIC_MODELS = [
+  "claude-sonnet-4-5",
+  "claude-sonnet-4-0",
+  "claude-3-7-sonnet-latest",
+  "claude-opus-4-1",
+  "claude-opus-4",
+  "claude-3-5-haiku-latest",
+] as const;
+
+export type AnthropicModelName = (typeof ANTHROPIC_MODELS)[number];
+export type AnthropicModelId =
+  | AnthropicModelName
+  | `anthropic/${AnthropicModelName}`;
+
+export async function anthropic(modelId: AnthropicModelId, data: string) {
+  if (!process.env["ANTHROPIC_API_KEY"]) {
+    throw new Error("ANTHROPIC_API_KEY is not set");
+  }
+
+  // Strip prefix if present
+  const cleanModelId = modelId.replace(
+    /^anthropic\//,
+    "",
+  ) as AnthropicModelName;
+
+  const client = new Anthropic({ apiKey: process.env["ANTHROPIC_API_KEY"] });
+
+  const result = await client.messages.countTokens({
+    model: cleanModelId,
+    messages: [
+      {
+        role: "user",
+        content: data,
       },
-    } satisfies TokenizerDispatch;
-  },
-};
+    ],
+  });
 
-async function countTokensAsync(text: string): Promise<number> {
-  const tokens = await Promise.resolve(countTokens(text));
-  return tokens;
+  return result.input_tokens;
 }
