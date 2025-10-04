@@ -1,9 +1,10 @@
 import type { SourceModel, Usage } from "@tokenlens/core";
+import { normalizeUsage } from "./internal.js";
 
 export type ContextHealth = {
   /** Total context window size in tokens */
   totalTokens: number;
-  /** Number of tokens used (input + output) */
+  /** Number of tokens used (input + output + reasoning + cache) */
   usedTokens: number;
   /** Number of tokens remaining */
   remainingTokens: number;
@@ -49,10 +50,14 @@ export function getContextHealth(args: {
     return undefined;
   }
 
-  // Calculate total tokens used (input + output)
-  const inputTokens = usage.input_tokens ?? 0;
-  const outputTokens = usage.output_tokens ?? 0;
-  const usedTokens = inputTokens + outputTokens;
+  // Calculate total tokens used (input + output + reasoning + cache)
+  const normalized = normalizeUsage(usage);
+  const usedTokens =
+    normalized.input +
+    normalized.output +
+    (normalized.reasoningTokens ?? 0) +
+    (normalized.cacheReads ?? 0) +
+    (normalized.cacheWrites ?? 0);
 
   // Calculate remaining tokens
   const remainingTokens = Math.max(0, contextLimit - usedTokens);

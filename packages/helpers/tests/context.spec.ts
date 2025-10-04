@@ -219,6 +219,115 @@ describe("getContextHealth", () => {
 
     expect(health).toBeUndefined();
   });
+
+  it("handles alternative field names (prompt_tokens, completion_tokens)", () => {
+    const model: SourceModel = {
+      id: "gpt-4o",
+      canonical_id: "openai/gpt-4o",
+      name: "GPT-4o",
+      limit: { context: 100000 },
+    };
+
+    const usage: Usage = {
+      prompt_tokens: 30000,
+      completion_tokens: 10000,
+    };
+
+    const health = getContextHealth({ model, usage });
+
+    expect(health).toBeDefined();
+    expect(health?.usedTokens).toBe(40000);
+    expect(health?.remainingTokens).toBe(60000);
+    expect(health?.status).toBe("healthy");
+  });
+
+  it("handles camelCase field names (promptTokens, completionTokens)", () => {
+    const model: SourceModel = {
+      id: "gpt-4o",
+      canonical_id: "openai/gpt-4o",
+      name: "GPT-4o",
+      limit: { context: 100000 },
+    };
+
+    const usage: Usage = {
+      promptTokens: 25000,
+      completionTokens: 15000,
+    };
+
+    const health = getContextHealth({ model, usage });
+
+    expect(health).toBeDefined();
+    expect(health?.usedTokens).toBe(40000);
+    expect(health?.status).toBe("healthy");
+  });
+
+  it("includes reasoning tokens in usage calculation", () => {
+    const model: SourceModel = {
+      id: "o1-preview",
+      canonical_id: "openai/o1-preview",
+      name: "O1 Preview",
+      limit: { context: 128000 },
+    };
+
+    const usage: Usage = {
+      input_tokens: 10000,
+      output_tokens: 5000,
+      reasoning_tokens: 20000, // Additional reasoning tokens
+    };
+
+    const health = getContextHealth({ model, usage });
+
+    expect(health).toBeDefined();
+    expect(health?.usedTokens).toBe(35000); // 10000 + 5000 + 20000
+    expect(health?.remainingTokens).toBe(93000);
+  });
+
+  it("includes cache tokens in usage calculation", () => {
+    const model: SourceModel = {
+      id: "claude-sonnet-4-5",
+      canonical_id: "anthropic/claude-sonnet-4-5",
+      name: "Claude Sonnet 4.5",
+      limit: { context: 200000 },
+    };
+
+    const usage: Usage = {
+      input_tokens: 50000,
+      output_tokens: 10000,
+      cache_read_tokens: 30000, // Tokens read from cache
+      cache_write_tokens: 5000, // Tokens written to cache
+    };
+
+    const health = getContextHealth({ model, usage });
+
+    expect(health).toBeDefined();
+    expect(health?.usedTokens).toBe(95000); // 50000 + 10000 + 30000 + 5000
+    expect(health?.remainingTokens).toBe(105000);
+    expect(health?.status).toBe("healthy");
+  });
+
+  it("includes all token types (reasoning + cache) together", () => {
+    const model: SourceModel = {
+      id: "test-model",
+      canonical_id: "test/test-model",
+      name: "Test Model",
+      limit: { context: 100000 },
+    };
+
+    const usage: Usage = {
+      input_tokens: 20000,
+      output_tokens: 10000,
+      reasoning_tokens: 15000,
+      cache_read_tokens: 25000,
+      cache_write_tokens: 5000,
+    };
+
+    const health = getContextHealth({ model, usage });
+
+    expect(health).toBeDefined();
+    expect(health?.usedTokens).toBe(75000); // Sum of all token types
+    expect(health?.remainingTokens).toBe(25000);
+    expect(health?.status).toBe("warning"); // 75% usage
+  });
 });
 
 describe("Real-world scenarios", () => {
