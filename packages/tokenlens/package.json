@@ -44,9 +44,7 @@
     "typecheck": "tsc --noEmit",
     "test": "pnpm run build && vitest --config ../../vitest.config.ts --project tokenlens",
     "test:run": "pnpm run build && vitest run --config ../../vitest.config.ts --project tokenlens",
-    "bench:lookup": "pnpm run build && node scripts/bench-lookup.mjs",
-    "bench:lookup:run": "node scripts/bench-lookup.mjs",
-    "pre-release": "pnpm run bench:lookup && pnpm run test:run && pnpm run build"
+    "pre-release": "pnpm run test:run && pnpm run build"
   },
   "repository": {
     "type": "git",
