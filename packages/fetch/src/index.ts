@@ -75,20 +75,6 @@ export async function fetchModelsDev(
 
 function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
   const id = String(m["id"] ?? "");
-  const arch = m["architecture"] as
-    | {
-        input_modalities?: string[];
-        output_modalities?: string[];
-        tokenizer?: string;
-        modality?: string;
-      }
-    | undefined;
-  const modalities = arch
-    ? ({ input: arch.input_modalities, output: arch.output_modalities } as {
-        input?: string[];
-        output?: string[];
-      })
-    : undefined;
   const cost =
     (m["pricing"] as Record<string, number> | undefined) ??
     (m["cost"] as Record<string, number> | undefined);
@@ -117,10 +103,6 @@ function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
       : {}),
     ...(m["last_updated"] !== undefined
       ? { last_updated: m["last_updated"] as string }
-      : {}),
-    ...(modalities ? { modalities } : {}),
-    ...(m["open_weights"] !== undefined
-      ? { open_weights: m["open_weights"] as boolean }
       : {}),
     ...(cost !== undefined ? { cost } : {}),
     ...(limit || context_length || outputCap
