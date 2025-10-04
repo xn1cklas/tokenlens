@@ -77,9 +77,6 @@ importers:
       '@tokenlens/helpers':
         specifier: workspace:*
         version: link:../../packages/helpers
-      '@tokenlens/models':
-        specifier: workspace:*
-        version: link:../../packages/models
       ai:
         specifier: ^5.0.52
         version: 5.0.52(zod@4.1.5)
@@ -228,16 +225,6 @@ importers:
         specifier: ^5.9.2
         version: 5.9.2
 
-  packages/models:
-    dependencies:
-      '@tokenlens/core':
-        specifier: workspace:*
-        version: link:../core
-    devDependencies:
-      typescript:
-        specifier: ^5.9.2
-        version: 5.9.2
-
   packages/provider-tests:
     dependencies:
       '@ai-sdk/anthropic':
@@ -299,32 +286,10 @@ importers:
       '@tokenlens/helpers':
         specifier: workspace:*
         version: link:../helpers
-      '@tokenlens/models':
-        specifier: workspace:*
-        version: link:../models
       '@tokenlens/tokenizer':
         specifier: workspace:*
         version: link:../tokenizer
     devDependencies:
-      typescript:
-        specifier: ^5.9.2
-        version: 5.9.2
-
-  packages/vercel:
-    dependencies:
-      tokenlens:
-        specifier: workspace:*
-        version: link:../tokenlens
-    devDependencies:
-      '@ai-sdk/provider':
-        specifier: ^2.0.0
-        version: 2.0.0
-      ai:
-        specifier: ^5.0.52
-        version: 5.0.52(zod@4.1.5)
-      msw:
-        specifier: ^2.11.3
-        version: 2.11.3(@types/node@24.5.2)(typescript@5.9.2)
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
@@ -4793,10 +4758,12 @@ snapshots:
   '@bundled-es-modules/cookie@2.0.1':
     dependencies:
       cookie: 0.7.2
+    optional: true
 
   '@bundled-es-modules/statuses@1.0.1':
     dependencies:
       statuses: 2.0.2
+    optional: true
 
   '@capsizecss/unpack@2.4.0':
     dependencies:
@@ -5199,7 +5166,8 @@ snapshots:
   '@img/sharp-win32-x64@0.34.4':
     optional: true
 
-  '@inquirer/ansi@1.0.0': {}
+  '@inquirer/ansi@1.0.0':
+    optional: true
 
   '@inquirer/confirm@5.1.18(@types/node@24.5.2)':
     dependencies:
@@ -5207,6 +5175,7 @@ snapshots:
       '@inquirer/type': 3.0.8(@types/node@24.5.2)
     optionalDependencies:
       '@types/node': 24.5.2
+    optional: true
 
   '@inquirer/core@10.2.2(@types/node@24.5.2)':
     dependencies:
@@ -5220,6 +5189,7 @@ snapshots:
       yoctocolors-cjs: 2.1.3
     optionalDependencies:
       '@types/node': 24.5.2
+    optional: true
 
   '@inquirer/external-editor@1.0.2(@types/node@24.5.2)':
     dependencies:
@@ -5228,11 +5198,13 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.5.2
 
-  '@inquirer/figures@1.0.13': {}
+  '@inquirer/figures@1.0.13':
+    optional: true
 
   '@inquirer/type@3.0.8(@types/node@24.5.2)':
     optionalDependencies:
       '@types/node': 24.5.2
+    optional: true
 
   '@isaacs/cliui@8.0.2':
     dependencies:
@@ -5326,6 +5298,7 @@ snapshots:
       is-node-process: 1.2.0
       outvariant: 1.4.3
       strict-event-emitter: 0.5.1
+    optional: true
 
   '@next/env@15.5.4': {}
 
@@ -5365,14 +5338,17 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
 
-  '@open-draft/deferred-promise@2.2.0': {}
+  '@open-draft/deferred-promise@2.2.0':
+    optional: true
 
   '@open-draft/logger@0.3.0':
     dependencies:
       is-node-process: 1.2.0
       outvariant: 1.4.3
+    optional: true
 
-  '@open-draft/until@2.1.0': {}
+  '@open-draft/until@2.1.0':
+    optional: true
 
   '@opentelemetry/api@1.9.0': {}
 
@@ -5917,7 +5893,8 @@ snapshots:
     dependencies:
       '@types/deep-eql': 4.0.2
 
-  '@types/cookie@0.6.0': {}
+  '@types/cookie@0.6.0':
+    optional: true
 
   '@types/d3-array@3.2.2': {}
 
@@ -6106,7 +6083,8 @@ snapshots:
     dependencies:
       '@types/node': 24.5.2
 
-  '@types/statuses@2.0.6': {}
+  '@types/statuses@2.0.6':
+    optional: true
 
   '@types/trusted-types@2.0.7':
     optional: true
@@ -6464,7 +6442,8 @@ snapshots:
 
   cli-boxes@3.0.0: {}
 
-  cli-width@4.1.0: {}
+  cli-width@4.1.0:
+    optional: true
 
   client-only@0.0.1: {}
 
@@ -6473,6 +6452,7 @@ snapshots:
       string-width: 4.2.3
       strip-ansi: 6.0.1
       wrap-ansi: 7.0.0
+    optional: true
 
   clone@2.1.2: {}
 
@@ -6502,7 +6482,8 @@ snapshots:
 
   cookie-es@1.2.2: {}
 
-  cookie@0.7.2: {}
+  cookie@0.7.2:
+    optional: true
 
   cookie@1.0.2: {}
 
@@ -6860,7 +6841,8 @@ snapshots:
       '@esbuild/win32-ia32': 0.25.10
       '@esbuild/win32-x64': 0.25.10
 
-  escalade@3.2.0: {}
+  escalade@3.2.0:
+    optional: true
 
   escape-string-regexp@5.0.0: {}
 
@@ -6992,7 +6974,8 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  get-caller-file@2.0.5: {}
+  get-caller-file@2.0.5:
+    optional: true
 
   get-east-asian-width@1.4.0: {}
 
@@ -7030,7 +7013,8 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  graphql@16.11.0: {}
+  graphql@16.11.0:
+    optional: true
 
   h3@1.15.4:
     dependencies:
@@ -7266,7 +7250,8 @@ snapshots:
       property-information: 7.1.0
       space-separated-tokens: 2.0.2
 
-  headers-polyfill@4.0.3: {}
+  headers-polyfill@4.0.3:
+    optional: true
 
   highlight.js@10.7.3: {}
 
@@ -7346,7 +7331,8 @@ snapshots:
     dependencies:
       is-docker: 3.0.0
 
-  is-node-process@1.2.0: {}
+  is-node-process@1.2.0:
+    optional: true
 
   is-number@7.0.0: {}
 
@@ -8145,8 +8131,10 @@ snapshots:
       typescript: 5.9.2
     transitivePeerDependencies:
       - '@types/node'
+    optional: true
 
-  mute-stream@2.0.0: {}
+  mute-stream@2.0.0:
+    optional: true
 
   nanoid@3.3.11: {}
 
@@ -8216,7 +8204,8 @@ snapshots:
 
   outdent@0.5.0: {}
 
-  outvariant@1.4.3: {}
+  outvariant@1.4.3:
+    optional: true
 
   p-filter@2.1.0:
     dependencies:
@@ -8307,7 +8296,8 @@ snapshots:
       lru-cache: 10.4.3
       minipass: 7.1.2
 
-  path-to-regexp@6.3.0: {}
+  path-to-regexp@6.3.0:
+    optional: true
 
   path-type@4.0.0: {}
 
@@ -8625,7 +8615,8 @@ snapshots:
       mdast-util-to-markdown: 2.1.2
       unified: 11.0.5
 
-  require-directory@2.1.1: {}
+  require-directory@2.1.1:
+    optional: true
 
   resolve-from@5.0.0: {}
 
@@ -8658,7 +8649,8 @@ snapshots:
       retext-stringify: 4.0.0
       unified: 11.0.5
 
-  rettime@0.7.0: {}
+  rettime@0.7.0:
+    optional: true
 
   reusify@1.1.0: {}
 
@@ -8793,7 +8785,8 @@ snapshots:
 
   stackback@0.0.2: {}
 
-  statuses@2.0.2: {}
+  statuses@2.0.2:
+    optional: true
 
   std-env@3.9.0: {}
 
@@ -8819,7 +8812,8 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  strict-event-emitter@0.5.1: {}
+  strict-event-emitter@0.5.1:
+    optional: true
 
   string-width@4.2.3:
     dependencies:
@@ -8928,11 +8922,13 @@ snapshots:
 
   tinyspy@4.0.4: {}
 
-  tldts-core@7.0.16: {}
+  tldts-core@7.0.16:
+    optional: true
 
   tldts@7.0.16:
     dependencies:
       tldts-core: 7.0.16
+    optional: true
 
   to-regex-range@5.0.1:
     dependencies:
@@ -8941,6 +8937,7 @@ snapshots:
   tough-cookie@6.0.0:
     dependencies:
       tldts: 7.0.16
+    optional: true
 
   tr46@0.0.3: {}
 
@@ -9093,7 +9090,8 @@ snapshots:
       ofetch: 1.4.1
       ufo: 1.6.1
 
-  until-async@3.0.2: {}
+  until-async@3.0.2:
+    optional: true
 
   use-callback-ref@1.3.3(@types/react@19.1.13)(react@19.1.1):
     dependencies:
@@ -9280,6 +9278,7 @@ snapshots:
       ansi-styles: 4.3.0
       string-width: 4.2.3
       strip-ansi: 6.0.1
+    optional: true
 
   wrap-ansi@7.0.0:
     dependencies:
@@ -9303,7 +9302,8 @@ snapshots:
 
   xxhash-wasm@1.1.0: {}
 
-  y18n@5.0.8: {}
+  y18n@5.0.8:
+    optional: true
 
   yallist@5.0.0: {}
 
@@ -9318,6 +9318,7 @@ snapshots:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
+    optional: true
 
   yocto-queue@1.2.1: {}
 
@@ -9325,7 +9326,8 @@ snapshots:
     dependencies:
       yoctocolors: 2.1.2
 
-  yoctocolors-cjs@2.1.3: {}
+  yoctocolors-cjs@2.1.3:
+    optional: true
 
   yoctocolors@2.1.2: {}
 

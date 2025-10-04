@@ -20,7 +20,6 @@
     "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@tokenlens/core": "workspace:*",
     "@tokenlens/helpers": "workspace:*",
-    "@tokenlens/models": "workspace:*",
     "ai": "^5.0.52",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

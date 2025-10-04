@@ -20,7 +20,7 @@ If you just need cost and context utilities, import the top-level helpers. They 
 
 ```ts
 import {
-  describeModel,
+  getModelData,
   computeCostUSD,
   getContextLimits,
 } from "tokenlens";

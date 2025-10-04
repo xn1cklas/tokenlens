@@ -1,9 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { getContextWindow, normalizeUsage } from "@tokenlens/helpers";
-import { catalogFromProviders } from "@tokenlens/models/api";
-import vercelModels from "@tokenlens/models/vercel";
+import { getContext, normalizeUsage } from "@tokenlens/helpers";
 import type { LanguageModelUsage, UIMessage } from "ai";
 import { GlobeIcon, MicIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";

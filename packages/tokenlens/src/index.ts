@@ -8,13 +8,10 @@ import type { GatewayId, TokenlensOptions } from "./types.js";
  * @returns A new Tokenlens instance.
  */
 
-interface CreateTokenlensArgs {
-  /** The options for the Tokenlens instance. */
-  options?: ConstructorParameters<typeof Tokenlens>[0];
-}
-
-export function createTokenlens(args: CreateTokenlensArgs) {
-  return new Tokenlens(args.options);
+export function createTokenlens(
+  options?: ConstructorParameters<typeof Tokenlens>[0],
+) {
+  return new Tokenlens(options);
 }
 
 interface ComputeCostUSDArgs {
