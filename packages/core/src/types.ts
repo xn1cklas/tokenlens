@@ -50,7 +50,7 @@ export type Usage = Partial<
     | "cacheWrites"
     | "cacheReadTokens"
     | "cacheWriteTokens",
-    number
+    number | undefined
   >
 >;
 
