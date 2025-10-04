@@ -4,21 +4,12 @@ export type SourceId = "models.dev" | "openrouter" | "package";
 
 export type SourceModel = {
   id: string;
+  canonical_id: string;
   name: string;
-  description?: string;
-  // Capabilities and flags
-  attachment?: boolean;
-  reasoning?: boolean;
-  temperature?: boolean;
-  tool_call?: boolean;
-  knowledge?: string;
   // Timeline
   created?: number;
   release_date?: string;
   last_updated?: string;
-  // Modalities and limits (combined + optional splits)
-  modalities?: { input?: readonly string[]; output?: readonly string[] };
-  open_weights?: boolean;
   cost?: {
     input?: number; // USD per 1M prompt tokens
     output?: number; // USD per 1M completion tokens
@@ -31,8 +22,6 @@ export type SourceModel = {
     input?: number;
     output?: number;
   };
-  // Source-specific additional fields to avoid losing information
-  extras?: Record<string, unknown>;
 };
 
 export type SourceProvider = {
