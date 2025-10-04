@@ -154,12 +154,9 @@ describe("OpenAI SDK - getContextLimits()", () => {
 describe("OpenAI SDK - Context Health Monitoring", () => {
   it("monitors healthy context usage", async () => {
     const tokenlens = createTestClient();
-    const model = await tokenlens.getModelData({ modelId: "gpt-5" });
 
-    if (!model) throw new Error("Model not found");
-
-    const health = await getContextHealth({
-      modelId: model.id,
+    const health = await tokenlens.getContextHealth({
+      modelId: "gpt-5",
       usage: {
         input_tokens: 50_000,
         output_tokens: 10_000,
@@ -176,12 +173,9 @@ describe("OpenAI SDK - Context Health Monitoring", () => {
 
   it("detects warning status at 75% usage", async () => {
     const tokenlens = createTestClient();
-    const model = await tokenlens.getModelData({ modelId: "gpt-5" });
 
-    if (!model) throw new Error("Model not found");
-
-    const health = await getContextHealth({
-      modelId: model.id,
+    const health = await tokenlens.getContextHealth({
+      modelId: "gpt-5",
       usage: {
         input_tokens: 140_000,
         output_tokens: 10_000,
@@ -194,12 +188,9 @@ describe("OpenAI SDK - Context Health Monitoring", () => {
 
   it("detects critical status at 95% usage", async () => {
     const tokenlens = createTestClient();
-    const model = await tokenlens.getModelData({ modelId: "gpt-5" });
 
-    if (!model) throw new Error("Model not found");
-
-    const health = await getContextHealth({
-      modelId: model.id,
+    const health = await tokenlens.getContextHealth({
+      modelId: "gpt-5",
       usage: {
         input_tokens: 180_000,
         output_tokens: 10_000,

@@ -175,11 +175,6 @@ describe("fetchOpenrouter DTO mapping", () => {
       created: 1704067200,
       release_date: "2024-01-01",
       last_updated: "2024-06-01",
-      modalities: {
-        input: ["text"],
-        output: ["text"],
-      },
-      open_weights: true,
       cost: {
         input: 1.5,
         output: 2.5,

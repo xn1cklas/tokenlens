@@ -101,11 +101,6 @@ describe("Anthropic SDK - getContextLimits()", () => {
 describe("Anthropic SDK - Context Health", () => {
   it("monitors large context conversations", async () => {
     const tokenlens = createTestClient();
-    const model = await tokenlens.getModelData({
-      modelId: "claude-3-5-sonnet-20241022",
-    });
-
-    if (!model) throw new Error("Model not found");
 
     // Simulate accumulated usage from long conversation
     const usage: AnthropicUsage = {
@@ -118,8 +113,8 @@ describe("Anthropic SDK - Context Health", () => {
       service_tier: null,
     };
 
-    const health = await getContextHealth({
-      modelId: model.id,
+    const health = await tokenlens.getContextHealth({
+      modelId: "claude-3-5-sonnet-20241022",
       usage: {
         input_tokens: usage.input_tokens,
         output_tokens: usage.output_tokens,
