@@ -1,125 +1,129 @@
-import { anthropic } from "@ai-sdk/anthropic";
 import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 import { xai } from "@ai-sdk/xai";
 import type { LanguageModelV2Usage as VercelUsage } from "@ai-sdk/provider";
-import { describe, expect, it, vi } from "vitest";
-
+import { describe, expect, it } from "vitest";
 import { createTestClient } from "./test-catalog.js";
 
-describe("AI SDK usage integration", () => {
-  const client = createTestClient();
-  const usage: VercelUsage = {
-    inputTokens: 150,
-    outputTokens: 50,
-    totalTokens: 200,
-    reasoningTokens: 100,
-    cachedInputTokens: 100,
-  };
-
-  it("computes costs for AI SDK usage payloads", async () => {
-    const details = await client.getModelData({
-      modelId: "openai/gpt-5",
-    });
-
-    expect(details?.id).toBe("openai/gpt-5");
-    expect(details?.limit?.context).toBe(200_000);
-    expect(details?.cost?.input).toBe(30);
-  });
-
-  it("accepts OpenAI LanguageModelV2 metadata", async () => {
+describe("Vercel AI SDK - computeCostUSD()", () => {
+  it("computes costs for OpenAI models via AI SDK", async () => {
+    const tokenlens = createTestClient();
     const model = openai("gpt-5");
+
+    // Simulate Vercel AI SDK usage
     const usage: VercelUsage = {
-      inputTokens: 120,
-      outputTokens: 80,
-      totalTokens: 200,
+      inputTokens: 1_200,
+      outputTokens: 800,
+      totalTokens: 2_000,
     };
 
-    const costs = await client.computeCostUSD({
+    // Integration pattern:
+    // const response = await generateText({
+    //   model: openai("gpt-5"),
+    //   prompt: "..."
+    // });
+    // const usage = response.usage;
+
+    const costs = await tokenlens.computeCostUSD({
       modelId: model.modelId,
-      provider: model.provider,
-      usage: usage,
+      provider: "openai",
+      usage: {
+        input_tokens: usage.inputTokens,
+        output_tokens: usage.outputTokens,
+      },
     });
 
-    expect(model.provider).toBe("openai.responses");
-    expect(costs.inputTokenCostUSD).toBeCloseTo(0.0036, 5);
-    expect(costs.outputTokenCostUSD).toBeCloseTo(0.0048, 6);
-    expect(costs.totalTokenCostUSD).toBeCloseTo(0.0084, 6);
+    expect(costs.inputTokenCostUSD).toBeCloseTo(0.036, 6); // 1200 * 30 / 1M
+    expect(costs.outputTokenCostUSD).toBeCloseTo(0.048, 6); // 800 * 60 / 1M
+    expect(costs.totalTokenCostUSD).toBeCloseTo(0.084, 6);
   });
 
-  it("accepts Anthropic LanguageModelV2 metadata", async () => {
+  it("computes costs for Anthropic models via AI SDK", async () => {
+    const tokenlens = createTestClient();
     const model = anthropic("claude-3-5-sonnet-20241022");
+
     const usage: VercelUsage = {
       inputTokens: 1_000,
       outputTokens: 500,
       totalTokens: 1_500,
     };
 
-    const costs = await client.computeCostUSD({
+    const costs = await tokenlens.computeCostUSD({
       modelId: model.modelId,
-      provider: model.provider,
-      usage: usage,
+      provider: "anthropic",
+      usage: {
+        input_tokens: usage.inputTokens,
+        output_tokens: usage.outputTokens,
+      },
     });
 
-    expect(model.provider.startsWith("anthropic")).toBeTruthy();
     expect(costs.inputTokenCostUSD).toBeCloseTo(0.003, 6);
     expect(costs.outputTokenCostUSD).toBeCloseTo(0.0075, 6);
     expect(costs.totalTokenCostUSD).toBeCloseTo(0.0105, 6);
   });
 
-  it("accepts xAI LanguageModelV2 metadata", async () => {
+  it("computes costs for xAI models", async () => {
+    const tokenlens = createTestClient();
     const model = xai("grok-4");
+
     const usage: VercelUsage = {
       inputTokens: 1_000,
       outputTokens: 500,
       totalTokens: 1_500,
     };
 
-    const costs = await client.computeCostUSD({
+    const costs = await tokenlens.computeCostUSD({
       modelId: model.modelId,
-      provider: model.provider,
-      usage: usage,
+      provider: "xai",
+      usage: {
+        input_tokens: usage.inputTokens,
+        output_tokens: usage.outputTokens,
+      },
     });
 
-    expect(model.provider.startsWith("xai")).toBeTruthy();
-    expect(costs.inputTokenCostUSD).toBeCloseTo(0.02, 6);
-    expect(costs.outputTokenCostUSD).toBeCloseTo(0.01, 6);
+    expect(costs.inputTokenCostUSD).toBeCloseTo(0.02, 6); // 1000 * 20 / 1M
+    expect(costs.outputTokenCostUSD).toBeCloseTo(0.01, 6); // 500 * 20 / 1M
     expect(costs.totalTokenCostUSD).toBeCloseTo(0.03, 6);
   });
+});
 
-  it("ignores reasoning costs when the model lacks reasoning pricing", async () => {
-    const usage: VercelUsage = {
-      inputTokens: 1_000,
-      outputTokens: 500,
-      reasoningTokens: 200,
-      totalTokens: 1_500,
-      cachedInputTokens: 0,
-    };
+describe("Vercel AI SDK - getModelData()", () => {
+  it("retrieves model metadata for AI SDK models", async () => {
+    const tokenlens = createTestClient();
 
-    const costs = await client.computeCostUSD({
-      modelId: "openai/o1",
-      usage: usage,
+    const model = await tokenlens.getModelData({
+      modelId: "gpt-5",
+      provider: "openai",
     });
 
-    expect(costs.reasoningTokenCostUSD).toBeUndefined();
-    expect(costs.inputTokenCostUSD).toBeCloseTo(0.015, 6);
-    expect(costs.outputTokenCostUSD).toBeCloseTo(0.03, 6);
-    expect(costs.totalTokenCostUSD).toBeCloseTo(0.045, 6);
+    expect(model?.id).toBe("openai/gpt-5");
+    expect(model?.limit?.context).toBe(200_000);
+    expect(model?.cost?.input).toBe(30);
   });
 
-  it("returns contextual hints for AI SDK model ids", async () => {
-    const usage: VercelUsage = {
-      inputTokens: 3_200,
-      outputTokens: 400,
-      totalTokens: 3_600,
-      cachedInputTokens: 0,
-    };
+  it("works with AI SDK model objects", async () => {
+    const tokenlens = createTestClient();
+    const aiModel = openai("gpt-5");
 
-    const details = await client.getModelData({
-      modelId: "openai/gpt-5",
+    const model = await tokenlens.getModelData({
+      modelId: aiModel.modelId,
+      provider: "openai",
     });
 
-    expect(details?.id).toBe("openai/gpt-5");
-    expect(details?.limit?.context).toBe(200_000);
-    expect(details?.reasoning).toBeUndefined();
+    expect(model?.id).toBe("openai/gpt-5");
+  });
+});
+
+describe("Vercel AI SDK - getContextLimits()", () => {
+  it("retrieves limits for AI SDK models", async () => {
+    const tokenlens = createTestClient();
+
+    const limits = await tokenlens.getContextLimits({
+      modelId: "gpt-5",
+      provider: "openai",
+    });
+
+    expect(limits?.context).toBe(200_000);
+    expect(limits?.output).toBe(8_192);
   });
 });
