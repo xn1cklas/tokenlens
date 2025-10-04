@@ -11,7 +11,13 @@ export type FetchLike = (
   text(): Promise<string>;
 }>;
 
-export type SourceId = "openrouter" | "models.dev" | "package";
+export const GATEWAY_IDS = [
+  "auto",
+  "openrouter",
+  "models.dev",
+  "package",
+] as const;
+export type GatewayId = (typeof GATEWAY_IDS)[number];
 
 export type CacheEntry = { value: SourceProviders; expiresAt: number };
 
@@ -24,10 +30,9 @@ export interface CacheAdapter {
 }
 
 export type TokenlensOptions = {
-  sources?: ReadonlyArray<SourceId>;
+  catalog?: GatewayId | SourceProviders;
   ttlMs?: number;
   fetch?: FetchLike;
   cache?: CacheAdapter;
-  loaders?: Partial<Record<SourceId, SourceLoader>>;
   cacheKey?: string;
 };

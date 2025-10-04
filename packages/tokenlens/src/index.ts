@@ -1,13 +1,6 @@
-export { Tokenlens } from "./client.js";
-import { Tokenlens as TokenlensClient, type ModelDetails } from "./client.js";
 import type { Usage } from "@tokenlens/core";
-import type {
-  CountTokensContent,
-  CountTokensOptions,
-  TokenizerResult,
-} from "@tokenlens/tokenizer";
-import type { SourceLoader, SourceId, TokenlensOptions } from "./types.js";
-import { DEFAULT_SOURCE, getDefaultLoader } from "./default-loaders.js";
+import { Tokenlens as TokenlensClient, type ModelDetails } from "./client.js";
+import type { TokenlensOptions } from "./types.js";
 
 /**
  * Create a new Tokenlens instance with the given options.
@@ -17,27 +10,7 @@ import { DEFAULT_SOURCE, getDefaultLoader } from "./default-loaders.js";
 export function createTokenlens(
   options?: ConstructorParameters<typeof TokenlensClient>[0],
 ) {
-  const { sources, loaders, ...rest } = options ?? {};
-  const resolvedSources = [...(sources?.length ? sources : [DEFAULT_SOURCE])];
-  const resolvedLoaders: Partial<Record<SourceId, SourceLoader>> = {
-    ...(loaders ?? {}),
-  };
-
-  for (const source of resolvedSources) {
-    if (!resolvedLoaders[source]) {
-      const fallback = getDefaultLoader(source);
-      if (!fallback) {
-        throw new Error(`No loader available for source "${source}"`);
-      }
-      resolvedLoaders[source] = fallback;
-    }
-  }
-
-  return new TokenlensClient({
-    ...rest,
-    sources: resolvedSources,
-    loaders: resolvedLoaders,
-  });
+  return new TokenlensClient(options);
 }
 
 /**
@@ -71,18 +44,18 @@ export async function describeModel(args: {
   provider?: string;
 }): Promise<ModelDetails> {
   const tokenlens = getTokenlens();
-  return tokenlens.describeModel(args);
+  return tokenlens.getModelData(args);
 }
 
-export async function experimental_countTokens(args: {
-  modelId: string;
-  provider?: string;
-  content: CountTokensContent;
-  options?: CountTokensOptions;
-}): Promise<TokenizerResult> {
-  const tokenlens = getTokenlens();
-  return tokenlens.experimental_countTokens(args);
-}
+// export async function experimental_countTokens(args: {
+//   modelId: string;
+//   provider?: string;
+//   content: CountTokensContent;
+//   options?: CountTokensOptions;
+// }): Promise<TokenizerResult> {
+//   const tokenlens = getTokenlens();
+//   return tokenlens.experimental_countTokens(args);
+// }
 
 let sharedTokenlens: TokenlensClient | undefined;
 
@@ -105,8 +78,3 @@ export function setSharedTokenlens(tokenlens?: TokenlensClient) {
 export type { SourceProviders, SourceModel, Usage } from "@tokenlens/core";
 export type { ModelDetails, TokenlensOptions };
 export type { TokenCosts } from "@tokenlens/helpers";
-export type {
-  CountTokensContent,
-  CountTokensOptions,
-  TokenizerResult,
-} from "@tokenlens/tokenizer";

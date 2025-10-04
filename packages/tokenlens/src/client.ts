@@ -1,99 +1,106 @@
 import type { SourceProviders, SourceModel, Usage } from "@tokenlens/core";
 import type { TokenCosts } from "@tokenlens/helpers";
 import { computeTokenCostsForModel } from "@tokenlens/helpers";
-import type {
-  CountTokensContent,
-  CountTokensOptions,
-  CountTokensParams,
-  TokenizerResult,
-} from "@tokenlens/tokenizer";
-import { mergeProviders } from "./merge.js";
-import { loadSources } from "./sources.js";
 import { MemoryCache, jitter } from "./cache.js";
-import type {
-  FetchLike,
-  SourceId,
-  TokenlensOptions,
-  CacheAdapter,
-  SourceLoader,
+import {
+  type TokenlensOptions,
+  GATEWAY_IDS,
+  type GatewayId,
+  type CacheAdapter,
 } from "./types.js";
 import { resolveModel } from "./resolve.js";
-import { DEFAULT_SOURCE, buildLoaderMap } from "./default-loaders.js";
+import { TokenLensError } from "./error/index.js";
+import { BASE_ERROR_CODES } from "./error/codes.js";
+import { fetchModelsDev, fetchOpenrouter } from "@tokenlens/fetch";
 
 export type ModelDetails = SourceModel | undefined;
 
-function getDefaultFetch(): FetchLike {
-  const f = (globalThis as unknown as { fetch?: FetchLike }).fetch;
-  if (!f) throw new Error("No fetch implementation available");
-  return f;
-}
-
 export class Tokenlens {
-  private readonly sources: ReadonlyArray<SourceId>;
+  private readonly catalog: GatewayId | SourceProviders;
   private readonly ttlMs: number;
-  private readonly fetchImpl: FetchLike;
   private readonly cache: CacheAdapter;
   private readonly cacheKey: string;
-  private readonly loaders: Record<SourceId, SourceLoader>;
 
   constructor(options?: TokenlensOptions) {
-    const sources =
-      options?.sources && options.sources.length > 0
-        ? options.sources
-        : [DEFAULT_SOURCE];
-
-    this.sources = sources;
+    // use automode as default
+    this.catalog = options?.catalog ?? GATEWAY_IDS[1];
     this.ttlMs = options?.ttlMs ?? 24 * 60 * 60 * 1000;
-    this.fetchImpl = options?.fetch ?? getDefaultFetch();
     this.cache = options?.cache ?? new MemoryCache();
-    this.cacheKey =
-      options?.cacheKey ?? `tokenlens:v2:${this.sources.join(",")}`;
 
-    const loaderMap = buildLoaderMap(this.sources, options?.loaders);
-    for (const source of this.sources) {
-      if (!loaderMap[source]) {
-        throw new Error(`No loader available for source "${source}"`);
-      }
+    // only cache when we load the catalog form a gateway
+    if (typeof this.catalog === "string") {
+      this.cacheKey = options?.cacheKey ?? `tokenlens:v2:${this.catalog}`;
+    } else {
+      this.cacheKey = options?.cacheKey ?? "";
     }
-    this.loaders = loaderMap;
   }
 
-  async getProviders(): Promise<SourceProviders> {
+  private async loadCatalog(): Promise<SourceProviders> {
+    if (typeof this.catalog === "object") {
+      return Promise.resolve(this.catalog);
+    }
+
     const now = Date.now();
     const cached = await this.cache.get(this.cacheKey);
     if (cached && cached.expiresAt > now) return cached.value;
 
-    try {
-      const providerSets = await loadSources(
-        this.sources,
-        this.fetchImpl,
-        this.loaders,
-      );
-      const merged = mergeProviders(providerSets);
-      const entry = { value: merged, expiresAt: now + jitter(this.ttlMs) };
-      await this.cache.set(this.cacheKey, entry);
-      return merged;
-    } catch (err) {
-      if (cached) return cached.value;
-      throw err;
+    let catalog: SourceProviders;
+    switch (this.catalog) {
+      case "auto":
+        catalog = await fetchModelsDev();
+        break;
+      case "openrouter":
+        catalog = await fetchOpenrouter();
+        break;
+      case "models.dev":
+        catalog = await fetchModelsDev();
+        break;
+      // TODO implement vercel AI Gateway
+      // case "vercel":
+      //   catalog = [];
+      //   break;
+      // TODO implement netlify AI Gateway
+      // case "netlify":
+      //   catalog = [];
+      //   break;
+      default:
+        throw new Error(`Unknown catalog ID: ${this.catalog}`);
     }
+
+    const entry = { value: catalog, expiresAt: now + jitter(this.ttlMs) };
+    await this.cache.set(this.cacheKey, entry);
+    return catalog;
   }
 
   async refresh(force?: boolean): Promise<SourceProviders> {
+    if (typeof this.catalog === "object") {
+      return Promise.resolve(this.catalog);
+    }
+
     const now = Date.now();
     if (!force) {
       const cached = await this.cache.get(this.cacheKey);
       if (cached && cached.expiresAt > now) return cached.value;
     }
-    const providerSets = await loadSources(
-      this.sources,
-      this.fetchImpl,
-      this.loaders,
-    );
-    const merged = mergeProviders(providerSets);
-    const entry = { value: merged, expiresAt: now + jitter(this.ttlMs) };
+
+    let catalog: SourceProviders;
+    switch (this.catalog) {
+      case "auto":
+        catalog = await fetchModelsDev();
+        break;
+      case "openrouter":
+        catalog = await fetchOpenrouter();
+        break;
+      case "models.dev":
+        catalog = await fetchModelsDev();
+        break;
+      default:
+        throw new Error(`Unknown catalog ID: ${this.catalog}`);
+    }
+
+    const entry = { value: catalog, expiresAt: now + jitter(this.ttlMs) };
     await this.cache.set(this.cacheKey, entry);
-    return merged;
+    return catalog;
   }
 
   async invalidate(): Promise<void> {
@@ -106,29 +113,37 @@ export class Tokenlens {
     provider?: string;
     usage: Usage;
   }): Promise<TokenCosts> {
-    const providers = await this.getProviders();
+    const catalog = await this.loadCatalog();
     const resolved = resolveModel({
-      providers,
+      catalog,
       ...(args.provider !== undefined ? { providerId: args.provider } : {}),
       modelId: args.modelId,
     });
+    // If we can't resolve the model within the given catalog throw an error
+    if (!resolved.model) {
+      throw new TokenLensError(BASE_ERROR_CODES.MODEL_NOT_FOUND);
+    }
     return computeTokenCostsForModel({
-      ...(resolved.model !== undefined ? { model: resolved.model } : {}),
+      model: resolved.model,
       usage: args.usage,
     });
   }
 
-  /** Describe a model's metadata as stored in the source catalog. */
-  async describeModel(args: {
+  /** Retuns a model's metadata as stored in the source catalog. */
+  async getModelData(args: {
     modelId: string;
     provider?: string;
   }): Promise<ModelDetails> {
-    const providers = await this.getProviders();
+    const catalog = await this.loadCatalog();
     const resolved = resolveModel({
-      providers,
+      catalog,
       ...(args.provider !== undefined ? { providerId: args.provider } : {}),
       modelId: args.modelId,
     });
+    // If we can't resolve the model within the given catalog throw an error
+    if (!resolved.model) {
+      throw new TokenLensError(BASE_ERROR_CODES.MODEL_NOT_FOUND);
+    }
     return resolved.model;
   }
 
@@ -139,93 +154,14 @@ export class Tokenlens {
   }): Promise<
     { context?: number; input?: number; output?: number } | undefined
   > {
-    const details = await this.describeModel({
+    const modelData = await this.getModelData({
       modelId: args.modelId,
       ...(args.provider !== undefined ? { provider: args.provider } : {}),
     });
-    return details?.limit;
-  }
-
-  /** Experimental: count tokens with a model's tokenizer. */
-  async experimental_countTokens(args: {
-    modelId: string;
-    provider?: string;
-    content: CountTokensContent;
-    options?: CountTokensOptions;
-  }): Promise<TokenizerResult> {
-    const { modelId, provider, content, options } = args;
-    const normalizedOptions = options ?? {};
-    const providers = await this.getProviders();
-    const resolved = resolveModel({
-      providers,
-      ...(provider !== undefined ? { providerId: provider } : {}),
-      modelId,
-    });
-
-    const { model, tokenizerId } = await this.#resolveTokenizerInfo({
-      providerId: resolved.providerId,
-      modelId: resolved.modelId,
-      ...((normalizedOptions.tokenizerId ?? normalizedOptions.encodingOverride)
-        ? {
-            tokenizerId:
-              normalizedOptions.tokenizerId ??
-              normalizedOptions.encodingOverride,
-          }
-        : {}),
-    });
-
-    const tokenizer = await import("@tokenlens/tokenizer");
-
-    const params: CountTokensParams = {
-      providerId: resolved.providerId,
-      modelId: resolved.modelId,
-      content,
-      options: {
-        ...normalizedOptions,
-        ...((normalizedOptions.model ?? model)
-          ? { model: normalizedOptions.model ?? model }
-          : {}),
-        ...((tokenizerId ?? normalizedOptions.tokenizerId)
-          ? { tokenizerId: tokenizerId ?? normalizedOptions.tokenizerId }
-          : {}),
-        ...(normalizedOptions.encodingOverride !== undefined
-          ? { encodingOverride: normalizedOptions.encodingOverride }
-          : {}),
-        ...(normalizedOptions.usage !== undefined
-          ? { usage: normalizedOptions.usage }
-          : {}),
-      },
-    };
-
-    return tokenizer.countTokens(params);
-  }
-
-  async #resolveTokenizerInfo(args: {
-    providerId: string;
-    modelId: string;
-    tokenizerId?: string;
-  }): Promise<{ model?: SourceModel; tokenizerId?: string }> {
-    if (args.tokenizerId) {
-      return { tokenizerId: args.tokenizerId };
+    // If we can't resolve the model within the given catalog throw an error
+    if (!modelData) {
+      throw new TokenLensError(BASE_ERROR_CODES.MODEL_NOT_FOUND);
     }
-
-    const providers = await this.getProviders();
-    const resolved = resolveModel({
-      providers,
-      providerId: args.providerId,
-      modelId: args.modelId,
-    });
-
-    const extras = resolved.model?.extras;
-    const inferred =
-      extras && typeof extras === "object"
-        ? (extras as { architecture?: { tokenizer?: string } }).architecture
-            ?.tokenizer
-        : undefined;
-
-    return {
-      ...(resolved.model !== undefined ? { model: resolved.model } : {}),
-      ...(inferred !== undefined ? { tokenizerId: inferred } : {}),
-    };
+    return modelData?.limit;
   }
 }

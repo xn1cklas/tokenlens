@@ -18,11 +18,11 @@ function normalizeProviderId(providerId?: string): string | undefined {
 }
 
 export function resolveModel(args: {
-  providers: SourceProviders;
+  catalog: SourceProviders;
   providerId?: string;
   modelId: string; // may be provider/model or bare model id
 }): ResolveModelResult {
-  const { providers, providerId, modelId } = args;
+  const { catalog, providerId, modelId } = args;
   const hasSlash = modelId.includes("/");
   const normalizedProvider = normalizeProviderId(providerId);
   const provider =
@@ -30,19 +30,19 @@ export function resolveModel(args: {
   const id = hasSlash ? modelId : provider ? `${provider}/${modelId}` : modelId;
 
   if (provider) {
-    const p = providers[provider];
+    const p = catalog[provider];
     const model = p?.models?.[id];
     return { providerId: provider, modelId: id, model };
   }
 
-  for (const [prov, entry] of Object.entries(providers)) {
+  for (const [prov, entry] of Object.entries(catalog)) {
     const m1 = entry.models?.[id];
     if (m1) return { providerId: prov, modelId: id, model: m1 };
     const key2 = `${prov}/${modelId}`;
     const m2 = entry.models?.[key2];
     if (m2) return { providerId: prov, modelId: key2, model: m2 };
   }
-  const firstProv = Object.keys(providers)[0];
+  const firstProv = Object.keys(catalog)[0];
   return {
     providerId: firstProv ?? "",
     modelId: hasSlash
