@@ -1,7 +1,7 @@
 import type { SourceProviders, SourceModel, Usage } from "@tokenlens/core";
 import type { TokenCosts } from "@tokenlens/helpers";
 import { computeTokenCostsForModel } from "@tokenlens/helpers";
-import { countTokens, type ModelId, type Provider } from "@tokenlens/tokenizer";
+import { countTokens, type ModelId } from "@tokenlens/tokenizer";
 import { MemoryCache, jitter } from "./cache.js";
 import {
   type TokenlensOptions,
@@ -130,7 +130,7 @@ export class Tokenlens {
     data: string;
   }): Promise<number | undefined> {
     const { modelId, data } = args;
-    return await countTokens(modelId, data)
+    return await countTokens(modelId, data);
   }
 
   /** Calculate a model's token usage cost in USD. */
@@ -180,10 +180,8 @@ export class Tokenlens {
   }): Promise<TokenCosts & { inputTokens: number }> {
     const { modelId, provider, data } = args;
 
-
     // Count tokens in input text
-    const inputTokens = await countTokens(modelId, data) ?? 0;
-
+    const inputTokens = (await countTokens(modelId, data)) ?? 0;
 
     // Compute costs using the existing method
     const costs = await this.computeCostUSD({

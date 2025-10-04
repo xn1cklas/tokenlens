@@ -1,7 +1,6 @@
 import type { Usage } from "@tokenlens/core";
 import { Tokenlens, type ModelDetails } from "./client.js";
 import type { GatewayId, TokenlensOptions } from "./types.js";
-import type { Provider } from "@tokenlens/tokenizer";
 
 /**
  * Create a new Tokenlens instance with the given options.
@@ -15,7 +14,6 @@ export function createTokenlens(
   return new Tokenlens(options);
 }
 
-
 interface CountTokensArgs {
   /** The model ID (e.g., "openai/gpt-4o-mini") */
   modelId: string;
@@ -24,22 +22,22 @@ interface CountTokensArgs {
 }
 
 /**
-   * Count tokens in a text string for a given model.
-   *
-   * @param args - Configuration for token counting
-   * @returns Token count
-   *
-   * @example
-   * ```typescript
-   * const tokenlens = new Tokenlens();
-   * const tokens = await tokenlens.countTokens({
-   *   modelId: "gpt-4o",
-   *   data: "Write a story about a robot",
-   * });
-   *
-   * console.log(`Input tokens: ${tokens}`);
-   * ```
-   */
+ * Count tokens in a text string for a given model.
+ *
+ * @param args - Configuration for token counting
+ * @returns Token count
+ *
+ * @example
+ * ```typescript
+ * const tokenlens = new Tokenlens();
+ * const tokens = await tokenlens.countTokens({
+ *   modelId: "gpt-4o",
+ *   data: "Write a story about a robot",
+ * });
+ *
+ * console.log(`Input tokens: ${tokens}`);
+ * ```
+ */
 
 export async function countTokens(args: CountTokensArgs) {
   const tokenlens = getTokenlens();
