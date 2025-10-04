@@ -39,7 +39,7 @@ export async function getContextLimits(args: {
 /**
  * Describe a model's metadata exactly as stored in the active sources.
  */
-export async function describeModel(args: {
+export async function getModelData(args: {
   modelId: string;
   provider?: string;
 }): Promise<ModelDetails> {
@@ -78,3 +78,4 @@ export function setSharedTokenlens(tokenlens?: TokenlensClient) {
 export type { SourceProviders, SourceModel, Usage } from "@tokenlens/core";
 export type { ModelDetails, TokenlensOptions };
 export type { TokenCosts } from "@tokenlens/helpers";
+export { Tokenlens } from "./client.js";
