@@ -93,7 +93,7 @@ providers.forEach(({ provider, modelId, displayName }) => {
   describe(`${displayName} integration`, () => {
     testCases.forEach(({ name, text, minTokens, maxTokens }) => {
       it(name, async () => {
-        const result = await countTokens(modelId as any, provider, text);
+        const result = await countTokens(modelId, provider, text);
         console.log(result);
 
         expect(result).toBeDefined();
@@ -108,7 +108,7 @@ providers.forEach(({ provider, modelId, displayName }) => {
     it("should handle provider prefix in model ID", async () => {
       const prefixedModelId = `${provider}/${modelId}`;
       const text = "Test with prefix";
-      const result = await countTokens(prefixedModelId as any, provider, text);
+      const result = await countTokens(prefixedModelId, provider, text);
       console.log(result);
 
       expect(result).toBeDefined();
