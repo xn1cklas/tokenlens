@@ -93,7 +93,6 @@
     "@tokenlens/core": "workspace:*",
     "@tokenlens/fetch": "workspace:*",
     "@tokenlens/helpers": "workspace:*",
-    "@tokenlens/models": "workspace:*",
     "@tokenlens/tokenizer": "workspace:*"
   }
 }
