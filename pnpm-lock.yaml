@@ -279,6 +279,9 @@ importers:
       llama-tokenizer-js:
         specifier: ^1.2.2
         version: 1.2.2
+      tokenlens:
+        specifier: workspace:*
+        version: link:../tokenlens
     devDependencies:
       dotenv:
         specifier: ^17.2.2
