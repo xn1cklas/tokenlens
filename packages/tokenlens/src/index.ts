@@ -79,22 +79,30 @@ export async function getModelData(args: GetModelDataArgs) {
 //   return tokenlens.experimental_countTokens(args);
 // }
 
-let sharedTokenlens: Tokenlens | undefined;
+const instances = new Map<GatewayId, Tokenlens>();
 
 /**
  * @internal
- * Lazily creates or returns the shared Tokenlens instance.
+ * Lazily creates or returns the shared Tokenlens instance for a given gateway.
  */
-function getTokenlens(provider?: GatewayId): Tokenlens {
-  sharedTokenlens ??= new Tokenlens({ catalog: provider ?? "auto" });
-  return sharedTokenlens;
+function getTokenlens(gateway?: GatewayId): Tokenlens {
+  const key = gateway ?? "auto";
+  let instance = instances.get(key);
+  if (!instance) {
+    instance = new Tokenlens({ catalog: key });
+    instances.set(key, instance);
+  }
+  return instance;
 }
 
 /**
  * @internal Utility for tests to override the shared Tokenlens instance.
  */
 export function setSharedTokenlens(tokenlens?: Tokenlens) {
-  sharedTokenlens = tokenlens;
+  instances.clear();
+  if (tokenlens) {
+    instances.set("auto", tokenlens);
+  }
 }
 
 export type { SourceProviders, SourceModel, Usage } from "@tokenlens/core";
