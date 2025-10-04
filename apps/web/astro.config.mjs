@@ -39,6 +39,7 @@ export default defineConfig({
           label: "Reference",
           items: [
             { label: "API Reference", slug: "reference/example" },
+            { label: "Tokenizer", slug: "reference/tokenizer" },
             { label: "Glossary", slug: "reference/glossary" },
           ],
         },
