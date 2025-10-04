@@ -1,0 +1,80 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="404 - Page Not Found">
+  <div class="not-found">
+    <div class="container">
+      <div class="content">
+        <h1>404</h1>
+        <p>Page not found</p>
+        <div class="links">
+          <a href="/" class="link">Go home</a>
+          <a href="/docs/" class="link">Browse docs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .not-found {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .content {
+    text-align: center;
+  }
+
+  h1 {
+    font-size: 8rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    font-size: 1.5rem;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 2rem;
+  }
+
+  .links {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .link {
+    padding: 0.75rem 1.5rem;
+    border: 2px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .link:hover {
+    background: hsl(var(--muted));
+    border-color: hsl(var(--foreground));
+    opacity: 1;
+  }
+
+  @media (max-width: 768px) {
+    h1 {
+      font-size: 5rem;
+    }
+
+    p {
+      font-size: 1.25rem;
+    }
+
+    .links {
+      flex-direction: column;
+    }
+  }
+</style>
+

@@ -1,0 +1,69 @@
+---
+import Layout from "../layouts/Layout.astro";
+import CopyButton from "../components/CopyButton.astro";
+---
+
+<Layout title="TokenLens - Typed model metadata for LLM applications">
+  <div class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div class="button-container">
+          <CopyButton />
+        </div>
+        <p class="hero-hint">Click to copy</p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .hero {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 0;
+  }
+
+  .hero-content {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .hero-title {
+    font-family: "Monaco", "Courier New", monospace;
+    font-size: 4rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .hero-description {
+    font-size: 1.25rem;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 3rem;
+    line-height: 1.6;
+  }
+
+  .button-container {
+    margin-bottom: 1rem;
+  }
+
+  .hero-hint {
+    font-size: 0.9rem;
+    color: hsl(var(--muted-foreground));
+    opacity: 0.6;
+  }
+
+  @media (max-width: 768px) {
+    .hero-title {
+      font-size: 2.5rem;
+    }
+
+    .hero-description {
+      font-size: 1.1rem;
+    }
+  }
+</style>
+

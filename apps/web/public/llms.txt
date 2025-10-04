@@ -1,0 +1,66 @@
+# TokenLens
+
+> Typed model metadata and cost/context helpers for LLM applications
+
+TokenLens resolves canonical model ids across multiple data sources, normalizes usage payloads, and estimates token costs/context limits with a consistent TypeScript API. Works great with the Vercel AI SDK and remains SDK-agnostic.
+
+## Getting Started
+
+- [Overview](https://tokenlens.dev/guides/overview/): Core concepts and architecture of TokenLens
+- [Installation](https://tokenlens.dev/guides/getting-started/): Installation instructions and quick setup guide
+- [Quick Start](https://tokenlens.dev/guides/quick-start/): Common usage patterns and code examples
+- [Sources & Caching](https://tokenlens.dev/guides/sources-caching/): How sources and loaders work, cache configuration
+
+## Integrations
+
+- [Vercel AI SDK](https://tokenlens.dev/integrations/vercel-ai-sdk/): Integration guide for the Vercel AI SDK
+
+## Reference
+
+- [API Reference](https://tokenlens.dev/reference/example/): Complete API documentation
+- [Glossary](https://tokenlens.dev/reference/glossary/): Key terminology and definitions
+
+## Additional Resources
+
+- [Initiative](https://tokenlens.dev/initiative): Why TokenLens exists and the problem it solves
+- [GitHub Repository](https://github.com/xn1cklas/tokenlens): Source code and issue tracker
+- [npm Package](https://www.npmjs.com/package/tokenlens): Official npm package
+
+## Key Features
+
+TokenLens provides:
+- Canonical model registry with alias resolution across OpenRouter and models.dev
+- Usage normalization across providers and SDKs (OpenAI, Anthropic, Vercel AI SDK)
+- Fast USD cost estimates based on provider pricing data
+- Context window checking and token limit management
+- TypeScript-first with strong type safety
+- Configurable caching with pluggable adapters
+
+## Installation
+
+```bash
+npm i tokenlens
+```
+
+## Basic Usage
+
+```typescript
+import { computeCostUSD, getContextLimits, describeModel } from "tokenlens";
+
+// Estimate costs
+const cost = await computeCostUSD({
+  modelId: "openai/gpt-4o-mini",
+  usage: { inputTokens: 3_200, outputTokens: 400 },
+});
+
+// Check context limits
+const limits = await getContextLimits({
+  modelId: "anthropic/claude-3-5-sonnet",
+});
+
+// Get full model details
+const details = await describeModel({
+  modelId: "openai/gpt-4o",
+});
+```
+
