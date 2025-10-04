@@ -25,14 +25,14 @@ export interface JsonToCompactOptions {
  *   { name: "Alice", age: 30, city: "NYC" },
  *   { name: "Bob", age: 25, city: "LA" }
  * ];
- * const result = jsonToCompact(data);
+ * const result = compactJson(data);
  * // Returns:
  * // name | age | city
  * // Alice | 30 | NYC
  * // Bob | 25 | LA
  * ```
  */
-export function jsonToCompact(
+export function compactJson(
   input: string | object | object[],
   options: JsonToCompactOptions = {},
 ): string {
@@ -118,7 +118,7 @@ export function estimateTokenSavings(
 } {
   const originalJson =
     typeof input === "string" ? input : JSON.stringify(input);
-  const compact = jsonToCompact(input, options);
+  const compact = compactJson(input, options);
 
   const originalChars = originalJson.length;
   const compactChars = compact.length;

@@ -151,5 +151,12 @@ export function setSharedTokenlens(tokenlens?: Tokenlens) {
 
 export type { SourceProviders, SourceModel, Usage } from "@tokenlens/core";
 export type { ModelDetails, TokenlensOptions };
-export type { TokenCosts } from "@tokenlens/helpers";
+export type { TokenCosts, ContextHealth } from "@tokenlens/helpers";
 export { Tokenlens } from "./client.js";
+
+// Re-export helper utilities
+export {
+  compactJson,
+  estimateTokenSavings,
+  getContextHealth,
+} from "@tokenlens/helpers";

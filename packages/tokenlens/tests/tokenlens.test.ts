@@ -15,7 +15,7 @@ import {
   createModelsDevProvidersFixture,
   createOpenrouterProvidersFixture,
 } from "./fixtures/providers.js";
-import { jsonToCompact } from "@tokenlens/helpers";
+import { compactJson } from "@tokenlens/helpers";
 import type { Mock } from "vitest";
 
 // Mock the fetch functions
@@ -566,7 +566,7 @@ describe("Tokenlens.estimateCostUSD()", () => {
       }));
 
       const jsonFormat = JSON.stringify(data);
-      const compactFormat = jsonToCompact(data);
+      const compactFormat = compactJson(data);
 
       const jsonCost = await tokenlens.estimateCostUSD({
         modelId: "openai/gpt-4o",

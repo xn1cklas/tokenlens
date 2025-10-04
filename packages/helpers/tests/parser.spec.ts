@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { jsonToCompact, estimateTokenSavings } from "../src/index";
+import { compactJson, estimateTokenSavings } from "../src/index";
 
-describe("jsonToCompact", () => {
+describe("compactJson", () => {
   describe("basic functionality", () => {
     it("should convert array of objects to compact format", () => {
       const input = [
@@ -21,7 +21,7 @@ describe("jsonToCompact", () => {
         },
       ];
 
-      const result = jsonToCompact(input);
+      const result = compactJson(input);
 
       expect(result).toBe(
         "text | start | end | speaker | confidence\n" +
@@ -39,7 +39,7 @@ describe("jsonToCompact", () => {
         confidence: 0.9,
       };
 
-      const result = jsonToCompact(input);
+      const result = compactJson(input);
 
       expect(result).toBe(
         "text | start | end | speaker | confidence\n" +
@@ -53,7 +53,7 @@ describe("jsonToCompact", () => {
         { name: "Bob", age: 25 },
       ]);
 
-      const result = jsonToCompact(input);
+      const result = compactJson(input);
 
       expect(result).toBe("name | age\n" + "Alice | 30\n" + "Bob | 25");
     });
@@ -66,7 +66,7 @@ describe("jsonToCompact", () => {
         { name: "Bob", age: 25 },
       ];
 
-      const result = jsonToCompact(input, { includeHeader: false });
+      const result = compactJson(input, { includeHeader: false });
 
       expect(result).toBe("Alice | 30\n" + "Bob | 25");
     });
@@ -77,7 +77,7 @@ describe("jsonToCompact", () => {
         { name: "Bob", age: 25 },
       ];
 
-      const result = jsonToCompact(input, { delimiter: ", " });
+      const result = compactJson(input, { delimiter: ", " });
 
       expect(result).toBe("name, age\n" + "Alice, 30\n" + "Bob, 25");
     });
@@ -88,7 +88,7 @@ describe("jsonToCompact", () => {
         { name: "Bob", age: 25 },
       ];
 
-      const result = jsonToCompact(input, { delimiter: "\t" });
+      const result = compactJson(input, { delimiter: "\t" });
 
       expect(result).toBe("name\tage\n" + "Alice\t30\n" + "Bob\t25");
     });
@@ -99,7 +99,7 @@ describe("jsonToCompact", () => {
         { name: "Bob", age: 25, city: "LA", country: "USA" },
       ];
 
-      const result = jsonToCompact(input, { fields: ["name", "city"] });
+      const result = compactJson(input, { fields: ["name", "city"] });
 
       expect(result).toBe("name | city\n" + "Alice | NYC\n" + "Bob | LA");
     });
@@ -110,7 +110,7 @@ describe("jsonToCompact", () => {
         { name: "Bob", age: 25, city: "LA" },
       ];
 
-      const result = jsonToCompact(input, {
+      const result = compactJson(input, {
         includeHeader: false,
         delimiter: ", ",
         fields: ["name", "age"],
@@ -122,7 +122,7 @@ describe("jsonToCompact", () => {
 
   describe("edge cases", () => {
     it("should handle empty array", () => {
-      const result = jsonToCompact([]);
+      const result = compactJson([]);
       expect(result).toBe("");
     });
 
@@ -132,7 +132,7 @@ describe("jsonToCompact", () => {
         { name: "Bob", age: null, city: "LA" },
       ];
 
-      const result = jsonToCompact(input);
+      const result = compactJson(input);
 
       expect(result).toBe(
         "name | age | city\n" + "Alice | 30 | \n" + "Bob |  | LA",
@@ -145,7 +145,7 @@ describe("jsonToCompact", () => {
         { name: "Bob", age: 25, city: "LA" },
       ];
 
-      const result = jsonToCompact(input);
+      const result = compactJson(input);
 
       expect(result).toBe("name | age\n" + "Alice | 30\n" + "Bob | 25");
     });
@@ -156,7 +156,7 @@ describe("jsonToCompact", () => {
         { name: "Bob", active: false },
       ];
 
-      const result = jsonToCompact(input);
+      const result = compactJson(input);
 
       expect(result).toBe("name | active\n" + "Alice | true\n" + "Bob | false");
     });
@@ -167,7 +167,7 @@ describe("jsonToCompact", () => {
         { name: "Bob", address: { city: "LA", zip: "90001" } },
       ];
 
-      const result = jsonToCompact(input);
+      const result = compactJson(input);
 
       expect(result).toBe("name\n" + "Alice\n" + "Bob");
     });
@@ -178,14 +178,14 @@ describe("jsonToCompact", () => {
         { name: "Bob", city: "LA" },
       ];
 
-      const result = jsonToCompact(input);
+      const result = compactJson(input);
 
       // Uses keys from first object
       expect(result).toBe("name | age\n" + "Alice | 30\n" + "Bob | ");
     });
 
     it("should throw error for invalid JSON string", () => {
-      expect(() => jsonToCompact("not valid json")).toThrow(
+      expect(() => compactJson("not valid json")).toThrow(
         "Invalid JSON string",
       );
     });
@@ -193,7 +193,7 @@ describe("jsonToCompact", () => {
     it("should handle special characters in values", () => {
       const input = [{ text: "Hello, world!", note: "It's great" }];
 
-      const result = jsonToCompact(input);
+      const result = compactJson(input);
 
       expect(result).toBe("text | note\n" + "Hello, world! | It's great");
     });
@@ -204,7 +204,7 @@ describe("jsonToCompact", () => {
         { id: "002", count: 13 },
       ];
 
-      const result = jsonToCompact(input);
+      const result = compactJson(input);
 
       expect(result).toBe("id | count\n" + "001 | 42\n" + "002 | 13");
     });
@@ -236,7 +236,7 @@ describe("jsonToCompact", () => {
         },
       ];
 
-      const result = jsonToCompact(input);
+      const result = compactJson(input);
 
       expect(result).toContain("text | start | end | speaker | confidence");
       expect(result.split("\n")).toHaveLength(4); // header + 3 rows
@@ -258,7 +258,7 @@ describe("jsonToCompact", () => {
         },
       ];
 
-      const result = jsonToCompact(input, { fields: ["username", "verified"] });
+      const result = compactJson(input, { fields: ["username", "verified"] });
 
       expect(result).toBe(
         "username | verified\n" + "alice_2024 | true\n" + "bob_dev | false",

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { jsonToCompact } from "@tokenlens/helpers";
+import { compactJson } from "@tokenlens/helpers";
 import { countTokens } from "@tokenlens/tokenizer";
 
 describe("Token reduction with actual tokenizer", () => {
-  it("should reduce actual tokens when using jsonToCompact with GPT models", async () => {
+  it("should reduce actual tokens when using compactJson with GPT models", async () => {
     // Sample data - realistic transcript/structured data
     const transcriptData = [
       {
@@ -47,7 +47,7 @@ describe("Token reduction with actual tokenizer", () => {
     const jsonFormat = JSON.stringify(transcriptData);
 
     // Format 2: Compact pipe-separated format
-    const compactFormat = jsonToCompact(transcriptData);
+    const compactFormat = compactJson(transcriptData);
 
     // Count tokens with GPT-4o (uses tiktoken locally, no API key needed)
     const jsonTokens = await countTokens("gpt-4o", jsonFormat);
@@ -95,7 +95,7 @@ describe("Token reduction with actual tokenizer", () => {
     }));
 
     const jsonFormat = JSON.stringify(largeDataset);
-    const compactFormat = jsonToCompact(largeDataset);
+    const compactFormat = compactJson(largeDataset);
 
     const jsonTokens = await countTokens("gpt-4o", jsonFormat);
     const compactTokens = await countTokens("gpt-4o", compactFormat);
@@ -132,7 +132,7 @@ describe("Token reduction with actual tokenizer", () => {
     ];
 
     const jsonFormat = JSON.stringify(data);
-    const compactFormat = jsonToCompact(data);
+    const compactFormat = compactJson(data);
 
     // Test with gpt-5 model
     const jsonTokens = await countTokens("gpt-5", jsonFormat);
@@ -170,11 +170,11 @@ describe("Token reduction with actual tokenizer", () => {
     const jsonFormat = JSON.stringify(data);
 
     // Test with header
-    const compactWithHeader = jsonToCompact(data, { includeHeader: true });
+    const compactWithHeader = compactJson(data, { includeHeader: true });
     const tokensWithHeader = await countTokens("gpt-4o", compactWithHeader);
 
     // Test without header
-    const compactWithoutHeader = jsonToCompact(data, { includeHeader: false });
+    const compactWithoutHeader = compactJson(data, { includeHeader: false });
     const tokensWithoutHeader = await countTokens(
       "gpt-4o",
       compactWithoutHeader,
