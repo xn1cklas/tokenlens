@@ -57,6 +57,9 @@ interface EstimateCostUSDArgs {
  * Estimate token costs in USD by counting tokens in text and looking up pricing.
  * This is useful for estimating costs BEFORE making an API call.
  *
+ * @param args - Configuration for cost estimation
+ * @returns Token costs breakdown including total cost in USD and token counts
+ *
  * @example
  * ```typescript
  * const estimate = await estimateCostUSD({
@@ -85,6 +88,9 @@ interface ComputeCostUSDArgs {
 /**
  * Calculate a model's token usage cost in USD.
  *
+ * @param args - Configuration for cost computation
+ * @returns Token costs breakdown including input, output, and total costs in USD
+ *
  * @example
  * ```typescript
  * const costs = await computeCostUSD({
@@ -110,6 +116,9 @@ interface GetContextLimitsArgs {
 
 /**
  * Read the context, input, and output token limits for a model.
+ *
+ * @param args - Configuration for context limits lookup
+ * @returns Object containing context, input, and output token limits
  *
  * @example
  * ```typescript
@@ -137,6 +146,9 @@ interface GetModelDataArgs {
  * - "openai/gpt-4o-mini" - Full provider/model format
  * - "gpt-4o-mini" with provider: "openai" - Separate model and provider
  * - "gpt-4o-mini" - Search across all providers (may be ambiguous)
+ *
+ * @param args - Configuration for model data lookup
+ * @returns Model metadata including pricing, limits, and other details
  *
  * @example
  * ```typescript
@@ -172,6 +184,9 @@ interface GetContextHealthArgs {
  * - Total, used, and remaining tokens
  * - Usage percentages
  * - Health status (healthy: <70%, warning: 70-90%, critical: >90%)
+ *
+ * @param args - Configuration for context health calculation
+ * @returns Context health metrics including usage percentages and health status
  *
  * @example
  * ```typescript

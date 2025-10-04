@@ -136,7 +136,22 @@ export class Tokenlens {
     return await countTokens(modelId, data);
   }
 
-  /** Calculate a model's token usage cost in USD. */
+  /**
+   * Calculate a model's token usage cost in USD.
+   *
+   * @param args - Configuration for cost computation
+   * @returns Token costs breakdown including input, output, and total costs in USD
+   *
+   * @example
+   * ```typescript
+   * const tokenlens = new Tokenlens();
+   * const costs = await tokenlens.computeCostUSD({
+   *   modelId: "openai/gpt-4o-mini",
+   *   usage: { input_tokens: 1000, output_tokens: 500 }
+   * });
+   * console.log(`Total: $${costs.totalTokenCostUSD}`);
+   * ```
+   */
   async computeCostUSD(args: {
     modelId: string;
     provider?: string;
@@ -205,7 +220,29 @@ export class Tokenlens {
     };
   }
 
-  /** Retuns a model's metadata as stored in the source catalog. */
+  /**
+   * Get a model's metadata exactly as stored in the active sources.
+   *
+   * Model ID formats supported:
+   * - "openai/gpt-4o-mini" - Full provider/model format
+   * - "gpt-4o-mini" with provider: "openai" - Separate model and provider
+   * - "gpt-4o-mini" - Search across all providers (may be ambiguous)
+   *
+   * @param args - Configuration for model data lookup
+   * @returns Model metadata including pricing, limits, and other details
+   *
+   * @example
+   * ```typescript
+   * const tokenlens = new Tokenlens();
+   * // Using provider prefix
+   * const details = await tokenlens.getModelData({ modelId: "openai/gpt-4o-mini" });
+   *
+   * // Using separate provider parameter (useful with AI SDK variables)
+   * const model = "gpt-4o-mini";
+   * const provider = "openai";
+   * const details = await tokenlens.getModelData({ modelId: model, provider });
+   * ```
+   */
   async getModelData(args: {
     modelId: string;
     provider?: string;
@@ -223,7 +260,19 @@ export class Tokenlens {
     return resolved.model;
   }
 
-  /** Fetch context, input, and output token limits for a model. */
+  /**
+   * Read the context, input, and output token limits for a model.
+   *
+   * @param args - Configuration for context limits lookup
+   * @returns Object containing context, input, and output token limits
+   *
+   * @example
+   * ```typescript
+   * const tokenlens = new Tokenlens();
+   * const limits = await tokenlens.getContextLimits({ modelId: "openai/gpt-4o-mini" });
+   * console.log(`Context: ${limits?.context} tokens`);
+   * ```
+   */
   async getContextLimits(args: {
     modelId: string;
     provider?: string;
@@ -248,6 +297,9 @@ export class Tokenlens {
    * - Total, used, and remaining tokens
    * - Usage percentages
    * - Health status (healthy: <70%, warning: 70-90%, critical: >90%)
+   *
+   * @param args - Configuration for context health calculation
+   * @returns Context health metrics including usage percentages and health status
    *
    * @example
    * ```typescript
