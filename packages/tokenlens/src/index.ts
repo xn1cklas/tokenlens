@@ -1,5 +1,5 @@
 import type { Usage } from "@tokenlens/core";
-import { Tokenlens as TokenlensClient, type ModelDetails } from "./client.js";
+import { Tokenlens, type ModelDetails } from "./client.js";
 import type { GatewayId, TokenlensOptions } from "./types.js";
 
 /**
@@ -10,11 +10,11 @@ import type { GatewayId, TokenlensOptions } from "./types.js";
 
 interface CreateTokenlensArgs {
   /** The options for the Tokenlens instance. */
-  options?: ConstructorParameters<typeof TokenlensClient>[0];
+  options?: ConstructorParameters<typeof Tokenlens>[0];
 }
 
 export function createTokenlens(args: CreateTokenlensArgs) {
-  return new TokenlensClient(args.options);
+  return new Tokenlens(args.options);
 }
 
 interface ComputeCostUSDArgs {
@@ -79,21 +79,21 @@ export async function getModelData(args: GetModelDataArgs) {
 //   return tokenlens.experimental_countTokens(args);
 // }
 
-let sharedTokenlens: TokenlensClient | undefined;
+let sharedTokenlens: Tokenlens | undefined;
 
 /**
  * @internal
  * Lazily creates or returns the shared Tokenlens instance.
  */
-function getTokenlens(provider?: GatewayId): TokenlensClient {
-  sharedTokenlens ??= new TokenlensClient({ catalog: provider ?? "auto" });
+function getTokenlens(provider?: GatewayId): Tokenlens {
+  sharedTokenlens ??= new Tokenlens({ catalog: provider ?? "auto" });
   return sharedTokenlens;
 }
 
 /**
  * @internal Utility for tests to override the shared Tokenlens instance.
  */
-export function setSharedTokenlens(tokenlens?: TokenlensClient) {
+export function setSharedTokenlens(tokenlens?: Tokenlens) {
   sharedTokenlens = tokenlens;
 }
 
