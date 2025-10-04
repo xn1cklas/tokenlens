@@ -1,9 +1,9 @@
 import type { TokenizerMessage } from "../types.js";
-import type { ModelMessage } from "ai";
+import type { CoreMessage } from "ai";
 
 export function isAiSdkMessageArray(
   value: unknown,
-): value is readonly ModelMessage[] {
+): value is readonly CoreMessage[] {
   return (
     Array.isArray(value) &&
     value.every(
@@ -17,7 +17,7 @@ export function isAiSdkMessageArray(
 }
 
 export function fromAiSdkMessages(
-  messages: readonly ModelMessage[],
+  messages: readonly CoreMessage[],
 ): TokenizerMessage[] {
   return messages.map((message) => ({
     role: message.role,
@@ -25,7 +25,7 @@ export function fromAiSdkMessages(
   }));
 }
 
-function stringifyAiSdkMessage(message: ModelMessage): string {
+function stringifyAiSdkMessage(message: CoreMessage): string {
   const content = (message as { content?: unknown }).content;
   if (typeof content === "string") return content;
   if (!Array.isArray(content)) return safeStringify(content);
@@ -46,7 +46,7 @@ function stringifyAiSdkMessage(message: ModelMessage): string {
 function stringifyAiSdkPart(part: unknown): string | undefined {
   if (!part || typeof part !== "object") return undefined;
 
-  const typed = part as { type?: string; [key: string]: unknown };
+  const typed = part as { type?: string;[key: string]: unknown };
   const type = typeof typed.type === "string" ? typed.type : undefined;
 
   if (type === "text") {

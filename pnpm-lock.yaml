@@ -215,8 +215,8 @@ importers:
         version: link:../core
     devDependencies:
       '@types/node':
-        specifier: ^22.10.5
-        version: 22.18.8
+        specifier: ^24.5.2
+        version: 24.5.2
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
@@ -249,7 +249,7 @@ importers:
         specifier: ^0.65.0
         version: 0.65.0(zod@4.1.5)
       openai:
-        specifier: ^4.77.3
+        specifier: ^4.104.0
         version: 4.104.0(ws@8.18.3)(zod@4.1.5)
       tokenlens:
         specifier: workspace:*
@@ -271,8 +271,8 @@ importers:
   packages/tokenizer:
     dependencies:
       '@anthropic-ai/sdk':
-        specifier: ^0.63.1
-        version: 0.63.1(zod@4.1.5)
+        specifier: ^0.65.0
+        version: 0.65.0(zod@4.1.5)
       '@anthropic-ai/tokenizer':
         specifier: ^0.0.4
         version: 0.0.4
@@ -289,9 +289,15 @@ importers:
         specifier: ^1.2.2
         version: 1.2.2
     devDependencies:
+      ai:
+        specifier: ^5.0.52
+        version: 5.0.52(zod@4.1.5)
       dotenv:
         specifier: ^17.2.2
         version: 17.2.2
+      openai:
+        specifier: ^4.104.0
+        version: 4.104.0(ws@8.18.3)(zod@4.1.5)
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
@@ -1869,9 +1875,6 @@ packages:
 
   '@types/node@18.19.127':
     resolution: {integrity: sha512-gSjxjrnKXML/yo0BO099uPixMqfpJU0TKYjpfLU7TrtA2WWDki412Np/RSTPRil1saKBhvVVKzVx/p/6p94nVA==}
-
-  '@types/node@22.18.8':
-    resolution: {integrity: sha512-pAZSHMiagDR7cARo/cch1f3rXy0AEXwsVsVH09FcyeJVAzCnGgmYis7P3JidtTUjyadhTeSo8TgRPswstghDaw==}
 
   '@types/node@24.5.2':
     resolution: {integrity: sha512-FYxk1I7wPv3K2XBaoyH2cTnocQEu8AOZ60hPbsyukMPLv5/5qr7V1i8PLHdl6Zf87I+xZXFvPCXYjiTFq+YSDQ==}
@@ -4333,9 +4336,6 @@ packages:
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
 
-  undici-types@6.21.0:
-    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
-
   undici-types@7.12.0:
     resolution: {integrity: sha512-goOacqME2GYyOZZfb5Lgtu+1IDmAlAEu5xnD3+xTzS10hT0vzpf0SPjkXwAw9Jm+4n/mQGDP3LO8CPbYROeBfQ==}
 
@@ -6324,10 +6324,6 @@ snapshots:
   '@types/node@18.19.127':
     dependencies:
       undici-types: 5.26.5
-
-  '@types/node@22.18.8':
-    dependencies:
-      undici-types: 6.21.0
 
   '@types/node@24.5.2':
     dependencies:
@@ -9469,8 +9465,6 @@ snapshots:
   uncrypto@0.1.3: {}
 
   undici-types@5.26.5: {}
-
-  undici-types@6.21.0: {}
 
   undici-types@7.12.0: {}
 

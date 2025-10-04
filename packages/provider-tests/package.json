@@ -21,7 +21,7 @@
     "@ai-sdk/openai": "^2.0.35",
     "@ai-sdk/xai": "^2.0.22",
     "@anthropic-ai/sdk": "^0.65.0",
-    "openai": "^4.77.3",
+    "openai": "^4.104.0",
     "tokenlens": "workspace:*"
   }
 }
