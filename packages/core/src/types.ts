@@ -2,7 +2,8 @@
  * Provider identifier. We accept any provider string so we can ingest the full
  * models.dev catalog without maintaining a hardcoded allowlist here.
  */
-export type Provider = string;
+export type ProviderId = string;
+export type Provider = ProviderId;
 
 /** Lifecycle status of a model. */
 export type Status = "stable" | "preview" | "deprecated" | "retired";
@@ -30,38 +31,25 @@ export type Modalities = {
   imageIn?: boolean;
 };
 
-/** Canonical model metadata entry */
-export type Model = {
-  id: string;
-  provider: Provider;
-  vendorId?: string;
-  displayName?: string;
-  family?: string;
-  status: Status;
-  context: ContextCaps;
-  modalities?: Modalities;
-  pricing?: Pricing;
-  pricingSource?: string;
-  aliases?: readonly string[];
-  releasedAt?: string;
-  source: string;
-  contextSource?: string;
-  verifiedAt?: string;
-};
-
 /** Usage shapes from various SDKs/providers (union of common fields). */
-export type UsageLike = Partial<
+export type Usage = Partial<
   Record<
     | "prompt_tokens"
     | "completion_tokens"
     | "total_tokens"
     | "input_tokens"
     | "output_tokens"
+    | "cache_read_tokens"
+    | "cache_write_tokens"
     | "reasoning_tokens"
     | "promptTokens"
     | "completionTokens"
     | "totalTokens"
-    | "reasoningTokens",
+    | "reasoningTokens"
+    | "cacheReads"
+    | "cacheWrites"
+    | "cacheReadTokens"
+    | "cacheWriteTokens",
     number
   >
 >;
@@ -86,46 +74,21 @@ export type TokenBreakdown = NormalizedUsage & {
 // Shared catalog types (models.dev-compatible)
 // ------------------------------------------------------------
 
-/** models.dev provider model entry */
-export type ProviderModel = {
+/** Model entry exported for downstream use, matches glossary definition. */
+export type Model = {
   id: string;
-  name: string;
-  attachment?: boolean;
-  reasoning?: boolean;
-  temperature?: boolean;
-  tool_call?: boolean;
-  knowledge?: string;
-  release_date?: string;
-  last_updated?: string;
-  modalities?: { input?: readonly string[]; output?: readonly string[] };
-  open_weights?: boolean;
-  cost?: {
-    input?: number;
-    output?: number;
-    reasoning?: number;
-    cache_read?: number;
-    cache_write?: number;
-  };
-  limit?: {
-    context?: number;
-    input?: number;
-    output?: number;
-  };
-};
-
-/** models.dev provider info */
-export type ProviderInfo = {
-  id: string;
+  provider: Provider;
+  vendorId?: string;
   name?: string;
-  api?: string;
-  npm?: string;
-  doc?: string;
-  env?: readonly string[];
-  models: Record<string, ProviderModel>;
+  family?: string;
+  status: Status;
+  context: ContextCaps;
+  modalities?: Modalities;
+  pricing?: Pricing;
+  pricingSource?: string;
+  aliases?: readonly string[];
+  releasedAt?: string;
+  source: string;
+  contextSource?: string;
+  verifiedAt?: string;
 };
-
-/** Root catalog keyed by provider */
-export type ProvidersCatalog = Record<string, ProviderInfo>;
-
-// Canonical alias for the root catalog shape
-export type ModelCatalog = ProvidersCatalog;
