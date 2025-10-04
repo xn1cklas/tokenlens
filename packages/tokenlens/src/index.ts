@@ -1,6 +1,7 @@
 import type { Usage } from "@tokenlens/core";
 import { Tokenlens, type ModelDetails } from "./client.js";
 import type { GatewayId, TokenlensOptions } from "./types.js";
+import type { Provider } from "@tokenlens/tokenizer";
 
 /**
  * Create a new Tokenlens instance with the given options.
@@ -12,6 +13,64 @@ export function createTokenlens(
   options?: ConstructorParameters<typeof Tokenlens>[0],
 ) {
   return new Tokenlens(options);
+}
+
+
+interface CountTokensArgs {
+  /** The model ID (e.g., "openai/gpt-4o-mini") */
+  modelId: string;
+  /** Text content to count tokens for */
+  data: string;
+}
+
+/**
+   * Count tokens in a text string for a given model.
+   *
+   * @param args - Configuration for token counting
+   * @returns Token count
+   *
+   * @example
+   * ```typescript
+   * const tokenlens = new Tokenlens();
+   * const tokens = await tokenlens.countTokens({
+   *   modelId: "gpt-4o",
+   *   data: "Write a story about a robot",
+   * });
+   *
+   * console.log(`Input tokens: ${tokens}`);
+   * ```
+   */
+
+export async function countTokens(args: CountTokensArgs) {
+  const tokenlens = getTokenlens();
+  return tokenlens.countTokens(args);
+}
+
+interface EstimateCostUSDArgs {
+  /** The model ID (e.g., "openai/gpt-4o-mini" or just "gpt-4o-mini") */
+  modelId: string;
+  /** Provider for model lookup (e.g., "openai", "anthropic") */
+  provider?: string;
+  /** Text content to estimate costs for */
+  data: string;
+}
+
+/**
+ * Estimate token costs in USD by counting tokens in text and looking up pricing.
+ * This is useful for estimating costs BEFORE making an API call.
+ *
+ * @example
+ * ```typescript
+ * const estimate = await estimateCostUSD({
+ *   modelId: "openai/gpt-4o",
+ *   provider: "openai",
+ *   data: "Write a story about a robot",
+ * });
+ * ```
+ */
+export async function estimateCostUSD(args: EstimateCostUSDArgs) {
+  const tokenlens = getTokenlens();
+  return tokenlens.estimateCostUSD(args);
 }
 
 interface ComputeCostUSDArgs {
@@ -65,16 +124,6 @@ export async function getModelData(args: GetModelDataArgs) {
   const tokenlens = getTokenlens(args.gateway);
   return tokenlens.getModelData(args);
 }
-
-// export async function experimental_countTokens(args: {
-//   modelId: string;
-//   provider?: string;
-//   content: CountTokensContent;
-//   options?: CountTokensOptions;
-// }): Promise<TokenizerResult> {
-//   const tokenlens = getTokenlens();
-//   return tokenlens.experimental_countTokens(args);
-// }
 
 const instances = new Map<GatewayId, Tokenlens>();
 
