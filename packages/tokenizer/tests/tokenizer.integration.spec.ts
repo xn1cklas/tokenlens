@@ -88,8 +88,9 @@ const testCases = [
 ];
 
 // Run tests for each provider
-providers.forEach(({ provider, modelId, displayName }) => {
-  describe(`${displayName} integration`, () => {
+providers.forEach(({ provider, modelId, displayName, skipIfNoKey, apiKey }) => {
+  const shouldSkip = skipIfNoKey && !apiKey;
+  describe.skipIf(shouldSkip)(`${displayName} integration`, () => {
     testCases.forEach(({ name, text, minTokens, maxTokens }) => {
       it(name, async () => {
         const result = await countTokens(modelId, text);
