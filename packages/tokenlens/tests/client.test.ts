@@ -1,5 +1,18 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import type { SourceProviders } from "@tokenlens/core";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  createTokenlens,
+  getContextLimits as apiGetContextLimits,
+  computeCostUSD as apiComputeCostUSD,
+  describeModel as apiDescribeModel,
+  setSharedTokenlens,
+} from "../src/index.js";
+import { Tokenlens } from "../src/client.js";
+import { TokenLensError } from "../src/error/index.js";
+import { BASE_ERROR_CODES } from "../src/error/codes.js";
+import {
+  createModelsDevProvidersFixture,
+  createOpenrouterProvidersFixture,
+} from "./fixtures/providers.js";
 
 type Usage = {
   input_tokens?: number;
@@ -8,252 +21,253 @@ type Usage = {
   cache_read_tokens?: number;
 };
 
-import {
-  createTokenlens,
-  getContextLimits as apiGetContextLimits,
-  computeCostUSD as apiComputeCostUSD,
-  describeModel as apiDescribeModel,
-  setSharedTokenlens,
-} from "../src/index.ts";
-import { Tokenlens } from "../src/client.ts";
-import type { FetchLike, SourceLoader } from "../src/types.ts";
-import {
-  createModelsDevProvidersFixture,
-  createOpenrouterProvidersFixture,
-  createPackageProvidersFixture,
-} from "./fixtures/providers.ts";
-
-type Providers = SourceProviders;
-
-type LoaderController = {
-  loader: SourceLoader;
-  setData(next: Providers): void;
-  setShouldFail(flag: boolean): void;
-  getCalls(): number;
-  getLastFetch(): FetchLike | undefined;
-};
-
-const noopFetch: FetchLike = async () => {
-  throw new Error("Unexpected network call in tests");
-};
-
-function makeLoader(initialData: Providers): LoaderController {
-  let data = initialData;
-  let shouldFail = false;
-  let calls = 0;
-  let lastFetch: FetchLike | undefined;
-
-  const loader: SourceLoader = async (fetchImpl) => {
-    calls += 1;
-    lastFetch = fetchImpl;
-    if (shouldFail) {
-      throw new Error("loader failure");
-    }
-    return data;
-  };
-
-  return {
-    loader,
-    setData(next) {
-      data = next;
-    },
-    setShouldFail(flag) {
-      shouldFail = flag;
-    },
-    getCalls() {
-      return calls;
-    },
-    getLastFetch() {
-      return lastFetch;
-    },
-  };
-}
-
 function makeUsage(): Usage {
   return {
     input_tokens: 2000,
     output_tokens: 500,
     reasoning_tokens: 100,
     cache_read_tokens: 50,
-  } satisfies Usage;
+  };
 }
 
-describe("Tokenlens core", () => {
+describe("Tokenlens with different catalogs", () => {
+  let fetchModelsDevSpy: any;
+  let fetchOpenrouterSpy: any;
+
+  beforeEach(async () => {
+    const fetchModule = await import("@tokenlens/fetch");
+    fetchModelsDevSpy = vi.spyOn(fetchModule, "fetchModelsDev");
+    fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter");
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("merges provider sets, caches results, and reuses cache", async () => {
-    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
-    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
-    const packageCtrl = makeLoader(createPackageProvidersFixture());
+  it("uses openrouter catalog and fetches model data", async () => {
+    const mockCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
 
     const client = new Tokenlens({
-      sources: ["openrouter", "models.dev", "package"],
-      fetch: noopFetch,
+      catalog: "openrouter",
       ttlMs: 60_000,
-      cacheKey: "tests-core",
-      loaders: {
-        openrouter: openrouterCtrl.loader,
-        "models.dev": modelsDevCtrl.loader,
-        package: packageCtrl.loader,
-      },
+      cacheKey: "test-openrouter",
     });
 
-    const first = await client.getProviders();
-    expect(Object.keys(first)).toEqual(["openai", "anthropic", "local"]);
-    expect(openrouterCtrl.getCalls()).toBe(1);
-    expect(modelsDevCtrl.getCalls()).toBe(1);
+    const modelData = await client.getModelData({ modelId: "openai/gpt-4o" });
 
-    const second = await client.getProviders();
-    expect(second).toBe(first);
-    expect(openrouterCtrl.getCalls()).toBe(1);
-    expect(modelsDevCtrl.getCalls()).toBe(1);
+    expect(modelData?.id).toBe("openai/gpt-4o");
+    expect(modelData?.limit?.context).toBe(128_000);
+    expect(fetchOpenrouterSpy).toHaveBeenCalled();
   });
 
-  it("falls back to cached providers when loaders fail", async () => {
-    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
-    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
-    const packageCtrl = makeLoader(createPackageProvidersFixture());
+  it("uses models.dev catalog", async () => {
+    const mockCatalog = createModelsDevProvidersFixture();
+    fetchModelsDevSpy.mockResolvedValue(mockCatalog);
 
     const client = new Tokenlens({
-      sources: ["openrouter", "models.dev", "package"],
-      fetch: noopFetch,
-      ttlMs: 0,
-      cacheKey: "tests-fallback",
-      loaders: {
-        openrouter: openrouterCtrl.loader,
-        "models.dev": modelsDevCtrl.loader,
-        package: packageCtrl.loader,
-      },
+      catalog: "models.dev",
+      ttlMs: 60_000,
+      cacheKey: "test-modelsdev",
     });
 
-    const baseline = await client.getProviders();
-    openrouterCtrl.setShouldFail(true);
-    modelsDevCtrl.setShouldFail(true);
+    const modelData = await client.getModelData({
+      modelId: "anthropic/claude-3.5",
+    });
 
-    const fallback = await client.getProviders();
-    expect(fallback).toBe(baseline);
-    expect(openrouterCtrl.getCalls()).toBe(2);
-    expect(modelsDevCtrl.getCalls()).toBe(2);
+    expect(modelData?.id).toBe("anthropic/claude-3.5");
+    expect(modelData?.limit?.context).toBe(200_000);
+    expect(fetchModelsDevSpy).toHaveBeenCalled();
   });
 
-  it("refresh(true) reloads providers and updates cache", async () => {
-    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
-    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
-    const packageCtrl = makeLoader(createPackageProvidersFixture());
+  it("uses custom catalog object without fetching", async () => {
+    const customCatalog = createOpenrouterProvidersFixture();
 
     const client = new Tokenlens({
-      sources: ["openrouter", "models.dev", "package"],
-      cacheKey: "tests-refresh",
-      fetch: noopFetch,
+      catalog: customCatalog,
       ttlMs: 60_000,
-      loaders: {
-        openrouter: openrouterCtrl.loader,
-        "models.dev": modelsDevCtrl.loader,
-        package: packageCtrl.loader,
-      },
+      cacheKey: "test-custom",
     });
 
-    await client.getProviders();
+    const modelData = await client.getModelData({ modelId: "openai/gpt-4o" });
 
-    const updatedOpenrouter = createOpenrouterProvidersFixture();
-    updatedOpenrouter.openai.models["openai/gpt-4o-mini"] = {
-      id: "openai/gpt-4o-mini",
-      name: "GPT-4o Mini",
-      limit: { context: 128_000, output: 2048 },
+    expect(modelData?.id).toBe("openai/gpt-4o");
+    expect(fetchModelsDevSpy).not.toHaveBeenCalled();
+    expect(fetchOpenrouterSpy).not.toHaveBeenCalled();
+  });
+
+  it("defaults to 'openrouter' catalog when not specified", async () => {
+    const mockCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
+
+    const client = new Tokenlens();
+
+    await client.getModelData({ modelId: "openai/gpt-4o" });
+
+    expect(fetchOpenrouterSpy).toHaveBeenCalled();
+  });
+});
+
+describe("Tokenlens caching", () => {
+  let fetchOpenrouterSpy: any;
+
+  beforeEach(async () => {
+    const fetchModule = await import("@tokenlens/fetch");
+    fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter");
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("caches catalog and reuses it", async () => {
+    const mockCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
+
+    const client = new Tokenlens({
+      catalog: "openrouter",
+      ttlMs: 60_000,
+      cacheKey: "test-cache-reuse",
+    });
+
+    await client.getModelData({ modelId: "openai/gpt-4o" });
+    await client.getModelData({ modelId: "openai/gpt-4o" });
+
+    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("refresh() updates cached catalog", async () => {
+    const initialCatalog = createOpenrouterProvidersFixture();
+    const updatedCatalog = createOpenrouterProvidersFixture();
+    updatedCatalog.openai.models["openai/gpt-4o"].limit = {
+      context: 256_000,
+      output: 8_192,
     };
-    openrouterCtrl.setData(updatedOpenrouter);
+
+    fetchOpenrouterSpy
+      .mockResolvedValueOnce(initialCatalog)
+      .mockResolvedValueOnce(updatedCatalog);
+
+    const client = new Tokenlens({
+      catalog: "openrouter",
+      ttlMs: 60_000,
+      cacheKey: "test-refresh",
+    });
+
+    const initial = await client.getModelData({ modelId: "openai/gpt-4o" });
+    expect(initial?.limit?.context).toBe(128_000);
+
+    await client.refresh(true);
+
+    const updated = await client.getModelData({ modelId: "openai/gpt-4o" });
+    expect(updated?.limit?.context).toBe(256_000);
+    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("refresh(false) uses cache if not expired", async () => {
+    const mockCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
+
+    const client = new Tokenlens({
+      catalog: "openrouter",
+      ttlMs: 60_000,
+      cacheKey: "test-refresh-cached",
+    });
+
+    await client.getModelData({ modelId: "openai/gpt-4o" });
+    await client.refresh(false);
+
+    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("invalidate() clears cache forcing new fetch", async () => {
+    const mockCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
+
+    const client = new Tokenlens({
+      catalog: "openrouter",
+      ttlMs: 60_000,
+      cacheKey: "test-invalidate",
+    });
+
+    await client.getModelData({ modelId: "openai/gpt-4o" });
+    await client.invalidate();
+    await client.getModelData({ modelId: "openai/gpt-4o" });
+
+    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not cache when using custom catalog object", async () => {
+    const customCatalog = createOpenrouterProvidersFixture();
+
+    const client = new Tokenlens({
+      catalog: customCatalog,
+      ttlMs: 60_000,
+      cacheKey: "test-no-cache",
+    });
 
     const refreshed = await client.refresh(true);
-    expect(refreshed.openai.models["openai/gpt-4o-mini"]).toBeTruthy();
-    expect(openrouterCtrl.getCalls()).toBe(2);
-    expect(modelsDevCtrl.getCalls()).toBe(2);
 
-    const cached = await client.getProviders();
-    expect(cached).toBe(refreshed);
+    expect(refreshed).toBe(customCatalog);
+    expect(fetchOpenrouterSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("Tokenlens model operations", () => {
+  let fetchOpenrouterSpy: any;
+
+  beforeEach(async () => {
+    const fetchModule = await import("@tokenlens/fetch");
+    fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter");
   });
 
-  it("invalidate clears cache forcing loaders to run again", async () => {
-    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
-    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
-    const packageCtrl = makeLoader(createPackageProvidersFixture());
-
-    const client = new Tokenlens({
-      sources: ["openrouter", "models.dev", "package"],
-      cacheKey: "tests-invalidate",
-      fetch: noopFetch,
-      ttlMs: 60_000,
-      loaders: {
-        openrouter: openrouterCtrl.loader,
-        "models.dev": modelsDevCtrl.loader,
-        package: packageCtrl.loader,
-      },
-    });
-
-    const initial = await client.getProviders();
-    await client.invalidate();
-
-    const updatedPackage = createPackageProvidersFixture();
-    updatedPackage.local.models["local/second"] = {
-      id: "local/second",
-      name: "Local Second",
-      open_weights: true,
-    };
-    packageCtrl.setData(updatedPackage);
-
-    const next = await client.getProviders();
-    expect(next).not.toBe(initial);
-    expect(packageCtrl.getCalls()).toBe(2);
-    expect(next.local.models["local/second"]).toBeTruthy();
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it("returns the resolved source model", async () => {
-    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
-    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
-    const packageCtrl = makeLoader(createPackageProvidersFixture());
+  it("getModelData returns model metadata", async () => {
+    const mockCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
 
     const client = new Tokenlens({
-      sources: ["openrouter", "models.dev", "package"],
-      cacheKey: "tests-details",
-      fetch: noopFetch,
-      ttlMs: 60_000,
-      loaders: {
-        openrouter: openrouterCtrl.loader,
-        "models.dev": modelsDevCtrl.loader,
-        package: packageCtrl.loader,
-      },
+      catalog: "openrouter",
+      cacheKey: "test-model-data",
     });
 
-    await client.getProviders();
+    const modelData = await client.getModelData({ modelId: "openai/gpt-4o" });
 
-    const details = await client.describeModel({
-      modelId: "openai/gpt-4o",
-    });
-
-    expect(details?.id).toBe("openai/gpt-4o");
-    expect(details?.limit?.context).toBe(128_000);
-    expect(details?.cost?.input).toBe(30);
+    expect(modelData?.id).toBe("openai/gpt-4o");
+    expect(modelData?.name).toBe("GPT-4o");
+    expect(modelData?.limit?.context).toBe(128_000);
+    expect(modelData?.cost?.input).toBe(30);
   });
 
-  it("computes token costs via helper", async () => {
-    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
-    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
-    const packageCtrl = makeLoader(createPackageProvidersFixture());
+  it("getModelData throws error for unknown model", async () => {
+    const mockCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
 
     const client = new Tokenlens({
-      sources: ["openrouter", "models.dev", "package"],
-      cacheKey: "tests-costs",
-      fetch: noopFetch,
-      ttlMs: 60_000,
-      loaders: {
-        openrouter: openrouterCtrl.loader,
-        "models.dev": modelsDevCtrl.loader,
-        package: packageCtrl.loader,
-      },
+      catalog: "openrouter",
+      cacheKey: "test-unknown-model",
     });
 
-    await client.getProviders();
+    await expect(
+      client.getModelData({ modelId: "unknown/model" }),
+    ).rejects.toThrow(TokenLensError);
+
+    await expect(
+      client.getModelData({ modelId: "unknown/model" }),
+    ).rejects.toThrow(BASE_ERROR_CODES.MODEL_NOT_FOUND);
+  });
+
+  it("computeCostUSD calculates token costs", async () => {
+    const mockCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
+
+    const client = new Tokenlens({
+      catalog: "openrouter",
+      cacheKey: "test-costs",
+    });
 
     const usage = makeUsage();
     const costs = await client.computeCostUSD({
@@ -268,110 +282,122 @@ describe("Tokenlens core", () => {
     expect(costs.cacheReadTokenCostUSD).toBeCloseTo(0.0003, 6);
   });
 
-  it("returns limit information when available", async () => {
-    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
-    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
-    const packageCtrl = makeLoader(createPackageProvidersFixture());
+  it("computeCostUSD throws error for unknown model", async () => {
+    const mockCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
 
     const client = new Tokenlens({
-      sources: ["openrouter", "models.dev", "package"],
-      cacheKey: "tests-limit",
-      fetch: noopFetch,
-      ttlMs: 60_000,
-      loaders: {
-        openrouter: openrouterCtrl.loader,
-        "models.dev": modelsDevCtrl.loader,
-        package: packageCtrl.loader,
-      },
+      catalog: "openrouter",
+      cacheKey: "test-costs-error",
     });
 
-    await client.getProviders();
+    const usage = makeUsage();
 
-    const limit = await client.getContextLimits({
-      modelId: "openai/gpt-4o",
-    });
-    expect(limit?.context).toBe(128_000);
-    expect(limit?.output).toBe(4096);
-
-    const missing = await client.getContextLimits({
-      modelId: "does-not-exist",
-    });
-    expect(missing).toBeUndefined();
+    await expect(
+      client.computeCostUSD({ modelId: "unknown/model", usage }),
+    ).rejects.toThrow(TokenLensError);
   });
 
-  it("createTokenlens wires loader overrides and uses provided fetch", async () => {
-    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
+  it("getContextLimits returns limit information", async () => {
+    const mockCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
 
-    const tokenlens = createTokenlens({
-      fetch: noopFetch,
-      loaders: {
-        openrouter: openrouterCtrl.loader,
-      },
-      sources: ["openrouter"],
-      ttlMs: 10,
+    const client = new Tokenlens({
+      catalog: "openrouter",
+      cacheKey: "test-limits",
     });
 
-    await tokenlens.getProviders();
-    expect(openrouterCtrl.getCalls()).toBe(1);
-    expect(openrouterCtrl.getLastFetch()).toBe(noopFetch);
+    const limits = await client.getContextLimits({ modelId: "openai/gpt-4o" });
+
+    expect(limits?.context).toBe(128_000);
+    expect(limits?.output).toBe(4_096);
+  });
+
+  it("getContextLimits throws error for unknown model", async () => {
+    const mockCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
+
+    const client = new Tokenlens({
+      catalog: "openrouter",
+      cacheKey: "test-limits-error",
+    });
+
+    await expect(
+      client.getContextLimits({ modelId: "unknown/model" }),
+    ).rejects.toThrow(TokenLensError);
+  });
+
+  it("resolves models with provider specified", async () => {
+    const mockCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
+
+    const client = new Tokenlens({
+      catalog: "openrouter",
+      cacheKey: "test-provider",
+    });
+
+    const modelData = await client.getModelData({
+      modelId: "openai/gpt-4o",
+      provider: "openai",
+    });
+
+    expect(modelData?.id).toBe("openai/gpt-4o");
   });
 });
 
 describe("module-level helpers", () => {
+  let fetchOpenrouterSpy: any;
+
+  beforeEach(async () => {
+    const fetchModule = await import("@tokenlens/fetch");
+    fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter");
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
     setSharedTokenlens(undefined);
   });
 
   function setupSharedInstance() {
-    const openrouterCtrl = makeLoader(createOpenrouterProvidersFixture());
-    const modelsDevCtrl = makeLoader(createModelsDevProvidersFixture());
-    const packageCtrl = makeLoader(createPackageProvidersFixture());
+    const mockCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
 
     const tokenlens = createTokenlens({
-      sources: ["openrouter", "models.dev", "package"],
-      fetch: noopFetch,
+      catalog: "openrouter",
       ttlMs: 60_000,
-      loaders: {
-        openrouter: openrouterCtrl.loader,
-        "models.dev": modelsDevCtrl.loader,
-        package: packageCtrl.loader,
-      },
+      cacheKey: "test-shared",
     });
 
     setSharedTokenlens(tokenlens);
 
-    return {
-      tokenlens,
-      openrouterCtrl,
-      modelsDevCtrl,
-      packageCtrl,
-    };
+    return tokenlens;
   }
 
-  it("getContextLimits returns cached context information", async () => {
-    const { tokenlens } = setupSharedInstance();
-    await tokenlens.getProviders();
+  it("getContextLimits uses shared instance", async () => {
+    const tokenlens = setupSharedInstance();
+    await tokenlens.getModelData({ modelId: "openai/gpt-4o" });
 
-    const limit = await apiGetContextLimits({ modelId: "openai/gpt-4o" });
-    expect(limit?.context).toBe(128_000);
+    const limits = await apiGetContextLimits({ modelId: "openai/gpt-4o" });
+
+    expect(limits?.context).toBe(128_000);
   });
 
-  it("computeCostUSD reuses cached providers", async () => {
-    const { tokenlens } = setupSharedInstance();
-    await tokenlens.getProviders();
+  it("computeCostUSD uses shared instance", async () => {
+    const tokenlens = setupSharedInstance();
+    await tokenlens.getModelData({ modelId: "openai/gpt-4o" });
 
     const usage = makeUsage();
     const costs = await apiComputeCostUSD({
       modelId: "openai/gpt-4o",
       usage,
     });
+
     expect(costs.totalTokenCostUSD).toBeCloseTo(0.1023, 6);
   });
 
-  it("describeModel reuses cached providers", async () => {
-    const { tokenlens } = setupSharedInstance();
-    await tokenlens.getProviders();
+  it("describeModel uses shared instance", async () => {
+    const tokenlens = setupSharedInstance();
+    await tokenlens.getModelData({ modelId: "openai/gpt-4o" });
 
     const metadata = await apiDescribeModel({
       modelId: "openai/gpt-4o",
@@ -379,5 +405,17 @@ describe("module-level helpers", () => {
 
     expect(metadata?.id).toBe("openai/gpt-4o");
     expect(metadata?.limit?.context).toBe(128_000);
+  });
+
+  it("createTokenlens creates instance with options", () => {
+    const customCatalog = createOpenrouterProvidersFixture();
+
+    const tokenlens = createTokenlens({
+      catalog: customCatalog,
+      ttlMs: 10_000,
+      cacheKey: "custom-key",
+    });
+
+    expect(tokenlens).toBeInstanceOf(Tokenlens);
   });
 });

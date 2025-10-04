@@ -3,11 +3,7 @@ import type { SourceModel, SourceProviders } from "@tokenlens/core";
 const OPENAI_GPT4O_MODEL: SourceModel = {
   id: "openai/gpt-4o",
   name: "GPT-4o",
-  reasoning: true,
-  tool_call: true,
-  attachment: false,
-  open_weights: false,
-  knowledge: "2024-06",
+  canonical_id: "openai/gpt-4o",
   limit: { context: 128_000, output: 4_096 },
   cost: {
     input: 30,
@@ -35,11 +31,7 @@ const OPENROUTER_PROVIDERS: SourceProviders = {
 const ANTHROPIC_CLAUDE35_MODEL: SourceModel = {
   id: "anthropic/claude-3.5",
   name: "Claude 3.5",
-  reasoning: true,
-  tool_call: false,
-  attachment: true,
-  open_weights: false,
-  knowledge: "2024-03",
+  canonical_id: "anthropic/claude-3.5",
   limit: { context: 200_000, output: 4_096 },
   cost: {
     input: 15,
@@ -69,7 +61,14 @@ const PACKAGE_PROVIDERS: SourceProviders = {
       "local/demo": {
         id: "local/demo",
         name: "Local Demo",
-        open_weights: true,
+        canonical_id: "local/demo",
+        limit: { context: 128_000, output: 4_096 },
+        cost: {
+          input: 30,
+          output: 60,
+          reasoning: 120,
+          cache_read: 6,
+        },
       },
     },
   },

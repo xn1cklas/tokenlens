@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach } from "vitest";
 
 import { MemoryCache, jitter } from "../src/cache.js";
 import type { CacheAdapter, CacheEntry } from "../src/types.js";
+import type { SourceProviders } from "@tokenlens/core";
 
 function makeEntry(
   value: CacheEntry["value"],
@@ -13,6 +14,16 @@ function makeEntry(
   } satisfies CacheEntry;
 }
 
+const mockProviders: SourceProviders = {
+  openai: {
+    id: "openai",
+    name: "OpenAI",
+    source: "models.dev",
+    schemaVersion: 1,
+    models: {},
+  },
+};
+
 describe("MemoryCache", () => {
   let cache: CacheAdapter;
 
@@ -21,21 +32,21 @@ describe("MemoryCache", () => {
   });
 
   it("stores and retrieves entries", () => {
-    const entry = makeEntry({ hello: "world" }, 1_000);
+    const entry = makeEntry(mockProviders, 1_000);
     cache.set("key", entry);
     expect(cache.get("key")).toEqual(entry);
   });
 
   it("deletes entries", () => {
-    const entry = makeEntry({ ok: true }, 1_000);
+    const entry = makeEntry(mockProviders, 1_000);
     cache.set("key", entry);
     cache.delete?.("key");
     expect(cache.get("key")).toBeUndefined();
   });
 
   it("overrides existing entries", () => {
-    const first = makeEntry({ value: 1 }, 1_000);
-    const second = makeEntry({ value: 2 }, 1_000);
+    const first = makeEntry(mockProviders, 1_000);
+    const second = makeEntry({ ...mockProviders }, 1_000);
     cache.set("key", first);
     cache.set("key", second);
     expect(cache.get("key")).toEqual(second);
