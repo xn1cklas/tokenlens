@@ -17,7 +17,7 @@ describe("AI SDK usage integration", () => {
   };
 
   it("computes costs for AI SDK usage payloads", async () => {
-    const details = await client.describeModel({
+    const details = await client.getModelData({
       modelId: "openai/gpt-5",
     });
 
@@ -114,7 +114,7 @@ describe("AI SDK usage integration", () => {
       cachedInputTokens: 0,
     };
 
-    const details = await client.describeModel({
+    const details = await client.getModelData({
       modelId: "openai/gpt-5",
     });
 

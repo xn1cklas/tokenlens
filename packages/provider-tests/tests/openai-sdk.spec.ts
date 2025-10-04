@@ -53,7 +53,7 @@ describe("OpenAI SDK integration", () => {
       },
     };
 
-    const meta = await client.describeModel({
+    const meta = await client.getModelData({
       modelId: "openai/gpt-4o-mini",
     });
 

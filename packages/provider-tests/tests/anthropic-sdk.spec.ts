@@ -53,7 +53,7 @@ describe("Anthropic SDK integration", () => {
       service_tier: null,
     };
 
-    const meta = await client.describeModel({
+    const meta = await client.getModelData({
       modelId: "anthropic/claude-3-5-sonnet-20241022",
     });
 

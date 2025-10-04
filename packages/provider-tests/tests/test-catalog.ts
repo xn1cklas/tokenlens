@@ -1,4 +1,8 @@
-import { Tokenlens, type SourceProviders } from "tokenlens";
+import {
+  createTokenlens,
+  type Tokenlens,
+  type SourceProviders,
+} from "tokenlens";
 
 export const testProviders: SourceProviders = {
   openai: {
@@ -9,6 +13,7 @@ export const testProviders: SourceProviders = {
     models: {
       "openai/gpt-5": {
         id: "openai/gpt-5",
+        canonical_id: "openai/gpt-5",
         name: "GPT-5",
         limit: { context: 200_000, input: 200_000, output: 8_192 },
         cost: {
@@ -21,6 +26,7 @@ export const testProviders: SourceProviders = {
       },
       "openai/gpt-4o-mini": {
         id: "openai/gpt-4o-mini",
+        canonical_id: "openai/gpt-4o-mini",
         name: "GPT-4o Mini",
         limit: { context: 128_000, input: 128_000, output: 2_048 },
         cost: {
@@ -30,6 +36,7 @@ export const testProviders: SourceProviders = {
       },
       "openai/o1": {
         id: "openai/o1",
+        canonical_id: "openai/o1",
         name: "OpenAI o1",
         limit: { context: 131_072, input: 131_072, output: 8_192 },
         cost: {
@@ -47,6 +54,7 @@ export const testProviders: SourceProviders = {
     models: {
       "anthropic/claude-3-5-sonnet-20241022": {
         id: "anthropic/claude-3-5-sonnet-20241022",
+        canonical_id: "anthropic/claude-3-5-sonnet-20241022",
         name: "Claude 3.5 Sonnet (2024-10-22)",
         limit: { context: 200_000, input: 200_000, output: 8_192 },
         cost: {
@@ -66,6 +74,7 @@ export const testProviders: SourceProviders = {
     models: {
       "xai/grok-4": {
         id: "xai/grok-4",
+        canonical_id: "xai/grok-4",
         name: "grok-4",
         limit: { context: 128_000, input: 128_000, output: 4_096 },
         cost: {
@@ -78,13 +87,9 @@ export const testProviders: SourceProviders = {
 } as const;
 
 export function createTestClient(
-  providers: SourceProviders = testProviders,
+  catalog: SourceProviders = testProviders,
 ): Tokenlens {
-  return new Tokenlens({
-    sources: ["package"],
-    ttlMs: 0,
-    loaders: {
-      package: async () => providers,
-    },
+  return createTokenlens({
+    catalog,
   });
 }
