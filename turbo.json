@@ -23,13 +23,6 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
-    "sync:models": {
-      "cache": false,
-      "outputs": [
-        "packages/models/src/providers/**",
-        "packages/models/src/index.ts"
-      ]
-    },
     "format": {
       "dependsOn": ["^format"]
     },
