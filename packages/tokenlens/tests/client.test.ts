@@ -3,7 +3,7 @@ import {
   createTokenlens,
   getContextLimits as apiGetContextLimits,
   computeCostUSD as apiComputeCostUSD,
-  describeModel as apiDescribeModel,
+  getModelData as apiGetModelData,
   setSharedTokenlens,
 } from "../src/index.js";
 import { Tokenlens } from "../src/client.js";
@@ -363,9 +363,11 @@ describe("module-level helpers", () => {
     fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
 
     const tokenlens = createTokenlens({
-      catalog: "openrouter",
-      ttlMs: 60_000,
-      cacheKey: "test-shared",
+      options: {
+        catalog: "openrouter",
+        ttlMs: 60_000,
+        cacheKey: "test-shared",
+      },
     });
 
     setSharedTokenlens(tokenlens);
@@ -395,11 +397,11 @@ describe("module-level helpers", () => {
     expect(costs.totalTokenCostUSD).toBeCloseTo(0.1023, 6);
   });
 
-  it("describeModel uses shared instance", async () => {
+  it("getModelData uses shared instance", async () => {
     const tokenlens = setupSharedInstance();
     await tokenlens.getModelData({ modelId: "openai/gpt-4o" });
 
-    const metadata = await apiDescribeModel({
+    const metadata = await apiGetModelData({
       modelId: "openai/gpt-4o",
     });
 
@@ -411,11 +413,117 @@ describe("module-level helpers", () => {
     const customCatalog = createOpenrouterProvidersFixture();
 
     const tokenlens = createTokenlens({
-      catalog: customCatalog,
-      ttlMs: 10_000,
-      cacheKey: "custom-key",
+      options: {
+        catalog: customCatalog,
+        ttlMs: 10_000,
+        cacheKey: "custom-key",
+      },
     });
 
     expect(tokenlens).toBeInstanceOf(Tokenlens);
+  });
+});
+
+describe("standalone functions with multiple gateways", () => {
+  let fetchOpenrouterSpy: any;
+  let fetchModelsDevSpy: any;
+
+  beforeEach(async () => {
+    const fetchModule = await import("@tokenlens/fetch");
+    fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter");
+    fetchModelsDevSpy = vi.spyOn(fetchModule, "fetchModelsDev");
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setSharedTokenlens(undefined);
+  });
+
+  it("creates separate instances for different gateways", async () => {
+    const openrouterCatalog = createOpenrouterProvidersFixture();
+    const modelsDevCatalog = createModelsDevProvidersFixture();
+
+    fetchOpenrouterSpy.mockResolvedValue(openrouterCatalog);
+    fetchModelsDevSpy.mockResolvedValue(modelsDevCatalog);
+
+    // Call with openrouter gateway
+    await apiComputeCostUSD({
+      modelId: "openai/gpt-4o",
+      usage: makeUsage(),
+      gateway: "openrouter",
+    });
+
+    // Call with models.dev gateway
+    await apiComputeCostUSD({
+      modelId: "anthropic/claude-3.5",
+      usage: makeUsage(),
+      gateway: "models.dev",
+    });
+
+    // Both fetchers should have been called once each
+    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
+    expect(fetchModelsDevSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("reuses instance for same gateway", async () => {
+    const openrouterCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(openrouterCatalog);
+
+    // First call with openrouter
+    await apiComputeCostUSD({
+      modelId: "openai/gpt-4o",
+      usage: makeUsage(),
+      gateway: "openrouter",
+    });
+
+    // Second call with same gateway
+    await apiGetContextLimits({
+      modelId: "openai/gpt-4o",
+      gateway: "openrouter",
+    });
+
+    // Fetcher should only be called once (instance reused)
+    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("defaults to 'auto' gateway when not specified", async () => {
+    const openrouterCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(openrouterCatalog);
+    fetchModelsDevSpy.mockResolvedValue(openrouterCatalog); // 'auto' uses models.dev
+
+    // Call without specifying gateway
+    await apiComputeCostUSD({
+      modelId: "openai/gpt-4o",
+      usage: makeUsage(),
+    });
+
+    // Should use 'auto' which defaults to models.dev
+    expect(fetchModelsDevSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("setSharedTokenlens clears all gateway instances", async () => {
+    const openrouterCatalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(openrouterCatalog);
+
+    // Create instances for different gateways
+    await apiComputeCostUSD({
+      modelId: "openai/gpt-4o",
+      usage: makeUsage(),
+      gateway: "openrouter",
+    });
+
+    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
+
+    // Clear all instances
+    setSharedTokenlens(undefined);
+
+    // Next call should fetch again (new instance created)
+    await apiComputeCostUSD({
+      modelId: "openai/gpt-4o",
+      usage: makeUsage(),
+      gateway: "openrouter",
+    });
+
+    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(2);
   });
 });
