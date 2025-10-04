@@ -158,5 +158,4 @@ export { Tokenlens } from "./client.js";
 export {
   compactJson,
   estimateTokenSavings,
-  getContextHealth,
 } from "@tokenlens/helpers";

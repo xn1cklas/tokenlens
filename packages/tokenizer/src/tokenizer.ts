@@ -14,8 +14,6 @@ import {
   type OpenAIModelName,
 } from "./tokenizers/openai.js";
 
-export type Provider = "openai" | "anthropic" | "google";
-
 /**
  * Type-safe union of all supported model IDs across all providers.
  * Includes both prefixed (e.g., "openai/gpt-4o") and unprefixed formats.
