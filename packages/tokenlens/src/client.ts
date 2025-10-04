@@ -1,7 +1,10 @@
 import type { SourceProviders, SourceModel, Usage } from "@tokenlens/core";
 import type { TokenCosts } from "@tokenlens/helpers";
-import { computeTokenCostsForModel } from "@tokenlens/helpers";
-import { countTokens, type ModelId } from "@tokenlens/tokenizer";
+import {
+  computeTokenCostsForModel,
+  getContextHealth,
+} from "@tokenlens/helpers";
+import { countTokens, type TokenizerModelId } from "@tokenlens/tokenizer";
 import { MemoryCache, jitter } from "./cache.js";
 import {
   type TokenlensOptions,
@@ -126,7 +129,7 @@ export class Tokenlens {
    * ```
    */
   async countTokens(args: {
-    modelId: ModelId;
+    modelId: TokenizerModelId;
     data: string;
   }): Promise<number | undefined> {
     const { modelId, data } = args;
@@ -236,5 +239,44 @@ export class Tokenlens {
       throw new TokenLensError(BASE_ERROR_CODES.MODEL_NOT_FOUND);
     }
     return modelData?.limit;
+  }
+
+  /**
+   * Calculate context window health metrics for a model and usage.
+   *
+   * Returns detailed information about context usage including:
+   * - Total, used, and remaining tokens
+   * - Usage percentages
+   * - Health status (healthy: <70%, warning: 70-90%, critical: >90%)
+   *
+   * @example
+   * ```typescript
+   * const tokenlens = new Tokenlens();
+   * const health = await tokenlens.getContextHealth({
+   *   modelId: "openai/gpt-4o-mini",
+   *   usage: { input_tokens: 50000, output_tokens: 10000 }
+   * });
+   *
+   * if (health) {
+   *   console.log(`Used: ${health.usedPercentage.toFixed(1)}%`);
+   *   console.log(`Status: ${health.status}`);
+   * }
+   * ```
+   */
+  async getContextHealth(args: {
+    modelId: string;
+    provider?: string;
+    usage: Usage;
+  }) {
+    const resolved = resolveModel({
+      catalog: await this.loadCatalog(),
+      ...(args.provider !== undefined ? { providerId: args.provider } : {}),
+      modelId: args.modelId,
+    });
+
+    if (!resolved.model) {
+      throw new TokenLensError(BASE_ERROR_CODES.MODEL_NOT_FOUND);
+    }
+    return getContextHealth({ model: resolved.model, usage: args.usage });
   }
 }
