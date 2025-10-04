@@ -39,8 +39,7 @@
     "access": "public"
   },
   "scripts": {
-    "prebuild": "pnpm --filter @tokenlens/core run build && pnpm --filter @tokenlens/helpers run build && pnpm --filter @tokenlens/fetch run build && node scripts/gen-providers.mjs",
-    "gen:providers": "node scripts/gen-providers.mjs",
+    "prebuild": "pnpm --filter @tokenlens/core run build && pnpm --filter @tokenlens/helpers run build && pnpm --filter @tokenlens/fetch run build",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "pnpm run build && vitest --config ../../vitest.config.ts --project tokenlens",
