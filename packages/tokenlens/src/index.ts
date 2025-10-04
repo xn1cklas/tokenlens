@@ -1,49 +1,71 @@
 import type { Usage } from "@tokenlens/core";
 import { Tokenlens as TokenlensClient, type ModelDetails } from "./client.js";
-import type { TokenlensOptions } from "./types.js";
+import type { GatewayId, TokenlensOptions } from "./types.js";
 
 /**
  * Create a new Tokenlens instance with the given options.
  * @param options - The options for the Tokenlens instance.
  * @returns A new Tokenlens instance.
  */
-export function createTokenlens(
-  options?: ConstructorParameters<typeof TokenlensClient>[0],
-) {
-  return new TokenlensClient(options);
+
+interface CreateTokenlensArgs {
+  /** The options for the Tokenlens instance. */
+  options?: ConstructorParameters<typeof TokenlensClient>[0];
+}
+
+export function createTokenlens(args: CreateTokenlensArgs) {
+  return new TokenlensClient(args.options);
+}
+
+interface ComputeCostUSDArgs {
+  /** The model ID (e.g., "openai/gpt-4o-mini") */
+  modelId: string;
+  /** Token usage data */
+  usage: Usage;
+  /** Gateway to use (defaults to "auto") */
+  gateway?: GatewayId;
+  /** Optional provider to disambiguate model lookup */
+  provider?: string;
 }
 
 /**
  * Calculate a model's token usage cost in USD.
  */
-export async function computeCostUSD(args: {
-  modelId: string;
-  provider?: string;
-  usage: Usage;
-}) {
-  const tokenlens = getTokenlens();
+export async function computeCostUSD(args: ComputeCostUSDArgs) {
+  const tokenlens = getTokenlens(args.gateway);
   return tokenlens.computeCostUSD(args);
+}
+
+interface GetContextLimitsArgs {
+  /** The model ID (e.g., "openai/gpt-4o-mini") */
+  modelId: string;
+  /** Optional provider to disambiguate model lookup */
+  provider?: string;
+  /** Gateway to use (defaults to "auto") */
+  gateway?: GatewayId;
 }
 
 /**
  * Read the context, input, and output token limits for a model.
  */
-export async function getContextLimits(args: {
-  modelId: string;
-  provider?: string;
-}) {
-  const tokenlens = getTokenlens();
+export async function getContextLimits(args: GetContextLimitsArgs) {
+  const tokenlens = getTokenlens(args.gateway);
   return tokenlens.getContextLimits(args);
 }
 
+interface GetModelDataArgs {
+  /** The model ID (e.g., "openai/gpt-4o-mini") */
+  modelId: string;
+  /** Optional provider to disambiguate model lookup */
+  provider?: string;
+  /** Gateway to use (defaults to "auto") */
+  gateway?: GatewayId;
+}
 /**
  * Describe a model's metadata exactly as stored in the active sources.
  */
-export async function getModelData(args: {
-  modelId: string;
-  provider?: string;
-}): Promise<ModelDetails> {
-  const tokenlens = getTokenlens();
+export async function getModelData(args: GetModelDataArgs) {
+  const tokenlens = getTokenlens(args.gateway);
   return tokenlens.getModelData(args);
 }
 
@@ -63,8 +85,8 @@ let sharedTokenlens: TokenlensClient | undefined;
  * @internal
  * Lazily creates or returns the shared Tokenlens instance.
  */
-function getTokenlens(): TokenlensClient {
-  sharedTokenlens ??= new TokenlensClient();
+function getTokenlens(provider?: GatewayId): TokenlensClient {
+  sharedTokenlens ??= new TokenlensClient({ catalog: provider ?? "auto" });
   return sharedTokenlens;
 }
 
