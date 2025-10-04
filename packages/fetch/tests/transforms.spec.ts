@@ -1,21 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { FetchLike } from "../src/index.ts";
 import { fetchModelsDev, fetchOpenrouter } from "../src/index.ts";
 
 type JsonShape = Record<string, unknown> | Array<unknown> | null;
 
-function createFetchMock(json: JsonShape): FetchLike {
-  return async () => ({
-    ok: true,
-    status: 200,
-    statusText: "OK",
-    json: async () => json,
-    text: async () => JSON.stringify(json),
-  });
-}
+// Mock global fetch
+const mockFetch = vi.fn();
+global.fetch = mockFetch as unknown as typeof fetch;
 
 describe("fetchModelsDev DTO normalization", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
   it("maps provider metadata and models into DTO shape", async () => {
     const raw = {
       foo: {
@@ -27,14 +24,27 @@ describe("fetchModelsDev DTO normalization", () => {
         models: {
           "foo/bar": {
             id: "foo/bar",
+            canonical_id: "foo/bar",
             name: "Foo Bar",
-            description: "Test model",
+            created: 1640000000,
+            cost: {
+              input: 1.0,
+              output: 2.0,
+            },
+            limit: {
+              context: 8192,
+            },
           },
         },
       },
     } satisfies JsonShape;
 
-    const catalog = await fetchModelsDev({ fetch: createFetchMock(raw) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => raw,
+    } as Response);
+
+    const catalog = await fetchModelsDev({});
 
     expect(Object.keys(catalog)).toEqual(["foo"]);
     const provider = catalog.foo;
@@ -45,8 +55,16 @@ describe("fetchModelsDev DTO normalization", () => {
     expect(Object.keys(provider?.models ?? {})).toEqual(["foo/bar"]);
     expect(provider?.models["foo/bar"]).toMatchObject({
       id: "foo/bar",
+      canonical_id: "foo/bar",
       name: "Foo Bar",
-      description: "Test model",
+      created: 1640000000,
+      cost: {
+        input: 1.0,
+        output: 2.0,
+      },
+      limit: {
+        context: 8192,
+      },
     });
   });
 
@@ -54,20 +72,36 @@ describe("fetchModelsDev DTO normalization", () => {
     const raw = {
       foo: {
         models: {
-          "foo/alpha": { id: "foo/alpha" },
-          "foo/beta": { id: "foo/beta" },
+          "foo/alpha": {
+            id: "foo/alpha",
+            canonical_id: "foo/alpha",
+            name: "Alpha",
+          },
+          "foo/beta": {
+            id: "foo/beta",
+            canonical_id: "foo/beta",
+            name: "Beta",
+          },
         },
       },
       bar: {
         models: {
-          "bar/gamma": { id: "bar/gamma" },
+          "bar/gamma": {
+            id: "bar/gamma",
+            canonical_id: "bar/gamma",
+            name: "Gamma",
+          },
         },
       },
     } satisfies JsonShape;
 
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => raw,
+    } as Response);
+
     const providerFiltered = await fetchModelsDev({
       provider: "foo",
-      fetch: createFetchMock(raw),
     });
 
     expect(Object.keys(providerFiltered)).toEqual(["foo"]);
@@ -75,7 +109,6 @@ describe("fetchModelsDev DTO normalization", () => {
     const modelFiltered = await fetchModelsDev({
       provider: "foo",
       model: "beta",
-      fetch: createFetchMock(raw),
     });
 
     expect(Object.keys(modelFiltered)).toEqual(["foo"]);
@@ -85,13 +118,17 @@ describe("fetchModelsDev DTO normalization", () => {
 });
 
 describe("fetchOpenrouter DTO mapping", () => {
-  it("splits provider namespace and maps advanced fields", async () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  it("splits provider namespace and maps DTO fields", async () => {
     const raw = {
       data: [
         {
           id: "test-provider/test-model",
           name: "Test Model",
-          description: "A model for testing",
+          created: 1704067200,
           architecture: {
             input_modalities: ["text"],
             output_modalities: ["text"],
@@ -102,66 +139,57 @@ describe("fetchOpenrouter DTO mapping", () => {
             output: 2.5,
             reasoning: 4.5,
             cache_read: 0.5,
+            cache_write: 1.0,
           },
-          limit: {
-            context: 8192,
-            input: 4096,
-            output: 2048,
-          },
+          context_length: 8192,
           top_provider: {
             max_completion_tokens: 1024,
             context_length: 16384,
             is_moderated: true,
           },
-          attachment: true,
-          reasoning: true,
-          tool_call: true,
-          knowledge: "2024-06",
+          open_weights: true,
           release_date: "2024-01-01",
           last_updated: "2024-06-01",
         },
       ],
     } satisfies JsonShape;
 
-    const catalog = await fetchOpenrouter({ fetch: createFetchMock(raw) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => raw,
+    } as Response);
+
+    const catalog = await fetchOpenrouter({});
 
     expect(Object.keys(catalog)).toEqual(["test-provider"]);
     const provider = catalog["test-provider"];
     expect(provider?.source).toBe("openrouter");
     expect(provider?.env).toContain("OPENROUTER_API_KEY");
+    expect(provider?.schemaVersion).toBe(1);
 
     const model = provider?.models["test-provider/test-model"];
     expect(model).toMatchObject({
       id: "test-provider/test-model",
+      canonical_id: "test-provider/test-model",
       name: "Test Model",
-      description: "A model for testing",
-      knowledge: "2024-06",
-      reasoning: true,
-      attachment: true,
-      tool_call: true,
+      created: 1704067200,
+      release_date: "2024-01-01",
+      last_updated: "2024-06-01",
+      modalities: {
+        input: ["text"],
+        output: ["text"],
+      },
+      open_weights: true,
       cost: {
         input: 1.5,
         output: 2.5,
         reasoning: 4.5,
         cache_read: 0.5,
+        cache_write: 1.0,
       },
       limit: {
         context: 8192,
-        input: 4096,
-        output: 2048,
-      },
-    });
-
-    expect(model?.extras).toMatchObject({
-      architecture: {
-        input_modalities: ["text"],
-        output_modalities: ["text"],
-        tokenizer: "test-tokenizer",
-      },
-      top_provider: {
-        max_completion_tokens: 1024,
-        context_length: 16384,
-        is_moderated: true,
+        output: 1024,
       },
     });
   });
@@ -175,9 +203,13 @@ describe("fetchOpenrouter DTO mapping", () => {
       ],
     } satisfies JsonShape;
 
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => raw,
+    } as Response);
+
     const providerFiltered = await fetchOpenrouter({
       provider: "foo",
-      fetch: createFetchMock(raw),
     });
 
     expect(Object.keys(providerFiltered)).toEqual(["foo"]);
@@ -185,7 +217,6 @@ describe("fetchOpenrouter DTO mapping", () => {
     const modelFiltered = await fetchOpenrouter({
       provider: "foo",
       model: "b",
-      fetch: createFetchMock(raw),
     });
 
     expect(Object.keys(modelFiltered)).toEqual(["foo"]);

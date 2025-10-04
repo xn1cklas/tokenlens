@@ -1,26 +1,3 @@
-/**
- * Thin async client for the models.dev API (https://models.dev/api.json).
- *
- * - Defaults to returning the full JSON catalog.
- * - Optionally filter by `provider` (e.g. "deepseek", "vercel") and/or `model` (e.g. "gpt-4o").
- * - No runtime dependencies. Uses `globalThis.fetch` if available, or accept a custom `fetch` via options.
- *
- * Note: This returns the raw models.dev schema as-is. Any higher-level formatting can be layered on later.
- */
-
-// Minimal "fetch-like" contract to avoid depending on DOM lib types in this package.
-export type FetchLike = (
-  input: string,
-  init?: { signal?: unknown } & Record<string, unknown>,
-  // deno-lint-ignore no-explicit-any
-) => Promise<{
-  ok: boolean;
-  status: number;
-  statusText: string;
-  json(): Promise<unknown>;
-  text(): Promise<string>;
-}>;
-
 import type { SourceModel, SourceProviders } from "@tokenlens/core";
 
 export type {
@@ -30,23 +7,10 @@ export type {
   SourceProviders,
 } from "@tokenlens/core";
 
-// ---------------------------------------------
-// v2 API: unified data shape + scoped fetchers
-// ---------------------------------------------
-
-// DTO types are sourced from @tokenlens/core now
-
 type CommonOptions = {
   provider?: string;
   model?: string;
-  fetch?: FetchLike;
 };
-
-function getFetch(options?: CommonOptions): FetchLike {
-  const f = options?.fetch ?? (globalThis as { fetch?: FetchLike }).fetch;
-  if (!f) throw new Error("No fetch implementation available");
-  return f;
-}
 
 function filterCatalog(
   catalog: SourceProviders,
@@ -72,8 +36,7 @@ function filterCatalog(
 export async function fetchModelsDev(
   options?: CommonOptions,
 ): Promise<SourceProviders> {
-  const f = getFetch(options);
-  const res = await f("https://models.dev/api.json");
+  const res = await fetch("https://models.dev/api.json");
   if (!res.ok) {
     throw new Error(
       `Failed to fetch models.dev: ${res.status} ${res.statusText}`,
@@ -144,25 +107,8 @@ function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
   const outputCap = topProvider?.max_completion_tokens;
   return {
     id,
+    canonical_id: id,
     name: (m["name"] as string | undefined) ?? id,
-    ...(m["description"] !== undefined
-      ? { description: m["description"] as string }
-      : {}),
-    ...(m["attachment"] !== undefined
-      ? { attachment: Boolean(m["attachment"]) }
-      : {}),
-    ...(m["reasoning"] !== undefined
-      ? { reasoning: Boolean(m["reasoning"]) }
-      : {}),
-    ...(m["temperature"] !== undefined
-      ? { temperature: Boolean(m["temperature"]) }
-      : {}),
-    ...(m["tool_call"] !== undefined
-      ? { tool_call: Boolean(m["tool_call"]) }
-      : {}),
-    ...(m["knowledge"] !== undefined
-      ? { knowledge: m["knowledge"] as string }
-      : {}),
     ...((m as { created?: number }).created !== undefined
       ? { created: (m as { created?: number }).created }
       : {}),
@@ -187,26 +133,13 @@ function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
           },
         }
       : {}),
-    extras: Object.fromEntries(
-      Object.entries({
-        canonical_slug: (m as { canonical_slug?: string }).canonical_slug,
-        hugging_face_id: (m as { hugging_face_id?: string }).hugging_face_id,
-        architecture: m["architecture"],
-        top_provider: m["top_provider"],
-        per_request_limits: (m as { per_request_limits?: unknown })
-          .per_request_limits,
-        supported_parameters: (m as { supported_parameters?: unknown })
-          .supported_parameters,
-      }).filter(([_, v]) => v !== undefined),
-    ),
   };
 }
 
 export async function fetchOpenrouter(
   options?: CommonOptions,
 ): Promise<SourceProviders> {
-  const f = getFetch(options);
-  const res = await f("https://openrouter.ai/api/v1/models");
+  const res = await fetch("https://openrouter.ai/api/v1/models");
   if (!res.ok) {
     throw new Error(
       `Failed to fetch OpenRouter: ${res.status} ${res.statusText}`,
