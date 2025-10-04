@@ -19,6 +19,8 @@ export type TokenCosts = {
   };
 };
 
+export { jsonToCompact, estimateTokenSavings } from "./parsers/json.js";
+
 export function computeTokenCostsForModel(args: {
   model?: SourceModel;
   usage: Usage;
