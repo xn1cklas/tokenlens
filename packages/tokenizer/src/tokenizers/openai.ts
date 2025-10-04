@@ -15,16 +15,13 @@ export type OpenAIModelId = OpenAIModelName | `openai/${OpenAIModelName}`;
 type EncodingType = "o200k_base" | "cl100k_base";
 
 function getEncodingForModel(modelId: string): EncodingType {
-  // Strip prefix if present
-  const cleanModelId = modelId.replace(/^openai\//, "");
-
   // Check o200k_base models (newer models)
-  if (OPENAI_MODELS_O200K.some((m) => cleanModelId.startsWith(m))) {
+  if (OPENAI_MODELS_O200K.some((m) => modelId.startsWith(m))) {
     return "o200k_base";
   }
 
   // Check cl100k_base models (older models)
-  if (OPENAI_MODELS_CL100K.some((m) => cleanModelId.startsWith(m))) {
+  if (OPENAI_MODELS_CL100K.some((m) => modelId.startsWith(m))) {
     return "cl100k_base";
   }
 
@@ -33,18 +30,16 @@ function getEncodingForModel(modelId: string): EncodingType {
 }
 
 export async function openai(
-  modelId: OpenAIModelId,
+  modelId: OpenAIModelName,
   data: string,
 ): Promise<number> {
-  const cleanModelId = modelId.replace(/^openai\//, "");
-
-  if (!OPENAI_MODELS.some((m) => cleanModelId.startsWith(m))) {
+  if (!OPENAI_MODELS.some((m) => modelId.startsWith(m))) {
     throw new Error(
-      `Unknown OpenAI model: ${cleanModelId}. Supported models: ${OPENAI_MODELS.join(", ")}`,
+      `Unknown OpenAI model: ${modelId}. Supported models: ${OPENAI_MODELS.join(", ")}`,
     );
   }
 
-  const encodingType = getEncodingForModel(cleanModelId);
+  const encodingType = getEncodingForModel(modelId);
   const encoding = get_encoding(encodingType);
 
   try {

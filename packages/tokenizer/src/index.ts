@@ -2,7 +2,6 @@ export {
   countTokens,
   type Provider,
   type ModelId,
-  type ProviderModelMap,
 } from "./tokenizer.js";
 export type { GoogleModelId, GoogleModelName } from "./tokenizers/google.js";
 export type { OpenAIModelId, OpenAIModelName } from "./tokenizers/openai.js";

@@ -9,17 +9,14 @@ const GOOGLE_MODELS = [
 export type GoogleModelName = (typeof GOOGLE_MODELS)[number];
 export type GoogleModelId = GoogleModelName | `google/${GoogleModelName}`;
 
-export async function google(modelId: GoogleModelId, data: string) {
+export async function google(modelId: GoogleModelName, data: string) {
   if (!process.env["GOOGLE_API_KEY"]) {
     throw new Error("GOOGLE_API_KEY is not set");
   }
 
-  // Strip the "google/" prefix if present
-  const cleanModelId = modelId.replace(/^google\//, "");
-
   const ai = new GoogleGenAI({ apiKey: process.env["GOOGLE_API_KEY"] });
   const countTokensResponse = await ai.models.countTokens({
-    model: cleanModelId,
+    model: modelId,
     contents: data,
   });
   return countTokensResponse.totalTokens;

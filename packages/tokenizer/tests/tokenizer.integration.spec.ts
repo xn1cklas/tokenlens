@@ -93,7 +93,7 @@ providers.forEach(({ provider, modelId, displayName }) => {
   describe(`${displayName} integration`, () => {
     testCases.forEach(({ name, text, minTokens, maxTokens }) => {
       it(name, async () => {
-        const result = await countTokens(modelId, provider, text);
+        const result = await countTokens(modelId, text);
         console.log(result);
 
         expect(result).toBeDefined();
@@ -108,7 +108,7 @@ providers.forEach(({ provider, modelId, displayName }) => {
     it("should handle provider prefix in model ID", async () => {
       const prefixedModelId = `${provider}/${modelId}`;
       const text = "Test with prefix";
-      const result = await countTokens(prefixedModelId, provider, text);
+      const result = await countTokens(prefixedModelId, text);
       console.log(result);
 
       expect(result).toBeDefined();
@@ -120,14 +120,10 @@ providers.forEach(({ provider, modelId, displayName }) => {
 
 // Test the fallback behavior (4th case)
 describe("Fallback to OpenAI GPT-5 (default)", () => {
-  it("should fallback to OpenAI GPT-5 for unknown provider", async () => {
+  it("should fallback to OpenAI GPT-5 for unknown model", async () => {
     const text = "Hello, how are you doing today?";
     // Cast to bypass TypeScript validation for testing unknown provider
-    const result = await countTokens(
-      "unknown-model",
-      "unknown" as Provider,
-      text,
-    );
+    const result = await countTokens("unknown-model", text);
 
     expect(result).toBeDefined();
     expect(typeof result).toBe("number");
@@ -136,11 +132,7 @@ describe("Fallback to OpenAI GPT-5 (default)", () => {
 
   it("should count tokens correctly in fallback mode", async () => {
     const text = "Hello world";
-    const result = await countTokens(
-      "some-future-model",
-      "future-provider" as Provider,
-      text,
-    );
+    const result = await countTokens("some-future-model", text);
 
     expect(result).toBeDefined();
     expect(typeof result).toBe("number");
@@ -155,11 +147,7 @@ describe("Fallback to OpenAI GPT-5 (default)", () => {
       The tokenizer should default to OpenAI's GPT-5 with tiktoken locally.
       This ensures that even for unknown providers, we can still count tokens.
     `;
-    const result = await countTokens(
-      "mystery-model",
-      "mystery-provider" as Provider,
-      text,
-    );
+    const result = await countTokens("mystery-model", text);
 
     expect(result).toBeDefined();
     expect(typeof result).toBe("number");
