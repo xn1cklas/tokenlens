@@ -1,3 +1,19 @@
 @import "tailwindcss";
 @import "fumadocs-ui/css/dusk.css";
 @import "fumadocs-ui/css/preset.css";
+
+.rounded-full {
+  border-radius: 0 !important;
+}
+
+.rounded-md {
+  border-radius: 0 !important;
+}
+
+.rounded-lg {
+  border-radius: 0 !important;
+}
+
+.rounded-xl {
+  border-radius: 0 !important;
+}
