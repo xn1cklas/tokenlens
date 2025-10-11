@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { detectImageMimeType } from "../utils/mime.js";
 
 const GOOGLE_MODELS = [
   "gemini-2.5-pro",
@@ -13,13 +14,14 @@ export async function google(
   modelId: GoogleModelName,
   data: string | ArrayBuffer | Uint8Array,
 ) {
+  if (!process.env["GOOGLE_API_KEY"]) {
+    throw new Error("GOOGLE_API_KEY is not set");
+  }
+
+  const ai = new GoogleGenAI({ apiKey: process.env["GOOGLE_API_KEY"] });
+
   // Handle text inputs first (most common case)
   if (typeof data === "string") {
-    if (!process.env["GOOGLE_API_KEY"]) {
-      throw new Error("GOOGLE_API_KEY is not set");
-    }
-
-    const ai = new GoogleGenAI({ apiKey: process.env["GOOGLE_API_KEY"] });
     const countTokensResponse = await ai.models.countTokens({
       model: modelId,
       contents: data,
@@ -27,9 +29,36 @@ export async function google(
     return countTokensResponse.totalTokens;
   }
 
-  // For now, only support string inputs
-  // Image support would require proper content structure
-  throw new Error(
-    "Image input (ArrayBuffer/Uint8Array) is not yet supported for Google models. Please use the Google GenAI SDK directly for image inputs.",
-  );
+  // Handle image inputs using Google's API
+  const mimeType = detectImageMimeType(data);
+  if (!mimeType) {
+    throw new Error(
+      "Failed to process ArrayBuffer/Uint8Array: not a recognized image format (PNG, JPEG, GIF, or WebP)",
+    );
+  }
+
+  // Convert to base64
+  const base64Data =
+    data instanceof ArrayBuffer
+      ? Buffer.from(data).toString("base64")
+      : Buffer.from(data).toString("base64");
+
+  // Use Google's countTokens API with inline image data
+  const countTokensResponse = await ai.models.countTokens({
+    model: modelId,
+    contents: [
+      {
+        parts: [
+          {
+            inlineData: {
+              mimeType: mimeType,
+              data: base64Data,
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  return countTokensResponse.totalTokens;
 }
