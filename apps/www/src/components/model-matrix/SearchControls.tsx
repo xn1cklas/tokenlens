@@ -24,20 +24,11 @@ export function SearchControls({
   onSourceChange: (value: SourceValue) => void;
 }) {
   return (
-    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search models, providers, or features..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10 bg-background rounded-none"
-        />
-      </div>
-      <div className="flex items-center gap-3 flex-shrink-0">
+    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
+      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 sm:order-1">
         <label
           htmlFor="source-select"
-          className="text-sm font-medium whitespace-nowrap"
+          className="text-xs sm:text-sm font-medium whitespace-nowrap"
         >
           Catalog:
         </label>
@@ -45,7 +36,7 @@ export function SearchControls({
           value={source}
           onValueChange={(v) => onSourceChange(v as SourceValue)}
         >
-          <SelectTrigger id="source-select" className="w-[160px]">
+          <SelectTrigger id="source-select" className="w-full sm:w-[160px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -53,6 +44,15 @@ export function SearchControls({
             <SelectItem value="modelsdev">Models.dev</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+      <div className="relative flex-1 sm:order-2">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search models, providers, or features..."
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-10 bg-background rounded-none"
+        />
       </div>
     </div>
   );

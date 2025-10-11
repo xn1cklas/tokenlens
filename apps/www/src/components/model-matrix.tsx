@@ -53,7 +53,7 @@ export function ModelMatrix({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       <SearchControls
         search={search}
         onSearchChange={setSearch}
@@ -63,31 +63,17 @@ export function ModelMatrix({
 
       <LastUpdated lastUpdated={lastUpdated} />
 
-      {
-        <>
-          <div className="flex flex-col lg:flex-row gap-6">
-            <ProviderSidebar
-              providers={providers}
-              modelsCountByProvider={modelsCountByProvider}
-              selectedProvider={selectedProvider}
-              onSelect={setSelectedProvider}
-              totalModels={models.length}
-            />
+      <div className="flex flex-col lg:flex-row gap-0">
+        <ProviderSidebar
+          providers={providers}
+          modelsCountByProvider={modelsCountByProvider}
+          selectedProvider={selectedProvider}
+          onSelect={setSelectedProvider}
+          totalModels={models.length}
+        />
 
-            <div className="flex-1">
-              <GroupedModels grouped={groupedModels} />
-
-              {filteredModels.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">
-                    No models found matching your search.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </>
-      }
+        <GroupedModels grouped={groupedModels} />
+      </div>
     </div>
   );
 }
