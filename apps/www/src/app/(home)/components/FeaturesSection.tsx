@@ -1,13 +1,13 @@
-import { Card } from "@/components/ui/card";
 import {
-  Zap,
-  Code2,
-  Shield,
   Boxes,
-  Lock,
-  Gauge,
   CheckCircle2,
+  Code2,
+  Gauge,
+  Lock,
+  Shield,
+  Zap,
 } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 export function FeaturesSection() {
   return (

@@ -3,9 +3,9 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
   createTokenlens,
-  type TokenCosts,
-  type SourceProviders,
   type SourceModel,
+  type SourceProviders,
+  type TokenCosts,
 } from "tokenlens";
 
 type ScenarioUsage = {

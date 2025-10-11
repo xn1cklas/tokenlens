@@ -1,7 +1,6 @@
-import { describe, expect, it } from "vitest";
-
-import { fetchModelsDev, fetchOpenrouter } from "../src/index.ts";
 import { writeFile } from "node:fs/promises";
+import { describe, expect, it } from "vitest";
+import { fetchModelsDev, fetchOpenrouter } from "../src/index.ts";
 
 describe("live fetchers", () => {
   it("fetchOpenrouter returns catalog with providers and models", async () => {

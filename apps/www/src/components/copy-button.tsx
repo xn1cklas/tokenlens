@@ -1,7 +1,7 @@
 "use client";
 
+import { Check, Copy } from "lucide-react";
 import { useState } from "react";
-import { Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CopyButtonProps {
@@ -20,6 +20,7 @@ export function CopyButton({ text, className }: CopyButtonProps) {
 
   return (
     <button
+      type="button"
       onClick={handleCopy}
       className={cn(
         "p-2 hover:bg-secondary rounded transition-all duration-200",

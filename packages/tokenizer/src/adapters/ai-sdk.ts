@@ -1,5 +1,5 @@
-import type { TokenizerMessage } from "../types.js";
 import type { CoreMessage } from "ai";
+import type { TokenizerMessage } from "../types.js";
 
 export function isAiSdkMessageArray(
   value: unknown,

@@ -1,8 +1,8 @@
 "use client";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Model } from "./types";
 import { ModelCard } from "./ModelCard";
+import type { Model } from "./types";
 
 export function GroupedModels({
   grouped,

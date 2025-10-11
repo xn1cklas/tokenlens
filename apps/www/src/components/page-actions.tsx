@@ -1,5 +1,11 @@
 "use client";
-import { useMemo, useState } from "react";
+import { cva } from "class-variance-authority";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "fumadocs-ui/components/ui/popover";
+import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
 import {
   Check,
   ChevronDown,
@@ -7,15 +13,9 @@ import {
   ExternalLinkIcon,
   MessageCircleIcon,
 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { cn } from "../lib/cn";
-import { useCopyButton } from "fumadocs-ui/utils/use-copy-button";
 import { buttonVariants } from "./ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "fumadocs-ui/components/ui/popover";
-import { cva } from "class-variance-authority";
 
 const cache = new Map<string, string>();
 
@@ -52,10 +52,11 @@ export function LLMCopyButton({
 
   return (
     <button
+      type="button"
       disabled={isLoading}
       className={cn(
         buttonVariants({
-          color: "secondary",
+          variant: "secondary",
           size: "sm",
           className: "gap-2 [&_svg]:size-3.5 [&_svg]:text-fd-muted-foreground",
         }),
@@ -218,7 +219,7 @@ export function ViewOptions({
       <PopoverTrigger
         className={cn(
           buttonVariants({
-            color: "secondary",
+            variant: "secondary",
             size: "sm",
             className: "gap-2",
           }),

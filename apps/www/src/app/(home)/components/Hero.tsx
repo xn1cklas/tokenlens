@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
-import { CopyButton } from "@/components/copy-button";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { CopyButton } from "@/components/copy-button";
+import { Button } from "@/components/ui/button";
 
 type NpmDownloads = {
   downloads: number;

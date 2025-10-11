@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
 import type OpenAI from "openai";
+import { countTokens, getContextHealth } from "tokenlens";
+import { describe, expect, it } from "vitest";
 import { createTestClient } from "./test-catalog.js";
-import { getContextHealth, countTokens } from "tokenlens";
 
 type CompletionUsage = OpenAI.CompletionUsage;
 

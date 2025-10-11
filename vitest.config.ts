@@ -1,6 +1,6 @@
-import { defineConfig, defineProject } from "vitest/config";
-import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { defineConfig, defineProject } from "vitest/config";
 
 const sharedTestOptions = {
   environment: "node",

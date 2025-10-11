@@ -1,8 +1,8 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { DollarSign, Sparkles, Zap } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import type { Model } from "./types";
 import { formatContextK, tierColors } from "./utils";
 

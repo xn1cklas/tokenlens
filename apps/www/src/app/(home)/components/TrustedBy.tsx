@@ -1,6 +1,6 @@
-import { VercelWordmark } from "@/components/ui/svgs/vercelWordmark";
 import { Mastra } from "@/components/ui/svgs/mastra";
 import { Midday } from "@/components/ui/svgs/midday";
+import { VercelWordmark } from "@/components/ui/svgs/vercelWordmark";
 
 export function TrustedBy() {
   return (

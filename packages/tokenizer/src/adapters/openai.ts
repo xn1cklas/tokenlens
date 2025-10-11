@@ -1,5 +1,5 @@
-import type { TokenizerMessage } from "../types.js";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import type { TokenizerMessage } from "../types.js";
 
 export function isOpenAIChatMessageArray(
   value: unknown,

@@ -1,11 +1,11 @@
 import "dotenv/config";
 import Anthropic from "@anthropic-ai/sdk";
 import {
-  createTokenlens,
   computeCostUSD,
-  getContextHealth,
-  estimateCostUSD,
   countTokens,
+  createTokenlens,
+  estimateCostUSD,
+  getContextHealth,
 } from "tokenlens";
 
 async function main(): Promise<void> {

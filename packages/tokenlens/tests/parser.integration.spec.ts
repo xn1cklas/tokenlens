@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
 import { compactJson } from "@tokenlens/helpers";
 import { countTokens } from "@tokenlens/tokenizer";
+import { describe, expect, it } from "vitest";
 
 describe("Token reduction with actual tokenizer", () => {
   it("should reduce actual tokens when using compactJson with GPT models", async () => {

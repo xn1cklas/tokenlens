@@ -1,7 +1,7 @@
-import { openai } from "@ai-sdk/openai";
 import { anthropic } from "@ai-sdk/anthropic";
-import { xai } from "@ai-sdk/xai";
+import { openai } from "@ai-sdk/openai";
 import type { LanguageModelV2Usage as VercelUsage } from "@ai-sdk/provider";
+import { xai } from "@ai-sdk/xai";
 import { describe, expect, it } from "vitest";
 import { createTestClient } from "./test-catalog.js";
 

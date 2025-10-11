@@ -1,22 +1,22 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { compactJson } from "@tokenlens/helpers";
+import type { Mock } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Tokenlens } from "../src/client.js";
+import { BASE_ERROR_CODES } from "../src/error/codes.js";
+import { TokenLensError } from "../src/error/index.js";
 import {
-  createTokenlens,
   computeCostUSD as apiComputeCostUSD,
+  countTokens as apiCountTokens,
+  estimateCostUSD as apiEstimateCostUSD,
   getContextLimits as apiGetContextLimits,
   getModelData as apiGetModelData,
-  estimateCostUSD as apiEstimateCostUSD,
-  countTokens as apiCountTokens,
+  createTokenlens,
   setSharedTokenlens,
 } from "../src/index.js";
-import { Tokenlens } from "../src/client.js";
-import { TokenLensError } from "../src/error/index.js";
-import { BASE_ERROR_CODES } from "../src/error/codes.js";
 import {
   createModelsDevProvidersFixture,
   createOpenrouterProvidersFixture,
 } from "./fixtures/providers.js";
-import { compactJson } from "@tokenlens/helpers";
-import type { Mock } from "vitest";
 
 // Mock the fetch functions
 vi.mock("@tokenlens/fetch", async () => {

@@ -1,4 +1,4 @@
-import type { SourceProviders, SourceModel } from "@tokenlens/core";
+import type { SourceModel, SourceProviders } from "@tokenlens/core";
 
 export type ResolveModelResult = {
   providerId: string;

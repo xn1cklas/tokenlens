@@ -1,6 +1,6 @@
+import type { SourceModel, Usage } from "@tokenlens/core";
 import { describe, expect, it } from "vitest";
 import { getContextHealth } from "../src/context.js";
-import type { SourceModel, Usage } from "@tokenlens/core";
 
 describe("getContextHealth", () => {
   it("returns healthy status for low usage", () => {

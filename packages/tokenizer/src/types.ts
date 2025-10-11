@@ -1,7 +1,7 @@
-import type { SourceModel, Usage } from "@tokenlens/core";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import type { MessageParam as AnthropicMessageParam } from "@anthropic-ai/sdk/resources/messages/messages";
+import type { SourceModel, Usage } from "@tokenlens/core";
 import type { ModelMessage as AiSdkModelMessage } from "ai";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
 export type TokenizerMessage = {
   role?: string;

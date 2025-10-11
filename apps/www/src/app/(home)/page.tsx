@@ -1,11 +1,11 @@
-import { Hero } from "./components/Hero";
-import { TrustedBy } from "./components/TrustedBy";
-import { SDKsSection } from "./components/SDKsSection";
-import { FeaturesSection } from "./components/FeaturesSection";
-import { ModelsSection } from "./components/ModelsSection";
+import { fetchModelsDev, fetchOpenrouter } from "@tokenlens/fetch";
 import { CtaSection } from "./components/CtaSection";
+import { FeaturesSection } from "./components/FeaturesSection";
+import { Hero } from "./components/Hero";
+import { ModelsSection } from "./components/ModelsSection";
+import { SDKsSection } from "./components/SDKsSection";
 import { SiteFooter } from "./components/SiteFooter";
-import { fetchOpenrouter, fetchModelsDev } from "@tokenlens/fetch";
+import { TrustedBy } from "./components/TrustedBy";
 
 export const revalidate = 86400; // 1 day
 
