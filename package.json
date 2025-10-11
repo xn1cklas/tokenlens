@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo run build --filter=\"@tokenlens/*\" --filter=tokenlens",
-    "typecheck": "turbo run typecheck --filter=\"@tokenlens/*\"",
+    "typecheck": "turbo run typecheck",
     "test": "turbo run test --filter=\"@tokenlens/*\"",
     "test:run": "turbo run test:run --filter=\"@tokenlens/*\"",
     "test:live": "turbo run test:live --filter=\"@tokenlens/*\"",
