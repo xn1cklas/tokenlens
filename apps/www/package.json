@@ -6,9 +6,12 @@
     "build": "next build",
     "dev": "next dev --turbo",
     "start": "next start",
+    "typecheck": "tsc --noEmit",
     "postinstall": "fumadocs-mdx"
   },
   "dependencies": {
+    "@radix-ui/react-scroll-area": "^1.2.10",
+    "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.3",
     "@tokenlens/fetch": "workspace:*",
     "class-variance-authority": "^0.7.1",
