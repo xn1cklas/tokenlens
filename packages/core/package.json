@@ -65,6 +65,6 @@
   },
   "homepage": "https://github.com/xn1cklas/tokenlens/tree/HEAD/packages/core#readme",
   "devDependencies": {
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   }
 }
