@@ -3,12 +3,11 @@ import { TrustedBy } from "./components/TrustedBy";
 import { SDKsSection } from "./components/SDKsSection";
 import { FeaturesSection } from "./components/FeaturesSection";
 import { ModelsSection } from "./components/ModelsSection";
-import { DocsSection } from "./components/DocsSection";
 import { CtaSection } from "./components/CtaSection";
 import { SiteFooter } from "./components/SiteFooter";
 import { fetchOpenrouter, fetchModelsDev } from "@tokenlens/fetch";
 
-export const revalidate = 3600 * 24; // 1 day
+export const revalidate = 86400; // 1 day
 
 export default async function HomePage() {
   // No local transformation here; we pass the catalogs directly to the component
