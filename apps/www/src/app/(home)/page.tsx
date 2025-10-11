@@ -8,7 +8,7 @@ import { CtaSection } from "./components/CtaSection";
 import { SiteFooter } from "./components/SiteFooter";
 import { fetchOpenrouter, fetchModelsDev } from "@tokenlens/fetch";
 
-export const revalidate = 3600;
+export const revalidate = 3600 * 24; // 1 day
 
 export default async function HomePage() {
   // No local transformation here; we pass the catalogs directly to the component
@@ -17,8 +17,6 @@ export default async function HomePage() {
     fetchOpenrouter(),
     fetchModelsDev(),
   ]);
-
-  console.log(JSON.stringify(openrouterCatalog, null, 2));
 
   const modelsdevFinal =
     Object.keys(modelsdevCatalog).length > 0
