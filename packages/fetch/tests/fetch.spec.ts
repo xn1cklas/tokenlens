@@ -80,10 +80,19 @@ describe("live fetchers", () => {
     expect(overlap.length).toBeGreaterThan(0);
 
     // Spot-check a few overlapping ids for presence and typed fields
-    function findModel(catalog: Record<string, { models: Record<string, unknown> }>, id: string) {
+    function findModel(
+      catalog: Record<string, { models: Record<string, unknown> }>,
+      id: string,
+    ) {
       for (const prov of Object.keys(catalog)) {
         const model = catalog[prov]?.models[id];
-        if (model) return model as { id?: string; name?: string; cost?: { input?: number }; limit?: { context?: number } };
+        if (model)
+          return model as {
+            id?: string;
+            name?: string;
+            cost?: { input?: number };
+            limit?: { context?: number };
+          };
       }
       return undefined;
     }

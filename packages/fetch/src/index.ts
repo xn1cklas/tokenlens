@@ -23,8 +23,8 @@ function filterCatalog(
     const models = prov.models || {};
     const filteredModels = model
       ? Object.fromEntries(
-        Object.entries(models).filter(([id]) => id.includes(model)),
-      )
+          Object.entries(models).filter(([id]) => id.includes(model)),
+        )
       : models;
     if (Object.keys(filteredModels).length > 0 || !model) {
       out[provKey] = { ...prov, models: filteredModels };
@@ -81,23 +81,45 @@ function toNumber(value: unknown): number | undefined {
 
 function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
   const id = String(m["id"] ?? "");
-  const pricingRaw = (m["pricing"] as Record<string, unknown> | undefined) ??
+  const pricingRaw =
+    (m["pricing"] as Record<string, unknown> | undefined) ??
     (m["cost"] as Record<string, unknown> | undefined);
   // OpenRouter pricing is per-token; convert to per-1M tokens to match DTO
-  const promptPerToken = toNumber(pricingRaw?.["prompt"]) ?? toNumber(pricingRaw?.["input"]);
-  const completionPerToken = toNumber(pricingRaw?.["completion"]) ?? toNumber(pricingRaw?.["output"]);
+  const promptPerToken =
+    toNumber(pricingRaw?.["prompt"]) ?? toNumber(pricingRaw?.["input"]);
+  const completionPerToken =
+    toNumber(pricingRaw?.["completion"]) ?? toNumber(pricingRaw?.["output"]);
   const reasoningPerToken = toNumber(pricingRaw?.["reasoning"]);
-  const cacheReadPerToken = toNumber(pricingRaw?.["cache_read"]) ?? toNumber(pricingRaw?.["input_cache_read"]);
-  const cacheWritePerToken = toNumber(pricingRaw?.["cache_write"]) ?? toNumber(pricingRaw?.["input_cache_write"]);
-  const cost = (promptPerToken !== undefined || completionPerToken !== undefined || reasoningPerToken !== undefined || cacheReadPerToken !== undefined || cacheWritePerToken !== undefined)
-    ? {
-      ...(promptPerToken !== undefined ? { input: promptPerToken * 1_000_000 } : {}),
-      ...(completionPerToken !== undefined ? { output: completionPerToken * 1_000_000 } : {}),
-      ...(reasoningPerToken !== undefined ? { reasoning: reasoningPerToken * 1_000_000 } : {}),
-      ...(cacheReadPerToken !== undefined ? { cache_read: cacheReadPerToken * 1_000_000 } : {}),
-      ...(cacheWritePerToken !== undefined ? { cache_write: cacheWritePerToken * 1_000_000 } : {}),
-    }
-    : undefined;
+  const cacheReadPerToken =
+    toNumber(pricingRaw?.["cache_read"]) ??
+    toNumber(pricingRaw?.["input_cache_read"]);
+  const cacheWritePerToken =
+    toNumber(pricingRaw?.["cache_write"]) ??
+    toNumber(pricingRaw?.["input_cache_write"]);
+  const cost =
+    promptPerToken !== undefined ||
+    completionPerToken !== undefined ||
+    reasoningPerToken !== undefined ||
+    cacheReadPerToken !== undefined ||
+    cacheWritePerToken !== undefined
+      ? {
+          ...(promptPerToken !== undefined
+            ? { input: promptPerToken * 1_000_000 }
+            : {}),
+          ...(completionPerToken !== undefined
+            ? { output: completionPerToken * 1_000_000 }
+            : {}),
+          ...(reasoningPerToken !== undefined
+            ? { reasoning: reasoningPerToken * 1_000_000 }
+            : {}),
+          ...(cacheReadPerToken !== undefined
+            ? { cache_read: cacheReadPerToken * 1_000_000 }
+            : {}),
+          ...(cacheWritePerToken !== undefined
+            ? { cache_write: cacheWritePerToken * 1_000_000 }
+            : {}),
+        }
+      : undefined;
   const limit =
     (m["limit"] as
       | { context?: number; input?: number; output?: number }
@@ -105,10 +127,10 @@ function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
   const context_length = (m as { context_length?: number }).context_length;
   const topProvider = m["top_provider"] as
     | {
-      max_completion_tokens?: number;
-      context_length?: number;
-      is_moderated?: boolean;
-    }
+        max_completion_tokens?: number;
+        context_length?: number;
+        is_moderated?: boolean;
+      }
     | undefined;
   const outputCap = topProvider?.max_completion_tokens;
   return {
@@ -127,13 +149,13 @@ function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
     ...(cost !== undefined ? { cost } : {}),
     ...(limit || context_length || outputCap
       ? {
-        limit: limit ?? {
-          ...(context_length !== undefined
-            ? { context: context_length }
-            : {}),
-          ...(outputCap !== undefined ? { output: outputCap } : {}),
-        },
-      }
+          limit: limit ?? {
+            ...(context_length !== undefined
+              ? { context: context_length }
+              : {}),
+            ...(outputCap !== undefined ? { output: outputCap } : {}),
+          },
+        }
       : {}),
   };
 }
