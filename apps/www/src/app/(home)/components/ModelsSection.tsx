@@ -1,13 +1,14 @@
 import { AlertCircle } from "lucide-react";
 import { ModelMatrix } from "@/components/model-matrix";
+import type { SourceProvidersLite } from "@/components/model-matrix";
 
 export function ModelsSection({
   openrouter,
   modelsdev,
   lastUpdated,
 }: {
-  openrouter: Record<string, { models: Record<string, unknown> }>;
-  modelsdev: Record<string, { models: Record<string, unknown> }>;
+  openrouter: SourceProvidersLite;
+  modelsdev: SourceProvidersLite;
   lastUpdated: number;
 }) {
   return (

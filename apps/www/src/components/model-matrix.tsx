@@ -28,14 +28,14 @@ export interface Model {
   };
 }
 
-type SourceModelLite = {
+export type SourceModelLite = {
   id?: string;
   name?: string;
   cost?: { input?: number; output?: number };
   limit?: { context?: number };
 };
 
-type SourceProvidersLite = Record<
+export type SourceProvidersLite = Record<
   string,
   { models: Record<string, SourceModelLite> }
 >;
