@@ -1,19 +1,37 @@
-import Link from "next/link";
+import { Hero } from "./components/Hero";
+import { TrustedBy } from "./components/TrustedBy";
+import { SDKsSection } from "./components/SDKsSection";
+import { FeaturesSection } from "./components/FeaturesSection";
+import { ModelsSection } from "./components/ModelsSection";
+import { DocsSection } from "./components/DocsSection";
+import { CtaSection } from "./components/CtaSection";
+import { SiteFooter } from "./components/SiteFooter";
+import { fetchOpenrouter, fetchModelsDev } from "@tokenlens/fetch";
 
-export default function HomePage() {
+export const revalidate = 3600;
+
+export default async function HomePage() {
+  // No local transformation here; we pass the catalogs directly to the component
+
+  const [openrouterCatalog, modelsdevCatalog] = await Promise.all([
+    fetchOpenrouter(),
+    fetchModelsDev(),
+  ]);
+
+  console.log(JSON.stringify(openrouterCatalog, null, 2));
+
+  const modelsdevFinal = Object.keys(modelsdevCatalog).length > 0 ? modelsdevCatalog : openrouterCatalog;
+  const lastUpdated = Date.now();
+
   return (
-    <main className="flex flex-1 flex-col justify-center text-center">
-      <h1 className="mb-4 text-2xl font-bold">Hello World</h1>
-      <p className="text-fd-muted-foreground">
-        You can open{" "}
-        <Link
-          href="/docs"
-          className="text-fd-foreground font-semibold underline"
-        >
-          /docs
-        </Link>{" "}
-        and see the documentation.
-      </p>
-    </main>
+    <div className="p-5 bg-background border-border hover:border-accent/50 transition-all group hover:shadow-lg">
+      <Hero />
+      <TrustedBy />
+      {/* <SDKsSection /> */}
+      {/* <FeaturesSection /> */}
+      <ModelsSection openrouter={openrouterCatalog} modelsdev={modelsdevFinal} lastUpdated={lastUpdated} />
+      <CtaSection />
+      <SiteFooter />
+    </div>
   );
 }

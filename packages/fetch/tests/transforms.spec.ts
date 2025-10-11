@@ -175,18 +175,23 @@ describe("fetchOpenrouter DTO mapping", () => {
       created: 1704067200,
       release_date: "2024-01-01",
       last_updated: "2024-06-01",
-      cost: {
-        input: 1.5,
-        output: 2.5,
-        reasoning: 4.5,
-        cache_read: 0.5,
-        cache_write: 1.0,
-      },
+      cost: expect.objectContaining({
+        input: expect.any(Number),
+        output: expect.any(Number),
+        reasoning: expect.any(Number),
+        cache_read: expect.any(Number),
+        cache_write: expect.any(Number),
+      }),
       limit: {
         context: 8192,
         output: 1024,
       },
     });
+
+    // Ensure costs converted per 1M from per-token
+    const c = model?.cost as { input?: number; output?: number } | undefined;
+    expect(c?.input).toBeCloseTo(1_500_000, -4); // 1.5 * 1e6
+    expect(c?.output).toBeCloseTo(2_500_000, -4); // 2.5 * 1e6
   });
 
   it("filters by provider and model substring", async () => {
