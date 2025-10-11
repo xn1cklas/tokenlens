@@ -20,5 +20,5 @@
 pre-commit:
   parallel: true
   jobs:
-    - run: pnpm format --fix {staged_files}
+    - run: pnpm format {staged_files}
       glob: "*.{js,ts,jsx,tsx,.json,.md}"
