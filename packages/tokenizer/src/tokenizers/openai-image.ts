@@ -34,9 +34,9 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
   "gpt-4o-mini": { family: "tile-based", baseTokens: 2833, tileTokens: 5667 },
   "gpt-4.1": { family: "tile-based", baseTokens: 85, tileTokens: 170 },
   "gpt-4.5": { family: "tile-based", baseTokens: 85, tileTokens: 170 },
-  "o1": { family: "tile-based", baseTokens: 75, tileTokens: 150 },
+  o1: { family: "tile-based", baseTokens: 75, tileTokens: 150 },
   "o1-pro": { family: "tile-based", baseTokens: 75, tileTokens: 150 },
-  "o3": { family: "tile-based", baseTokens: 75, tileTokens: 150 },
+  o3: { family: "tile-based", baseTokens: 75, tileTokens: 150 },
   "computer-use-preview": {
     family: "tile-based",
     baseTokens: 65,
