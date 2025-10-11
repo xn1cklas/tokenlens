@@ -15,6 +15,11 @@ export function baseOptions(): BaseLayoutProps {
     // see https://fumadocs.dev/docs/ui/navigation/links
     links: [
       {
+        type: "main",
+        text: "Docs",
+        url: "/docs/",
+      },
+      {
         type: "icon",
         url: "https://github.com/xn1cklas/tokenlens",
         text: "Github",
