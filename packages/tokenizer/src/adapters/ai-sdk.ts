@@ -46,7 +46,7 @@ function stringifyAiSdkMessage(message: CoreMessage): string {
 function stringifyAiSdkPart(part: unknown): string | undefined {
   if (!part || typeof part !== "object") return undefined;
 
-  const typed = part as { type?: string;[key: string]: unknown };
+  const typed = part as { type?: string; [key: string]: unknown };
   const type = typeof typed.type === "string" ? typed.type : undefined;
 
   if (type === "text") {
