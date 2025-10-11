@@ -1,6 +1,6 @@
 import { AlertCircle } from "lucide-react";
 import { ModelMatrix } from "@/components/model-matrix";
-import type { SourceProvidersLite } from "@/components/model-matrix";
+import type { SourceProvidersLite } from "@/components/model-matrix/types";
 
 export function ModelsSection({
   openrouter,
