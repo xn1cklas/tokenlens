@@ -26,6 +26,11 @@ export function baseOptions(): BaseLayoutProps {
         url: "/docs/",
       },
       {
+        type: "main",
+        text: "Initiative",
+        url: "/initiative/",
+      },
+      {
         type: "icon",
         url: "https://www.npmjs.com/package/tokenlens",
         text: "npm",
