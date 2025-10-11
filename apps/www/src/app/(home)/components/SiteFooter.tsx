@@ -38,7 +38,16 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>Built with ❤️ for the AI developer community</p>
+          <p>
+            Built with ❤️ by{" "}
+            <Link
+              href="https://x.com/xn1cklas"
+              className="text-foreground hover:text-accent transition-colors"
+            >
+              Nicklas
+            </Link>{" "}
+            for a better AI developer experience.
+          </p>
         </div>
       </div>
     </footer>
