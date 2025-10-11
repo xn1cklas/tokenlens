@@ -1,4 +1,5 @@
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
+import { Code2 } from "lucide-react";
 
 /**
  * Shared layout configurations
@@ -10,7 +11,12 @@ import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
-      title: <>TokenLens</>,
+      title: (
+        <>
+          <Code2 className="h-5 w-5 text-accent" />
+          <span className="font-mono font-semibold">tokenlens</span>
+        </>
+      ),
     },
     // see https://fumadocs.dev/docs/ui/navigation/links
     links: [
@@ -19,6 +25,23 @@ export function baseOptions(): BaseLayoutProps {
         text: "Docs",
         url: "/docs/",
       },
+      {
+        type: "icon",
+        url: "https://www.npmjs.com/package/tokenlens",
+        text: "npm",
+        icon: (
+          <svg viewBox="0 0 2500 2500">
+            <title>Npm</title>
+            <path fill="currentColor" d="M0 0h2500v2500H0z" />
+            <path
+              className="fill-[hsl(var(--background))]"
+              d="M1241.5 268.5h-973v1962.9h972.9V763.5h495v1467.9h495V268.5z"
+            />
+          </svg>
+        ),
+        external: true,
+      },
+
       {
         type: "icon",
         url: "https://github.com/xn1cklas/tokenlens",
