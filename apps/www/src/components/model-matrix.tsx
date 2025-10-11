@@ -35,7 +35,10 @@ type SourceModelLite = {
   limit?: { context?: number };
 };
 
-type SourceProvidersLite = Record<string, { models: Record<string, SourceModelLite> }>;
+type SourceProvidersLite = Record<
+  string,
+  { models: Record<string, SourceModelLite> }
+>;
 
 interface ModelMatrixProps {
   openrouter: SourceProvidersLite;
@@ -57,7 +60,11 @@ const tierIcons = {
   high: Sparkles,
 };
 
-export function ModelMatrix({ openrouter, modelsdev, lastUpdated }: ModelMatrixProps) {
+export function ModelMatrix({
+  openrouter,
+  modelsdev,
+  lastUpdated,
+}: ModelMatrixProps) {
   const [source, setSource] = useState<"openrouter" | "modelsdev">(
     "openrouter",
   );
@@ -90,7 +97,13 @@ export function ModelMatrix({ openrouter, modelsdev, lastUpdated }: ModelMatrixP
           provider: providerId,
           contextWindow: context ? `${context}` : "-",
           tier:
-            prompt === 0 ? "free" : prompt < 0.5 ? "low" : prompt < 3 ? "mid" : "high",
+            prompt === 0
+              ? "free"
+              : prompt < 0.5
+                ? "low"
+                : prompt < 3
+                  ? "mid"
+                  : "high",
           features: [],
           pricing: { prompt, completion, currency: "USD" },
         });
@@ -205,10 +218,11 @@ export function ModelMatrix({ openrouter, modelsdev, lastUpdated }: ModelMatrixP
                     <button
                       type="button"
                       onClick={() => setSelectedProvider(null)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${!selectedProvider
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                        }`}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        !selectedProvider
+                          ? "bg-accent text-accent-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
                     >
                       All Providers
                       <span className="ml-2 text-xs opacity-60">
@@ -224,10 +238,11 @@ export function ModelMatrix({ openrouter, modelsdev, lastUpdated }: ModelMatrixP
                           type="button"
                           key={provider}
                           onClick={() => setSelectedProvider(provider)}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedProvider === provider
-                            ? "bg-accent text-accent-foreground"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                            }`}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            selectedProvider === provider
+                              ? "bg-accent text-accent-foreground"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          }`}
                         >
                           {provider}
                           <span className="ml-2 text-xs opacity-60">
@@ -246,105 +261,103 @@ export function ModelMatrix({ openrouter, modelsdev, lastUpdated }: ModelMatrixP
                 <div className="space-y-8">
                   {Object.entries(groupedModels)
                     .sort(([a], [b]) => a.localeCompare(b))
-                    .map(
-                      ([provider, providerModels]) => (
-                        <div key={provider}>
-                          <h3 className="text-2xl font-bold mb-4 flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                              <span className="text-sm font-bold text-accent">
-                                {provider[0]}
-                              </span>
-                            </div>
-                            {provider}
-                            <span className="text-sm font-normal text-muted-foreground">
-                              ({providerModels.length} models)
+                    .map(([provider, providerModels]) => (
+                      <div key={provider}>
+                        <h3 className="text-2xl font-bold mb-4 flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                            <span className="text-sm font-bold text-accent">
+                              {provider[0]}
                             </span>
-                          </h3>
-                          <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                            {providerModels.map((model) => {
-                              const TierIcon = tierIcons[model.tier];
-                              return (
-                                <Card
-                                  key={model.id}
-                                  className="p-5 bg-background border-border hover:border-accent/50 transition-all group hover:shadow-lg rounded-none"
-                                >
-                                  <div className="flex items-start justify-between mb-3">
-                                    <h4 className="font-semibold text-base group-hover:text-accent transition-colors">
-                                      {model.name}
-                                    </h4>
-                                    <TierIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          </div>
+                          {provider}
+                          <span className="text-sm font-normal text-muted-foreground">
+                            ({providerModels.length} models)
+                          </span>
+                        </h3>
+                        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                          {providerModels.map((model) => {
+                            const TierIcon = tierIcons[model.tier];
+                            return (
+                              <Card
+                                key={model.id}
+                                className="p-5 bg-background border-border hover:border-accent/50 transition-all group hover:shadow-lg rounded-none"
+                              >
+                                <div className="flex items-start justify-between mb-3">
+                                  <h4 className="font-semibold text-base group-hover:text-accent transition-colors">
+                                    {model.name}
+                                  </h4>
+                                  <TierIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                </div>
+
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">
+                                      Context
+                                    </span>
+                                    <span className="font-mono font-medium">
+                                      {formatContextK(model.contextWindow)}
+                                    </span>
                                   </div>
 
-                                  <div className="space-y-3">
-                                    <div className="flex items-center justify-between text-sm">
-                                      <span className="text-muted-foreground">
-                                        Context
-                                      </span>
-                                      <span className="font-mono font-medium">
-                                        {formatContextK(model.contextWindow)}
-                                      </span>
-                                    </div>
-
-                                    {model.pricing &&
-                                      (model.pricing.prompt > 0 ||
-                                        model.pricing.completion > 0) && (
-                                        <div className="space-y-1.5 text-xs">
-                                          <div className="flex items-center justify-between">
-                                            <span className="text-muted-foreground">
-                                              Input
-                                            </span>
-                                            <span className="font-mono">
-                                              ${model.pricing.prompt.toFixed(2)}
-                                              /1M
-                                            </span>
-                                          </div>
-                                          <div className="flex items-center justify-between">
-                                            <span className="text-muted-foreground">
-                                              Output
-                                            </span>
-                                            <span className="font-mono">
-                                              $
-                                              {model.pricing.completion.toFixed(
-                                                2,
-                                              )}
-                                              /1M
-                                            </span>
-                                          </div>
+                                  {model.pricing &&
+                                    (model.pricing.prompt > 0 ||
+                                      model.pricing.completion > 0) && (
+                                      <div className="space-y-1.5 text-xs">
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-muted-foreground">
+                                            Input
+                                          </span>
+                                          <span className="font-mono">
+                                            ${model.pricing.prompt.toFixed(2)}
+                                            /1M
+                                          </span>
                                         </div>
-                                      )}
-
-                                    <div
-                                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${tierColors[model.tier]}`}
-                                    >
-                                      {model.tier === "free" && "Free"}
-                                      {model.tier === "low" && "Low Cost"}
-                                      {model.tier === "mid" && "Mid Tier"}
-                                      {model.tier === "high" && "Premium"}
-                                    </div>
-
-                                    {model.features.length > 0 && (
-                                      <div className="flex flex-wrap gap-1.5">
-                                        {model.features
-                                          .slice(0, 3)
-                                          .map((feature) => (
-                                            <Badge
-                                              key={feature}
-                                              variant="secondary"
-                                              className="text-xs"
-                                            >
-                                              {feature}
-                                            </Badge>
-                                          ))}
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-muted-foreground">
+                                            Output
+                                          </span>
+                                          <span className="font-mono">
+                                            $
+                                            {model.pricing.completion.toFixed(
+                                              2,
+                                            )}
+                                            /1M
+                                          </span>
+                                        </div>
                                       </div>
                                     )}
+
+                                  <div
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${tierColors[model.tier]}`}
+                                  >
+                                    {model.tier === "free" && "Free"}
+                                    {model.tier === "low" && "Low Cost"}
+                                    {model.tier === "mid" && "Mid Tier"}
+                                    {model.tier === "high" && "Premium"}
                                   </div>
-                                </Card>
-                              );
-                            })}
-                          </div>
+
+                                  {model.features.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {model.features
+                                        .slice(0, 3)
+                                        .map((feature) => (
+                                          <Badge
+                                            key={feature}
+                                            variant="secondary"
+                                            className="text-xs"
+                                          >
+                                            {feature}
+                                          </Badge>
+                                        ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </Card>
+                            );
+                          })}
                         </div>
-                      ),
-                    )}
+                      </div>
+                    ))}
                 </div>
 
                 {filteredModels.length === 0 && (

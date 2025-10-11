@@ -20,7 +20,10 @@ export default async function HomePage() {
 
   console.log(JSON.stringify(openrouterCatalog, null, 2));
 
-  const modelsdevFinal = Object.keys(modelsdevCatalog).length > 0 ? modelsdevCatalog : openrouterCatalog;
+  const modelsdevFinal =
+    Object.keys(modelsdevCatalog).length > 0
+      ? modelsdevCatalog
+      : openrouterCatalog;
   const lastUpdated = Date.now();
 
   return (
@@ -29,7 +32,11 @@ export default async function HomePage() {
       <TrustedBy />
       {/* <SDKsSection /> */}
       {/* <FeaturesSection /> */}
-      <ModelsSection openrouter={openrouterCatalog} modelsdev={modelsdevFinal} lastUpdated={lastUpdated} />
+      <ModelsSection
+        openrouter={openrouterCatalog}
+        modelsdev={modelsdevFinal}
+        lastUpdated={lastUpdated}
+      />
       <CtaSection />
       <SiteFooter />
     </div>
