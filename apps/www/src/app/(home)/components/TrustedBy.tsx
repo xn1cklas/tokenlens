@@ -11,13 +11,13 @@ export function TrustedBy() {
         </p>
         <div className="flex flex-wrap items-center justify-center gap-12 opacity-60">
           <div className="flex items-center gap-2">
-            <VercelWordmark className="h-6 w-auto text-foreground" />
+            <VercelWordmark className="h-10 w-auto text-foreground p-1" />
           </div>
           <div className="flex items-center gap-2">
-            <Midday className="h-6 w-auto" />
+            <Midday className="h-10 w-auto" />
           </div>
           <div className="flex items-center gap-2">
-            <Mastra className="h-6 w-auto" />
+            <Mastra className="h-10 w-auto" />
           </div>
         </div>
       </div>
