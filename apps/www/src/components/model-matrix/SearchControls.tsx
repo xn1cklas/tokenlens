@@ -34,7 +34,7 @@ export function SearchControls({
         </label>
         <Select
           value={source}
-          onValueChange={(v) => onSourceChange(v as SourceValue)}
+          onValueChange={(v: string) => onSourceChange(v as SourceValue)}
         >
           <SelectTrigger id="source-select" className="w-full sm:w-[160px]">
             <SelectValue />
