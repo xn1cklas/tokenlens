@@ -213,16 +213,15 @@ export function ModelMatrix({
                 <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
                   Providers
                 </h3>
-                <ScrollArea className="h-[500px] pr-4">
+                <ScrollArea className="h-[600px] pr-4">
                   <div className="space-y-1">
                     <button
                       type="button"
                       onClick={() => setSelectedProvider(null)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        !selectedProvider
-                          ? "bg-accent text-accent-foreground"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${!selectedProvider
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }`}
                     >
                       All Providers
                       <span className="ml-2 text-xs opacity-60">
@@ -238,11 +237,10 @@ export function ModelMatrix({
                           type="button"
                           key={provider}
                           onClick={() => setSelectedProvider(provider)}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            selectedProvider === provider
-                              ? "bg-accent text-accent-foreground"
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                          }`}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedProvider === provider
+                            ? "bg-accent text-accent-foreground"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            }`}
                         >
                           {provider}
                           <span className="ml-2 text-xs opacity-60">
@@ -257,7 +255,7 @@ export function ModelMatrix({
             </div>
 
             <div className="flex-1">
-              <ScrollArea className="h-[700px] pr-4">
+              <ScrollArea className="h-[600px] pr-4">
                 <div className="space-y-8">
                   {Object.entries(groupedModels)
                     .sort(([a], [b]) => a.localeCompare(b))
