@@ -193,8 +193,8 @@ export class Tokenlens {
     modelId: string;
     /** Provider for model lookup (e.g., "openai", "anthropic") */
     provider?: string;
-    /** Text content to estimate costs for */
-    data: string;
+    /** Text or image content to estimate costs for */
+    data: string | ArrayBuffer | Uint8Array;
   }): Promise<TokenCosts & { inputTokens: number }> {
     const { modelId, provider, data } = args;
 

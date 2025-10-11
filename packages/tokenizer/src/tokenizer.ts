@@ -43,7 +43,7 @@ export type ModelId = GoogleModelId | OpenAIModelId | AnthropicModelId | string;
  */
 export async function countTokens(
   modelId: ModelId,
-  data: string,
+  data: string | ArrayBuffer | Uint8Array,
 ): Promise<number | undefined> {
   // Route to the correct tokenizer and strip provider prefix
   if (modelId.startsWith("openai/")) {
