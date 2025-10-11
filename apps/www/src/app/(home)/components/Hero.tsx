@@ -43,7 +43,7 @@ export async function Hero() {
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none overflow-hidden"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,140,60,0.05),transparent_50%)] pointer-events-none" />
+      <div className="absolute inset-0 pointer-events-none" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
         <div className="max-w-4xl mx-auto">
