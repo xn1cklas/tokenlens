@@ -15,6 +15,7 @@ export const GATEWAY_IDS = [
   "auto",
   "openrouter",
   "models.dev",
+  "vercel",
   "package",
 ] as const;
 export type GatewayId = (typeof GATEWAY_IDS)[number];

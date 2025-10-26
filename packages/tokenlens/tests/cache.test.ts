@@ -1,8 +1,7 @@
-import { describe, expect, it, beforeEach } from "vitest";
-
-import { MemoryCache, jitter } from "../src/cache.js";
-import type { CacheAdapter, CacheEntry } from "../src/types.js";
 import type { SourceProviders } from "@tokenlens/core";
+import { beforeEach, describe, expect, it } from "vitest";
+import { jitter, MemoryCache } from "../src/cache.js";
+import type { CacheAdapter, CacheEntry } from "../src/types.js";
 
 function makeEntry(
   value: CacheEntry["value"],

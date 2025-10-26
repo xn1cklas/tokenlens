@@ -1,5 +1,5 @@
-import type { TokenizerMessage } from "../types.js";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages/messages";
+import type { TokenizerMessage } from "../types.js";
 
 export function isAnthropicMessageArray(
   value: unknown,

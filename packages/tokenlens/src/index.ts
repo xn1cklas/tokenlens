@@ -1,5 +1,5 @@
 import type { Usage } from "@tokenlens/core";
-import { Tokenlens, type ModelDetails } from "./client.js";
+import { type ModelDetails, Tokenlens } from "./client.js";
 import type { GatewayId, TokenlensOptions } from "./types.js";
 
 /**
@@ -232,13 +232,12 @@ export function setSharedTokenlens(tokenlens?: Tokenlens) {
   }
 }
 
-export type { SourceProviders, SourceModel, Usage } from "@tokenlens/core";
+export type { SourceModel, SourceProviders, Usage } from "@tokenlens/core";
 export type { ModelDetails, TokenlensOptions };
-export type { TokenCosts, ContextHealth } from "@tokenlens/helpers";
-export { Tokenlens } from "./client.js";
-
+export type { ContextHealth, TokenCosts } from "@tokenlens/helpers";
 // Re-export helper utilities
 export {
   compactJson,
   estimateTokenSavings,
 } from "@tokenlens/helpers";
+export { Tokenlens } from "./client.js";

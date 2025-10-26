@@ -4,7 +4,7 @@ import { normalizeUsage } from "./internal.js";
 export type ContextHealth = {
   /** Total context window size in tokens */
   totalTokens: number;
-  /** Number of tokens used (input + output + reasoning + cache) */
+  /** Number of tokens used (input + output + reasoning). Note: cache reads/writes are not added as they're subsets of input for pricing purposes. */
   usedTokens: number;
   /** Number of tokens remaining */
   remainingTokens: number;
@@ -50,14 +50,11 @@ export function getContextHealth(args: {
     return undefined;
   }
 
-  // Calculate total tokens used (input + output + reasoning + cache)
+  // Calculate total tokens used (input + output + reasoning)
+  // Note: cache reads/writes are subsets of input tokens for pricing, not additional usage
   const normalized = normalizeUsage(usage);
   const usedTokens =
-    normalized.input +
-    normalized.output +
-    (normalized.reasoningTokens ?? 0) +
-    (normalized.cacheReads ?? 0) +
-    (normalized.cacheWrites ?? 0);
+    normalized.input + normalized.output + (normalized.reasoningTokens ?? 0);
 
   // Calculate remaining tokens
   const remainingTokens = Math.max(0, contextLimit - usedTokens);

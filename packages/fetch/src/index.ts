@@ -73,11 +73,53 @@ export async function fetchModelsDev(
   return filterCatalog(catalog, options?.provider, options?.model);
 }
 
+function toNumber(value: unknown): number | undefined {
+  if (value === undefined || value === null) return undefined;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
   const id = String(m["id"] ?? "");
+  const pricingRaw =
+    (m["pricing"] as Record<string, unknown> | undefined) ??
+    (m["cost"] as Record<string, unknown> | undefined);
+  // OpenRouter pricing is per-token; convert to per-1M tokens to match DTO
+  const promptPerToken =
+    toNumber(pricingRaw?.["prompt"]) ?? toNumber(pricingRaw?.["input"]);
+  const completionPerToken =
+    toNumber(pricingRaw?.["completion"]) ?? toNumber(pricingRaw?.["output"]);
+  const reasoningPerToken = toNumber(pricingRaw?.["reasoning"]);
+  const cacheReadPerToken =
+    toNumber(pricingRaw?.["cache_read"]) ??
+    toNumber(pricingRaw?.["input_cache_read"]);
+  const cacheWritePerToken =
+    toNumber(pricingRaw?.["cache_write"]) ??
+    toNumber(pricingRaw?.["input_cache_write"]);
   const cost =
-    (m["pricing"] as Record<string, number> | undefined) ??
-    (m["cost"] as Record<string, number> | undefined);
+    promptPerToken !== undefined ||
+    completionPerToken !== undefined ||
+    reasoningPerToken !== undefined ||
+    cacheReadPerToken !== undefined ||
+    cacheWritePerToken !== undefined
+      ? {
+          ...(promptPerToken !== undefined
+            ? { input: promptPerToken * 1_000_000 }
+            : {}),
+          ...(completionPerToken !== undefined
+            ? { output: completionPerToken * 1_000_000 }
+            : {}),
+          ...(reasoningPerToken !== undefined
+            ? { reasoning: reasoningPerToken * 1_000_000 }
+            : {}),
+          ...(cacheReadPerToken !== undefined
+            ? { cache_read: cacheReadPerToken * 1_000_000 }
+            : {}),
+          ...(cacheWritePerToken !== undefined
+            ? { cache_write: cacheWritePerToken * 1_000_000 }
+            : {}),
+        }
+      : undefined;
   const limit =
     (m["limit"] as
       | { context?: number; input?: number; output?: number }
@@ -116,6 +158,79 @@ function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
         }
       : {}),
   };
+}
+
+type VercelModelJson = {
+  [key: string]: unknown;
+  id?: string;
+  name?: string;
+  owned_by?: string;
+  created?: number;
+  context_window?: number | string | null;
+  max_tokens?: number | string | null;
+  pricing?: Record<string, unknown>;
+};
+
+function mapVercelModel(model: VercelModelJson): SourceModel {
+  const contextWindow = toNumber(model.context_window);
+  const maxTokens = toNumber(model.max_tokens);
+  const limit =
+    contextWindow !== undefined || maxTokens !== undefined
+      ? {
+          ...(contextWindow !== undefined ? { context: contextWindow } : {}),
+          ...(maxTokens !== undefined ? { output: maxTokens } : {}),
+        }
+      : undefined;
+  const normalized: Record<string, unknown> = {
+    ...(model as Record<string, unknown>),
+    ...(contextWindow !== undefined ? { context_length: contextWindow } : {}),
+    ...(limit !== undefined ? { limit } : {}),
+  };
+  return mapOpenrouterModel(normalized);
+}
+
+export async function fetchVercel(
+  options?: CommonOptions,
+): Promise<SourceProviders> {
+  const res = await fetch("https://ai-gateway.vercel.sh/v1/models");
+  if (!res.ok) {
+    throw new Error(
+      `Failed to fetch Vercel AI Gateway: ${res.status} ${res.statusText}`,
+    );
+  }
+  const parsed = (await res.json()) as {
+    data?: VercelModelJson[];
+  };
+  const list = Array.isArray(parsed?.data) ? parsed.data : [];
+
+  const catalog: SourceProviders = {};
+  for (const model of list) {
+    if (!model) continue;
+    const id = String(model.id ?? "");
+    if (!id) continue;
+    const providerPart = id.includes("/") ? id.split("/")[0] : undefined;
+    const providerId =
+      typeof model.owned_by === "string" && model.owned_by.length > 0
+        ? model.owned_by
+        : (providerPart ?? "vercel");
+    if (!catalog[providerId]) {
+      catalog[providerId] = {
+        id: providerId,
+        name: providerId,
+        api: "https://ai-gateway.vercel.sh/v1",
+        doc: "https://vercel.com/docs/ai/ai-gateway",
+        env: ["VERCEL_AI_API_KEY"],
+        source: "vercel",
+        schemaVersion: 1,
+        models: {},
+      };
+    }
+    const provider = catalog[providerId];
+    if (!provider) continue;
+    provider.models[id] = mapVercelModel(model);
+  }
+
+  return filterCatalog(catalog, options?.provider, options?.model);
 }
 
 export async function fetchOpenrouter(

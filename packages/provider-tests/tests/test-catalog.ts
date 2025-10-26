@@ -1,7 +1,7 @@
 import {
   createTokenlens,
-  type Tokenlens,
   type SourceProviders,
+  type Tokenlens,
 } from "tokenlens";
 
 export const testProviders: SourceProviders = {

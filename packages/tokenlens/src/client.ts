@@ -1,21 +1,21 @@
-import type { SourceProviders, SourceModel, Usage } from "@tokenlens/core";
+import type { SourceModel, SourceProviders, Usage } from "@tokenlens/core";
+import { fetchModelsDev, fetchOpenrouter, fetchVercel } from "@tokenlens/fetch";
 import type { TokenCosts } from "@tokenlens/helpers";
 import {
   computeTokenCostsForModel,
   getContextHealth,
 } from "@tokenlens/helpers";
 import { countTokens, type TokenizerModelId } from "@tokenlens/tokenizer";
-import { MemoryCache, jitter } from "./cache.js";
+import { jitter, MemoryCache } from "./cache.js";
+import { BASE_ERROR_CODES } from "./error/codes.js";
+import { TokenLensError } from "./error/index.js";
+import { resolveModel } from "./resolve.js";
 import {
-  type TokenlensOptions,
+  type CacheAdapter,
   GATEWAY_IDS,
   type GatewayId,
-  type CacheAdapter,
+  type TokenlensOptions,
 } from "./types.js";
-import { resolveModel } from "./resolve.js";
-import { TokenLensError } from "./error/index.js";
-import { BASE_ERROR_CODES } from "./error/codes.js";
-import { fetchModelsDev, fetchOpenrouter } from "@tokenlens/fetch";
 
 export type ModelDetails = SourceModel | undefined;
 
@@ -59,10 +59,9 @@ export class Tokenlens {
       case "models.dev":
         catalog = await fetchModelsDev();
         break;
-      // TODO implement vercel AI Gateway
-      // case "vercel":
-      //   catalog = [];
-      //   break;
+      case "vercel":
+        catalog = await fetchVercel();
+        break;
       // TODO implement netlify AI Gateway
       // case "netlify":
       //   catalog = [];
@@ -97,6 +96,9 @@ export class Tokenlens {
         break;
       case "models.dev":
         catalog = await fetchModelsDev();
+        break;
+      case "vercel":
+        catalog = await fetchVercel();
         break;
       default:
         throw new Error(`Unknown catalog ID: ${this.catalog}`);

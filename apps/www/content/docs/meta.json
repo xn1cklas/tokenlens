@@ -1,0 +1,14 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "overview",
+    "getting-started",
+    "package-setup-comparison",
+    "sources-and-caching",
+    "testing",
+    "custom-catalog",
+    "integrations",
+    "migrations",
+    "glossary"
+  ]
+}

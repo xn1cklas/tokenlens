@@ -1,0 +1,108 @@
+---
+title: "Transparent Token Initiative"
+description: "Initiative"
+---
+
+<div className="p-5 mx-auto container prose max-w-5xl text-balance">
+
+# Transparent Token Initiative
+
+The fact that tokenlens is successfull validates that developers care about token usage and context management.
+
+Over 100k developers rely on tokenlens, yet tokenlens can not ensure the data is correct.
+
+We built on top of open sources like OpenRouter, models.dev, and Vercel AI Gateway. If their data is not correct or incomplete, tokenlens is not correct or incomplete.
+
+## What is this initiative about?
+
+There are two main cases, where developers rely on fresh model data.
+- cost tracking (for example via PostHog and Langfuse)
+- context management
+
+These information should be provided by the model providers themselves, not by third parties.
+
+## Milestones
+
+- [ ] agree on a common format for the model data
+- [ ] cooperate with model providers to implement the common format
+
+
+## Proposal
+
+Previous formats are lacking information.
+
+```json title="previous response format (example from OpenAI)"
+{
+  // ... other fields ...
+  "usage": {
+    "input_tokens": 32,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens": 18,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 50
+  }
+  // ... other fields ...
+}
+```
+
+We propose to use the following format for the model data:
+
+```json title="new response format (example from OpenAI)"
+{
+  // ... other fields ...
+  "usage": {
+    "input_tokens": 32,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens": 18,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 50
+  },
+  "limit": {
+    "context": 128000,
+    "input": 120000,
+    "output": 8000
+  },
+  "usage_costs": {
+    "input_usd": 0.000048,
+    "output_usd": 0.000108,
+    "reasoning_usd": 0,
+    "cache_read_usd": 0,
+    "cache_write_usd": 0,
+    "total_usd": 0.000156,
+    "rates_used": {
+      "input_per_mtokens_usd": 150,
+      "output_per_mtokens_usd": 600,
+      "reasoning_per_mtokens_usd": 0,
+      "cache_read_per_mtokens_usd": 75,
+      "cache_write_per_mtokens_usd": 300,
+      "currency": "USD"
+    }
+  }
+  // ... other fields ...
+}
+```
+
+
+
+## Signed by
+
+[Nicklas Scharpff](https://x.com/xn1cklas) (creator of tokenlens)
+
+
+## How can you help?
+
+Share this initiative with your friends and colleagues.
+
+If you are a model provider, please implement the new format.
+
+If you are a developer, please share this initiative with your friends and colleagues.
+
+</div>

@@ -1,4 +1,10 @@
 packages:
-  - "apps/*"
-  - "packages/*"
-  - "examples/*"
+  - apps/*
+  - packages/*
+  - examples/*
+onlyBuiltDependencies:
+  - '@tailwindcss/oxide'
+  - esbuild
+  - lefthook
+  - msw
+  - sharp

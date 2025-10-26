@@ -1,4 +1,3 @@
-import type { TokenizerInput, TokenizerMessage } from "./types.js";
 import {
   fromAiSdkMessages,
   fromAnthropicMessages,
@@ -7,6 +6,7 @@ import {
   isAnthropicMessageArray,
   isOpenAIChatMessageArray,
 } from "./adapters/index.js";
+import type { TokenizerInput, TokenizerMessage } from "./types.js";
 
 export function coerceContent(input: TokenizerInput): {
   text: string;

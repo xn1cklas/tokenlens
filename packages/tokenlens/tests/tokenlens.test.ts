@@ -1,28 +1,30 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { compactJson } from "@tokenlens/helpers";
+import type { Mock } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Tokenlens } from "../src/client.js";
+import { BASE_ERROR_CODES } from "../src/error/codes.js";
+import { TokenLensError } from "../src/error/index.js";
 import {
-  createTokenlens,
   computeCostUSD as apiComputeCostUSD,
+  countTokens as apiCountTokens,
+  estimateCostUSD as apiEstimateCostUSD,
   getContextLimits as apiGetContextLimits,
   getModelData as apiGetModelData,
-  estimateCostUSD as apiEstimateCostUSD,
-  countTokens as apiCountTokens,
+  createTokenlens,
   setSharedTokenlens,
 } from "../src/index.js";
-import { Tokenlens } from "../src/client.js";
-import { TokenLensError } from "../src/error/index.js";
-import { BASE_ERROR_CODES } from "../src/error/codes.js";
 import {
   createModelsDevProvidersFixture,
   createOpenrouterProvidersFixture,
+  createVercelProvidersFixture,
 } from "./fixtures/providers.js";
-import { compactJson } from "@tokenlens/helpers";
-import type { Mock } from "vitest";
 
 // Mock the fetch functions
 vi.mock("@tokenlens/fetch", async () => {
   return {
     fetchOpenrouter: vi.fn(),
     fetchModelsDev: vi.fn(),
+    fetchVercel: vi.fn(),
   };
 });
 
@@ -45,12 +47,14 @@ function makeUsage(): Usage {
 describe("Tokenlens - Catalog Loading", () => {
   let fetchModelsDevSpy: Mock;
   let fetchOpenrouterSpy: Mock;
+  let fetchVercelSpy: Mock;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     const fetchModule = await import("@tokenlens/fetch");
     fetchModelsDevSpy = vi.spyOn(fetchModule, "fetchModelsDev") as Mock;
     fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter") as Mock;
+    fetchVercelSpy = vi.spyOn(fetchModule, "fetchVercel") as Mock;
   });
 
   afterEach(() => {
@@ -87,6 +91,21 @@ describe("Tokenlens - Catalog Loading", () => {
 
     expect(modelData?.id).toBe("anthropic/claude-3.5");
     expect(fetchModelsDevSpy).toHaveBeenCalled();
+  });
+
+  it("uses vercel catalog", async () => {
+    const mockCatalog = createVercelProvidersFixture();
+    fetchVercelSpy.mockResolvedValue(mockCatalog);
+
+    const client = new Tokenlens({
+      catalog: "vercel",
+      cacheKey: "test-vercel",
+    });
+
+    const modelData = await client.getModelData({ modelId: "openai/gpt-4o" });
+
+    expect(modelData?.id).toBe("openai/gpt-4o");
+    expect(fetchVercelSpy).toHaveBeenCalled();
   });
 
   it("uses custom catalog object without fetching", async () => {

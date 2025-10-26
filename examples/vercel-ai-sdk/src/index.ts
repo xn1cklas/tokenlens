@@ -1,13 +1,13 @@
 import "dotenv/config";
-import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { generateText } from "ai";
 import {
-  createTokenlens,
-  computeCostUSD,
-  getContextHealth,
-  estimateCostUSD,
-  countTokens,
   compactJson,
+  computeCostUSD,
+  countTokens,
+  createTokenlens,
+  estimateCostUSD,
+  getContextHealth,
 } from "tokenlens";
 
 async function main(): Promise<void> {

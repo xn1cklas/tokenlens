@@ -1,9 +1,9 @@
-export {
-  fromOpenAIChatMessages,
-  isOpenAIChatMessageArray,
-} from "./openai.js";
+export { fromAiSdkMessages, isAiSdkMessageArray } from "./ai-sdk.js";
 export {
   fromAnthropicMessages,
   isAnthropicMessageArray,
 } from "./anthropic.js";
-export { fromAiSdkMessages, isAiSdkMessageArray } from "./ai-sdk.js";
+export {
+  fromOpenAIChatMessages,
+  isOpenAIChatMessageArray,
+} from "./openai.js";

@@ -17,9 +17,9 @@
  * Note: Tests will be automatically skipped if API keys are not set.
  */
 
-import { config } from "dotenv";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { join, dirname } from "node:path";
+import { config } from "dotenv";
 
 // Load .env from packages/tokenizer directory
 const __dirname = dirname(fileURLToPath(import.meta.url));
