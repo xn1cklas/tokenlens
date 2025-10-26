@@ -71,6 +71,8 @@ describe("live fetchers", () => {
     expect(typeof model.name).toBe("string");
   }, 30000);
 
+  // Enable locally with `pnpm --filter @tokenlens/fetch test:run -- --runTestsByPath packages/fetch/tests/fetch.spec.ts`
+  // when debugging catalog drift; it writes large snapshots and depends on live data.
   it.skip("live parity snapshot and overlap checks", async () => {
     const [openrouter, modelsdev] = await Promise.all([
       fetchOpenrouter(),

@@ -14,12 +14,18 @@ export function SiteFooter() {
             <Link
               href="https://github.com/tokenlens/tokenlens"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="TokenLens GitHub repository (opens in new tab)"
             >
               GitHub
             </Link>
             <Link
               href="https://www.npmjs.com/package/tokenlens"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="TokenLens npm package (opens in new tab)"
             >
               npm
             </Link>
@@ -30,8 +36,11 @@ export function SiteFooter() {
               Documentation
             </Link>
             <Link
-              href="#"
+              href="https://github.com/xn1cklas/tokenlens/blob/v2/LICENSE"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="TokenLens license (opens in new tab)"
             >
               License
             </Link>
@@ -43,6 +52,9 @@ export function SiteFooter() {
             <Link
               href="https://x.com/xn1cklas"
               className="text-foreground hover:text-accent transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Nicklas on X (opens in new tab)"
             >
               Nicklas
             </Link>{" "}

@@ -12,6 +12,10 @@ import {
 
 export type SourceValue = "openrouter" | "modelsdev" | "vercel";
 
+function isSourceValue(value: string): value is SourceValue {
+  return value === "openrouter" || value === "modelsdev" || value === "vercel";
+}
+
 export function SearchControls({
   search,
   onSearchChange,
@@ -34,7 +38,11 @@ export function SearchControls({
         </label>
         <Select
           value={source}
-          onValueChange={(v: string) => onSourceChange(v as SourceValue)}
+          onValueChange={(v: string) => {
+            if (isSourceValue(v)) {
+              onSourceChange(v);
+            }
+          }}
         >
           <SelectTrigger id="source-select" className="w-full sm:w-[160px]">
             <SelectValue />

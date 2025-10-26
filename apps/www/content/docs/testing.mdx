@@ -96,7 +96,7 @@ const tokenlens = createTestTokenlens();
 
 const model = openai("gpt-5").withMiddleware(tokenlensMiddleware(tokenlens));
 
-const response = await model.invoke("hi");
+const response = await model.generateText("hi");
 
 expect(response.providerMetadata?.tokenlens?.costs?.totalTokenCostUSD).toBeCloseTo(0.0084, 6);
 ```

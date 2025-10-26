@@ -9,7 +9,10 @@ export function GroupedModels({
 }: {
   grouped: Record<string, Model[]>;
 }) {
-  const hasResults = Object.keys(grouped).length > 0;
+  const nonEmptyGroups = Object.entries(grouped).filter(
+    ([, models]) => models.length > 0,
+  );
+  const hasResults = nonEmptyGroups.length > 0;
 
   return (
     <div className="flex-1">
@@ -19,14 +22,14 @@ export function GroupedModels({
       <ScrollArea className="h-[70vh] lg:h-[600px] lg:border lg:border-border lg:border-l-0 pr-2 lg:pr-4 lg:p-4">
         <div className="space-y-6 lg:space-y-8 pb-4">
           {hasResults ? (
-            Object.entries(grouped)
+            nonEmptyGroups
               .sort(([a], [b]) => a.localeCompare(b))
               .map(([provider, providerModels]) => (
                 <div key={provider}>
                   <h3 className="text-xl lg:text-2xl font-bold mb-3 lg:mb-4 flex items-center gap-2 lg:gap-3 flex-wrap">
                     <div className="h-8 w-8 lg:h-10 lg:w-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
                       <span className="text-xs lg:text-sm font-bold text-accent">
-                        {provider[0]}
+                        {(provider?.[0] ?? "?").toUpperCase()}
                       </span>
                     </div>
                     <span className="break-words">{provider}</span>

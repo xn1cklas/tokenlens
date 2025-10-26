@@ -32,18 +32,18 @@ export function normalizeUsage(usage: Usage): NormalizedUsage {
     "output_tokens",
     "outputTokens",
   );
-  const total = num(u["total_tokens"]) ?? num(u["totalTokens"]) ?? undefined;
+  const total = num(u.total_tokens) ?? num(u.totalTokens) ?? undefined;
   const reasoningTokens =
-    num(u["reasoning_tokens"]) ?? num(u["reasoningTokens"]) ?? undefined;
+    num(u.reasoning_tokens) ?? num(u.reasoningTokens) ?? undefined;
   const cacheReads =
-    num(u["cache_read_tokens"]) ??
-    num(u["cacheReads"]) ??
-    num(u["cacheReadTokens"]) ??
+    num(u.cache_read_tokens) ??
+    num(u.cacheReads) ??
+    num(u.cacheReadTokens) ??
     undefined;
   const cacheWrites =
-    num(u["cache_write_tokens"]) ??
-    num(u["cacheWrites"]) ??
-    num(u["cacheWriteTokens"]) ??
+    num(u.cache_write_tokens) ??
+    num(u.cacheWrites) ??
+    num(u.cacheWriteTokens) ??
     undefined;
   return {
     input: prompt,

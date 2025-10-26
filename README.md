@@ -1,5 +1,4 @@
-TokenLens
-========
+# TokenLens
 
 [![npm version](https://img.shields.io/npm/v/tokenlens.svg)](https://www.npmjs.com/package/tokenlens)
 [![npm downloads](https://img.shields.io/npm/dm/tokenlens.svg)](https://www.npmjs.com/package/tokenlens)
@@ -327,6 +326,10 @@ const tokenlens = new Tokenlens({
   catalog: testCatalog 
 });
 ```
+
+## Development
+
+- `pnpm format` runs `biome check --write`, which formats files and applies lint fixes; use `pnpm format:fix` for additional auto-fixes or `biome format` if you only need formatting.
 
 ## Further Reading
 

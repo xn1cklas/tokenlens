@@ -1,6 +1,6 @@
 "use client";
 
-import { DollarSign, Sparkles, Zap } from "lucide-react";
+import { Crown, DollarSign, Sparkles, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import type { Model } from "./types";
@@ -10,7 +10,7 @@ const icons = {
   free: DollarSign,
   low: Zap,
   mid: Sparkles,
-  high: Sparkles,
+  high: Crown,
 } as const;
 
 export function ModelCard({ model }: { model: Model }) {

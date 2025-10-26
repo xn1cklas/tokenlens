@@ -27,13 +27,18 @@ export function ModelMatrix({
   const [search, setSearch] = useState("");
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
 
+  const handleSourceChange = (value: SourceValue) => {
+    setSource(value);
+    setSearch("");
+    setSelectedProvider(null);
+  };
+
   const currentCatalog = useMemo(() => {
     switch (source) {
       case "modelsdev":
         return modelsdev;
       case "vercel":
         return vercel;
-      case "openrouter":
       default:
         return openrouter;
     }
@@ -66,7 +71,7 @@ export function ModelMatrix({
         search={search}
         onSearchChange={setSearch}
         source={source}
-        onSourceChange={setSource}
+        onSourceChange={handleSourceChange}
       />
 
       <LastUpdated lastUpdated={lastUpdated} />

@@ -74,17 +74,20 @@ export function ProviderSidebar({
     setMobileOpen(false);
   };
 
-  // Handle escape key to close modal
+  // Handle escape key to close modal and lock background scroll
   useEffect(() => {
-    if (mobileOpen) {
-      const handleEscape = (e: KeyboardEvent) => {
-        if (e.key === "Escape") {
-          setMobileOpen(false);
-        }
-      };
-      document.addEventListener("keydown", handleEscape);
-      return () => document.removeEventListener("keydown", handleEscape);
-    }
+    if (!mobileOpen) return;
+    document.body.style.overflow = "hidden";
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "";
+    };
   }, [mobileOpen]);
 
   return (
@@ -122,10 +125,13 @@ export function ProviderSidebar({
           <div
             role="dialog"
             aria-modal="true"
+            aria-labelledby="provider-filter-title"
             className="fixed inset-x-0 bottom-0 z-50 bg-background/95 backdrop-blur-md border-t border-border shadow-2xl lg:hidden"
           >
             <div className="flex items-center justify-between p-4 border-b border-border bg-background">
-              <h3 className="text-lg font-semibold">Filter by Provider</h3>
+              <h3 id="provider-filter-title" className="text-lg font-semibold">
+                Filter by Provider
+              </h3>
               <Button
                 variant="ghost"
                 size="sm"

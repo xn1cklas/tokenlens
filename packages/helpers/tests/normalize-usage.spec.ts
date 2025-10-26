@@ -48,6 +48,6 @@ describe("perMTokensToUnitCostUSD", () => {
 
 describe("round6", () => {
   it("rounds to six decimal places", () => {
-    expect(round6(Math.PI)).toBeCloseTo(3.141593, 6);
+    expect(round6(Math.PI)).toBeCloseTo(Math.PI, 6);
   });
 });

@@ -17,7 +17,7 @@ async function main(): Promise<void> {
   }
 
   const client = new Anthropic({ apiKey });
-  const tokenlens = createTokenlens();
+  const _tokenlens = createTokenlens();
 
   console.log("🎯 TokenLens Anthropic SDK Example\n");
   console.log("=".repeat(60));
@@ -181,7 +181,7 @@ async function main(): Promise<void> {
     );
   }
 
-  console.log("\n" + "=".repeat(60));
+  console.log(`\n${"=".repeat(60)}`);
   console.log("✅ Example completed successfully!");
 }
 

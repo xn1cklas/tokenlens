@@ -69,8 +69,8 @@ describe("computeTokenCostsForModel", () => {
   it("rounds output to six decimal places", () => {
     const model = {
       cost: {
-        input: 3.141592,
-        output: 2.718281,
+        input: Math.PI,
+        output: Math.E,
       },
     } as unknown as SourceModel;
 

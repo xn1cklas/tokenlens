@@ -18,7 +18,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const tokenlens = createTokenlens();
+  const _tokenlens = createTokenlens();
 
   console.log("🎯 TokenLens + Vercel AI SDK Example\n");
   console.log("=".repeat(60));
@@ -39,7 +39,7 @@ async function main(): Promise<void> {
 
   if (response.usage) {
     const costs = await computeCostUSD({
-      modelId: "gpt-4o-mini",
+      modelId: "openai/gpt-4o-mini",
       usage: response.usage,
     });
 
@@ -62,11 +62,11 @@ async function main(): Promise<void> {
   const compactData = compactJson(jsonData);
 
   const jsonTokens = await countTokens({
-    modelId: "gpt-4o-mini",
+    modelId: "openai/gpt-4o-mini",
     data: jsonResponse.text,
   });
   const compactTokens = await countTokens({
-    modelId: "gpt-4o-mini",
+    modelId: "openai/gpt-4o-mini",
     data: compactData,
   });
   const savings =
@@ -98,7 +98,7 @@ async function main(): Promise<void> {
 
   for (const msg of conversation) {
     const tokens = await countTokens({
-      modelId: "gpt-4o",
+      modelId: "openai/gpt-4o",
       data: msg.content,
     });
     if (msg.role === "user") {
@@ -109,7 +109,7 @@ async function main(): Promise<void> {
   }
 
   const health = await getContextHealth({
-    modelId: "gpt-4o",
+    modelId: "openai/gpt-4o",
     usage: {
       input_tokens: totalInput,
       output_tokens: totalOutput,
@@ -135,7 +135,7 @@ async function main(): Promise<void> {
   `;
 
   const estimate = await estimateCostUSD({
-    modelId: "gpt-4o",
+    modelId: "openai/gpt-4o",
     data: largePrompt,
   });
 
@@ -145,7 +145,7 @@ async function main(): Promise<void> {
     `Decision: ${estimate.totalTokenCostUSD > 0.01 ? "⚠️ High cost" : "✅ Proceed"}`,
   );
 
-  console.log("\n" + "=".repeat(60));
+  console.log(`\n${"=".repeat(60)}`);
   console.log("✅ Example completed successfully!");
 }
 

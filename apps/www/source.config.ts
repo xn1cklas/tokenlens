@@ -10,9 +10,7 @@ import {
 export const docs = defineDocs({
   docs: {
     schema: frontmatterSchema,
-    postprocess: {
-      includeProcessedMarkdown: true,
-    },
+    // Add postprocess.includeProcessedMarkdown if runtime access to compiled markdown is required.
   },
   meta: {
     schema: metaSchema,

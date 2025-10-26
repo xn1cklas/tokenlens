@@ -10,11 +10,11 @@ export type GoogleModelName = (typeof GOOGLE_MODELS)[number];
 export type GoogleModelId = GoogleModelName | `google/${GoogleModelName}`;
 
 export async function google(modelId: GoogleModelName, data: string) {
-  if (!process.env["GOOGLE_API_KEY"]) {
+  if (!process.env.GOOGLE_API_KEY) {
     throw new Error("GOOGLE_API_KEY is not set");
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env["GOOGLE_API_KEY"] });
+  const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
   const countTokensResponse = await ai.models.countTokens({
     model: modelId,
     contents: data,

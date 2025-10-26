@@ -1,5 +1,37 @@
 import type { SourceModel, SourceProviders } from "@tokenlens/core";
 
+const DEFAULT_TIMEOUT_MS = 10_000;
+
+function resolveFetch(): typeof globalThis.fetch {
+  const fetchFn = globalThis.fetch;
+  if (typeof fetchFn !== "function") {
+    throw new Error(
+      "Fetch API is not available in this environment. Please provide a polyfill.",
+    );
+  }
+  return fetchFn.bind(globalThis) as typeof globalThis.fetch;
+}
+
+// Respect user-provided AbortSignals; otherwise apply a conservative timeout to avoid hanging requests.
+async function fetchWithTimeout(
+  input: Parameters<typeof globalThis.fetch>[0],
+  init?: Parameters<typeof globalThis.fetch>[1],
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+) {
+  const nativeFetch = resolveFetch();
+  if (timeoutMs <= 0 || init?.signal) {
+    return nativeFetch(input, init);
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await nativeFetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export type {
   SourceId,
   SourceModel,
@@ -36,7 +68,7 @@ function filterCatalog(
 export async function fetchModelsDev(
   options?: CommonOptions,
 ): Promise<SourceProviders> {
-  const res = await fetch("https://models.dev/api.json");
+  const res = await fetchWithTimeout("https://models.dev/api.json");
   if (!res.ok) {
     throw new Error(
       `Failed to fetch models.dev: ${res.status} ${res.statusText}`,
@@ -80,22 +112,21 @@ function toNumber(value: unknown): number | undefined {
 }
 
 function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
-  const id = String(m["id"] ?? "");
+  const id = String(m.id ?? "");
   const pricingRaw =
-    (m["pricing"] as Record<string, unknown> | undefined) ??
-    (m["cost"] as Record<string, unknown> | undefined);
+    (m.pricing as Record<string, unknown> | undefined) ??
+    (m.cost as Record<string, unknown> | undefined);
   // OpenRouter pricing is per-token; convert to per-1M tokens to match DTO
   const promptPerToken =
-    toNumber(pricingRaw?.["prompt"]) ?? toNumber(pricingRaw?.["input"]);
+    toNumber(pricingRaw?.prompt) ?? toNumber(pricingRaw?.input);
   const completionPerToken =
-    toNumber(pricingRaw?.["completion"]) ?? toNumber(pricingRaw?.["output"]);
-  const reasoningPerToken = toNumber(pricingRaw?.["reasoning"]);
+    toNumber(pricingRaw?.completion) ?? toNumber(pricingRaw?.output);
+  const reasoningPerToken = toNumber(pricingRaw?.reasoning);
   const cacheReadPerToken =
-    toNumber(pricingRaw?.["cache_read"]) ??
-    toNumber(pricingRaw?.["input_cache_read"]);
+    toNumber(pricingRaw?.cache_read) ?? toNumber(pricingRaw?.input_cache_read);
   const cacheWritePerToken =
-    toNumber(pricingRaw?.["cache_write"]) ??
-    toNumber(pricingRaw?.["input_cache_write"]);
+    toNumber(pricingRaw?.cache_write) ??
+    toNumber(pricingRaw?.input_cache_write);
   const cost =
     promptPerToken !== undefined ||
     completionPerToken !== undefined ||
@@ -121,11 +152,11 @@ function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
         }
       : undefined;
   const limit =
-    (m["limit"] as
+    (m.limit as
       | { context?: number; input?: number; output?: number }
       | undefined) ?? undefined;
   const context_length = (m as { context_length?: number }).context_length;
-  const topProvider = m["top_provider"] as
+  const topProvider = m.top_provider as
     | {
         max_completion_tokens?: number;
         context_length?: number;
@@ -136,15 +167,15 @@ function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
   return {
     id,
     canonical_id: id,
-    name: (m["name"] as string | undefined) ?? id,
+    name: (m.name as string | undefined) ?? id,
     ...((m as { created?: number }).created !== undefined
       ? { created: (m as { created?: number }).created }
       : {}),
-    ...(m["release_date"] !== undefined
-      ? { release_date: m["release_date"] as string }
+    ...(m.release_date !== undefined
+      ? { release_date: m.release_date as string }
       : {}),
-    ...(m["last_updated"] !== undefined
-      ? { last_updated: m["last_updated"] as string }
+    ...(m.last_updated !== undefined
+      ? { last_updated: m.last_updated as string }
       : {}),
     ...(cost !== undefined ? { cost } : {}),
     ...(limit || context_length || outputCap
@@ -192,7 +223,7 @@ function mapVercelModel(model: VercelModelJson): SourceModel {
 export async function fetchVercel(
   options?: CommonOptions,
 ): Promise<SourceProviders> {
-  const res = await fetch("https://ai-gateway.vercel.sh/v1/models");
+  const res = await fetchWithTimeout("https://ai-gateway.vercel.sh/v1/models");
   if (!res.ok) {
     throw new Error(
       `Failed to fetch Vercel AI Gateway: ${res.status} ${res.statusText}`,
@@ -236,7 +267,7 @@ export async function fetchVercel(
 export async function fetchOpenrouter(
   options?: CommonOptions,
 ): Promise<SourceProviders> {
-  const res = await fetch("https://openrouter.ai/api/v1/models");
+  const res = await fetchWithTimeout("https://openrouter.ai/api/v1/models");
   if (!res.ok) {
     throw new Error(
       `Failed to fetch OpenRouter: ${res.status} ${res.statusText}`,
@@ -249,7 +280,7 @@ export async function fetchOpenrouter(
 
   const catalog: SourceProviders = {};
   for (const m of list) {
-    const id = String(m["id"] ?? "");
+    const id = String(m.id ?? "");
     const providerPart = id.includes("/") ? id.split("/")[0] : undefined;
     const provider = providerPart ?? "openrouter";
     if (!catalog[provider]) {

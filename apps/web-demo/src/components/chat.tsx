@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { getContext, normalizeUsage } from "@tokenlens/helpers";
+import { normalizeUsage } from "@tokenlens/helpers";
 import type { LanguageModelUsage, UIMessage } from "ai";
 import { GlobeIcon, MicIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";

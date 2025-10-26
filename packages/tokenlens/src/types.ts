@@ -30,10 +30,19 @@ export interface CacheAdapter {
   delete?(key: string): Promise<void> | void;
 }
 
-export type TokenlensOptions = {
-  catalog?: GatewayId | SourceProviders;
-  ttlMs?: number;
-  fetch?: FetchLike;
-  cache?: CacheAdapter;
-  cacheKey?: string;
-};
+export type TokenlensOptions =
+  | {
+      catalog?: Exclude<GatewayId, "package"> | SourceProviders;
+      ttlMs?: number;
+      fetch?: FetchLike;
+      cache?: CacheAdapter;
+      cacheKey?: string;
+    }
+  | {
+      catalog: "package";
+      loaders: Record<string, SourceLoader>;
+      ttlMs?: number;
+      fetch?: FetchLike;
+      cache?: CacheAdapter;
+      cacheKey?: string;
+    };

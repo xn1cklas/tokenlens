@@ -1,5 +1,5 @@
 import type OpenAI from "openai";
-import { countTokens, getContextHealth } from "tokenlens";
+import { countTokens } from "tokenlens";
 import { describe, expect, it } from "vitest";
 import { createTestClient } from "./test-catalog.js";
 
@@ -231,6 +231,6 @@ describe("OpenAI SDK - Cache Management", () => {
     const refreshedCatalog = await tokenlens.refresh(true);
 
     expect(refreshedCatalog).toBeDefined();
-    expect(refreshedCatalog["openai"]).toBeDefined();
+    expect(refreshedCatalog.openai).toBeDefined();
   });
 });

@@ -22,6 +22,8 @@ export type SourceModel = {
     input?: number;
     output?: number;
   };
+  // Preserve provider-specific fields without tightening DTO
+  extras?: Record<string, unknown>;
 };
 
 export type SourceProvider = {

@@ -1,12 +1,6 @@
 import "dotenv/config";
 import OpenAI from "openai";
-import {
-  computeCostUSD,
-  countTokens,
-  createTokenlens,
-  estimateCostUSD,
-  getContextHealth,
-} from "tokenlens";
+import { createTokenlens } from "tokenlens";
 
 async function main(): Promise<void> {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -28,8 +22,8 @@ async function main(): Promise<void> {
 
   const prompt = "Explain how token usage affects AI application costs.";
 
-  const estimate = await estimateCostUSD({
-    modelId: "gpt-4o",
+  const estimate = await tokenlens.estimateCostUSD({
+    modelId: "openai/gpt-4o",
     data: prompt,
   });
 
@@ -41,36 +35,44 @@ async function main(): Promise<void> {
   console.log("\n🔢 Example 2: Local Token Counting");
   console.log("-".repeat(60));
 
-  const tokenCount = await countTokens({ modelId: "gpt-4o", data: prompt });
+  const tokenCount = await tokenlens.countTokens({
+    modelId: "openai/gpt-4o",
+    data: prompt,
+  });
   console.log(`Tokens (local): ${tokenCount}`);
 
   // Example 3: Make actual API call and track costs
   console.log("\n💬 Example 3: Actual API Call with Cost Tracking");
   console.log("-".repeat(60));
 
-  const completion = await client.chat.completions.create({
+  const completion = await client.responses.create({
     model: "gpt-4o-mini",
-    messages: [{ role: "user", content: prompt }],
-    max_tokens: 150,
+    input: prompt,
+    max_output_tokens: 150,
   });
 
-  const response = completion.choices[0]?.message?.content || "";
-  console.log(`Response: "${response.substring(0, 100)}..."`);
+  const responseText = completion.output_text ?? "";
+  console.log(`Response: "${responseText.substring(0, 100)}..."`);
 
-  const { usage } = completion;
+  let inputTokens = 0;
+  let outputTokens = 0;
+  const usage = completion.usage;
   if (usage) {
-    const costs = await computeCostUSD({
-      modelId: "gpt-4o-mini",
+    inputTokens = usage.input_tokens ?? usage.prompt_tokens ?? 0;
+    outputTokens = usage.output_tokens ?? usage.completion_tokens ?? 0;
+    const totalTokens = usage.total_tokens ?? inputTokens + outputTokens;
+    const costs = await tokenlens.computeCostUSD({
+      modelId: "openai/gpt-4o-mini",
       usage: {
-        input_tokens: usage.prompt_tokens,
-        output_tokens: usage.completion_tokens,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
       },
     });
 
     console.log(`\nActual usage:`);
-    console.log(`  Input tokens:  ${usage.prompt_tokens}`);
-    console.log(`  Output tokens: ${usage.completion_tokens}`);
-    console.log(`  Total tokens:  ${usage.total_tokens}`);
+    console.log(`  Input tokens:  ${inputTokens}`);
+    console.log(`  Output tokens: ${outputTokens}`);
+    console.log(`  Total tokens:  ${totalTokens}`);
     console.log(`\nCost breakdown:`);
     console.log(`  Input cost:  $${costs.inputTokenCostUSD?.toFixed(6)}`);
     console.log(`  Output cost: $${costs.outputTokenCostUSD?.toFixed(6)}`);
@@ -81,14 +83,16 @@ async function main(): Promise<void> {
   console.log("\n🏥 Example 4: Context Health Monitoring");
   console.log("-".repeat(60));
 
-  const model = await tokenlens.getModelData({ modelId: "gpt-4o-mini" });
+  const model = await tokenlens.getModelData({
+    modelId: "openai/gpt-4o-mini",
+  });
 
   if (usage && model) {
-    const health = await getContextHealth({
-      modelId: "gpt-4o",
+    const health = await tokenlens.getContextHealth({
+      modelId: "openai/gpt-4o-mini",
       usage: {
-        input_tokens: usage.prompt_tokens,
-        output_tokens: usage.completion_tokens,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
       },
     });
 
@@ -125,8 +129,12 @@ async function main(): Promise<void> {
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
 
+  // Token counting here approximates chat usage by measuring message content only, ignoring role/system overhead.
   for (const msg of conversation) {
-    const tokens = await countTokens({ modelId: "gpt-4o", data: msg.content });
+    const tokens = await tokenlens.countTokens({
+      modelId: "openai/gpt-4o",
+      data: msg.content,
+    });
     if (tokens) {
       if (msg.role === "user") {
         totalInputTokens += tokens;
@@ -136,8 +144,8 @@ async function main(): Promise<void> {
     }
   }
 
-  const conversationCost = await computeCostUSD({
-    modelId: "gpt-4o",
+  const conversationCost = await tokenlens.computeCostUSD({
+    modelId: "openai/gpt-4o",
     usage: {
       input_tokens: totalInputTokens,
       output_tokens: totalOutputTokens,
@@ -151,7 +159,7 @@ async function main(): Promise<void> {
   console.log(`Total output tokens: ${totalOutputTokens}`);
   console.log(`Estimated cost: $${totalCost.toFixed(6)}`);
 
-  console.log("\n" + "=".repeat(60));
+  console.log(`\n${"=".repeat(60)}`);
   console.log("✅ Example completed successfully!");
 }
 

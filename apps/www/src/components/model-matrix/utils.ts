@@ -11,8 +11,15 @@ export const tierIconsMap = {
   free: "DollarSign",
   low: "Zap",
   mid: "Sparkles",
-  high: "Sparkles",
+  high: "Crown",
 } as const;
+
+function calculateTier(promptCost: number): Model["tier"] {
+  if (promptCost === 0) return "free";
+  if (promptCost < 0.5) return "low";
+  if (promptCost < 3) return "mid";
+  return "high";
+}
 
 export function buildModelsFromCatalog(catalog?: SourceProvidersLite): Model[] {
   const models: Model[] = [];
@@ -22,25 +29,20 @@ export function buildModelsFromCatalog(catalog?: SourceProvidersLite): Model[] {
       const id = String(canonicalId ?? m.id ?? "");
       const name = m.name ?? id;
       const context = m.limit?.context ?? 0;
-      const prompt = Number.isFinite(m.cost?.input ?? 0)
-        ? Number(m.cost?.input)
-        : 0;
-      const completion = Number.isFinite(m.cost?.output ?? 0)
-        ? Number(m.cost?.output)
-        : 0;
+      const prompt =
+        typeof m.cost?.input === "number" && Number.isFinite(m.cost.input)
+          ? m.cost.input
+          : 0;
+      const completion =
+        typeof m.cost?.output === "number" && Number.isFinite(m.cost.output)
+          ? m.cost.output
+          : 0;
       models.push({
         id,
         name,
         provider: providerId,
         contextWindow: context ? `${context}` : "-",
-        tier:
-          prompt === 0
-            ? "free"
-            : prompt < 0.5
-              ? "low"
-              : prompt < 3
-                ? "mid"
-                : "high",
+        tier: calculateTier(prompt),
         features: [],
         pricing: { prompt, completion, currency: "USD" },
       });

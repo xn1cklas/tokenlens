@@ -14,9 +14,10 @@ import {
   MessageCircleIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { cn } from "../lib/cn";
+import { cn } from "@/lib/utils";
 import { buttonVariants } from "./ui/button";
 
+// Module-level cache resets on reload/navigation; used only for short-lived clipboard reuse.
 const cache = new Map<string, string>();
 
 export function LLMCopyButton({

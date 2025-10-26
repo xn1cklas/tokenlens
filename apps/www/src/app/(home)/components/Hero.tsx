@@ -11,10 +11,11 @@ type NpmDownloads = {
 };
 
 const formatDownloads = (num: number): string => {
-  if (num >= 1000000) {
-    return `${(num / 1000000).toFixed(1)}M`;
-  } else if (num >= 1000) {
-    return `${(num / 1000).toFixed(1)}K`;
+  if (num >= 1_000_000) {
+    return `${(num / 1_000_000).toFixed(1)}M`;
+  }
+  if (num >= 1_000) {
+    return `${(num / 1_000).toFixed(1)}K`;
   }
   return num.toString();
 };
@@ -23,7 +24,7 @@ async function getNpmStats() {
   try {
     const res = await fetch(
       "https://api.npmjs.org/downloads/point/last-month/tokenlens",
-      { next: { revalidate: 3600 }, cache: "force-cache" },
+      { next: { revalidate: 3600 } },
     );
     if (!res.ok) throw new Error("Failed to fetch npm stats");
     const data: NpmDownloads = await res.json();

@@ -1,9 +1,7 @@
 import { fetchModelsDev, fetchOpenrouter, fetchVercel } from "@tokenlens/fetch";
 import { CtaSection } from "./components/CtaSection";
-import { FeaturesSection } from "./components/FeaturesSection";
 import { Hero } from "./components/Hero";
 import { ModelsSection } from "./components/ModelsSection";
-import { SDKsSection } from "./components/SDKsSection";
 import { SiteFooter } from "./components/SiteFooter";
 import { TrustedBy } from "./components/TrustedBy";
 
@@ -19,21 +17,25 @@ export default async function HomePage() {
     Object.keys(modelsdevCatalog).length > 0
       ? modelsdevCatalog
       : openrouterCatalog;
+  const modelsdevUsedFallback = Object.keys(modelsdevCatalog).length === 0;
+
   const vercelFinal =
     Object.keys(vercelCatalog).length > 0 ? vercelCatalog : openrouterCatalog;
+  const vercelUsedFallback = Object.keys(vercelCatalog).length === 0;
+
   const lastUpdated = Date.now();
 
   return (
     <div className="p-5 bg-background border-border hover:border-accent/50 transition-all group hover:shadow-lg">
       <Hero />
       <TrustedBy />
-      {/* <SDKsSection /> */}
-      {/* <FeaturesSection /> */}
       <ModelsSection
         openrouter={openrouterCatalog}
         modelsdev={modelsdevFinal}
         vercel={vercelFinal}
         lastUpdated={lastUpdated}
+        modelsdevFallback={modelsdevUsedFallback}
+        vercelFallback={vercelUsedFallback}
       />
       <CtaSection />
       <SiteFooter />

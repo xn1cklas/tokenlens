@@ -24,6 +24,16 @@ export type ContextHealth = {
  * - Usage percentages
  * - Health status (healthy: <70%, warning: 70-90%, critical: >90%)
  *
+ * **Important Note on Reasoning Tokens:**
+ * For models with reasoning support (e.g., OpenAI o1), the `usage` object should provide:
+ * - `input_tokens`: Total input tokens
+ * - `output_tokens`: Completion tokens (excluding reasoning)
+ * - `reasoning_tokens`: Separate token count for model reasoning
+ *
+ * These are calculated as: `input + output + reasoning` because reasoning tokens
+ * are reported separately and are NOT included in the output_tokens count.
+ * Do NOT pass a usage object where reasoning_tokens are already counted in output_tokens.
+ *
  * @param args - Model and usage information
  * @returns Context health metrics or undefined if context limit is unavailable
  *
@@ -37,6 +47,17 @@ export type ContextHealth = {
  * console.log(health?.remainingTokens); // 68000
  * console.log(health?.remainingPercentage); // 53.125
  * console.log(health?.status); // "healthy"
+ * ```
+ *
+ * @example
+ * ```ts
+ * // With reasoning tokens (separate from output)
+ * const health = getContextHealth({
+ *   model: { limit: { context: 128000 } },
+ *   usage: { input_tokens: 50000, output_tokens: 10000, reasoning_tokens: 20000 }
+ * });
+ *
+ * console.log(health?.usedTokens); // 80000 (50000 + 10000 + 20000)
  * ```
  */
 export function getContextHealth(args: {

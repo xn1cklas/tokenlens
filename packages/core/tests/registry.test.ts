@@ -35,7 +35,6 @@ const {
   MODEL_IDS,
   models,
   resolveModel,
-  resolveModels,
   getModelRaw,
   isModelId,
   assertModelId,

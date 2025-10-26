@@ -15,11 +15,11 @@ export type AnthropicModelId =
   | `anthropic/${AnthropicModelName}`;
 
 export async function anthropic(modelId: AnthropicModelName, data: string) {
-  if (!process.env["ANTHROPIC_API_KEY"]) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error("ANTHROPIC_API_KEY is not set");
   }
 
-  const client = new Anthropic({ apiKey: process.env["ANTHROPIC_API_KEY"] });
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const result = await client.messages.countTokens({
     model: modelId,
