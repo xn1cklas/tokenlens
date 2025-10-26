@@ -282,7 +282,7 @@ describe("getContextHealth", () => {
     expect(health?.remainingTokens).toBe(93000);
   });
 
-  it("includes cache tokens in usage calculation", () => {
+  it("does not double-count cache tokens in usage calculation", () => {
     const model: SourceModel = {
       id: "claude-sonnet-4-5",
       canonical_id: "anthropic/claude-sonnet-4-5",
@@ -293,19 +293,19 @@ describe("getContextHealth", () => {
     const usage: Usage = {
       input_tokens: 50000,
       output_tokens: 10000,
-      cache_read_tokens: 30000, // Tokens read from cache
-      cache_write_tokens: 5000, // Tokens written to cache
+      cache_read_tokens: 30000, // Subset of input_tokens (for pricing)
+      cache_write_tokens: 5000, // Subset of input_tokens (for pricing)
     };
 
     const health = getContextHealth({ model, usage });
 
     expect(health).toBeDefined();
-    expect(health?.usedTokens).toBe(95000); // 50000 + 10000 + 30000 + 5000
-    expect(health?.remainingTokens).toBe(105000);
+    expect(health?.usedTokens).toBe(60000); // 50000 + 10000 (cache tokens are subsets, not additive)
+    expect(health?.remainingTokens).toBe(140000);
     expect(health?.status).toBe("healthy");
   });
 
-  it("includes all token types (reasoning + cache) together", () => {
+  it("correctly handles reasoning tokens while not double-counting cache tokens", () => {
     const model: SourceModel = {
       id: "test-model",
       canonical_id: "test/test-model",
@@ -317,16 +317,16 @@ describe("getContextHealth", () => {
       input_tokens: 20000,
       output_tokens: 10000,
       reasoning_tokens: 15000,
-      cache_read_tokens: 25000,
-      cache_write_tokens: 5000,
+      cache_read_tokens: 25000, // Subset of input_tokens (for pricing)
+      cache_write_tokens: 5000, // Subset of input_tokens (for pricing)
     };
 
     const health = getContextHealth({ model, usage });
 
     expect(health).toBeDefined();
-    expect(health?.usedTokens).toBe(75000); // Sum of all token types
-    expect(health?.remainingTokens).toBe(25000);
-    expect(health?.status).toBe("warning"); // 75% usage
+    expect(health?.usedTokens).toBe(45000); // 20000 + 10000 + 15000 (cache tokens not added)
+    expect(health?.remainingTokens).toBe(55000);
+    expect(health?.status).toBe("healthy"); // 45% usage
   });
 });
 

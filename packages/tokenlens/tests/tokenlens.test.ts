@@ -16,6 +16,7 @@ import {
 import {
   createModelsDevProvidersFixture,
   createOpenrouterProvidersFixture,
+  createVercelProvidersFixture,
 } from "./fixtures/providers.js";
 
 // Mock the fetch functions
@@ -23,6 +24,7 @@ vi.mock("@tokenlens/fetch", async () => {
   return {
     fetchOpenrouter: vi.fn(),
     fetchModelsDev: vi.fn(),
+    fetchVercel: vi.fn(),
   };
 });
 
@@ -45,12 +47,14 @@ function makeUsage(): Usage {
 describe("Tokenlens - Catalog Loading", () => {
   let fetchModelsDevSpy: Mock;
   let fetchOpenrouterSpy: Mock;
+  let fetchVercelSpy: Mock;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     const fetchModule = await import("@tokenlens/fetch");
     fetchModelsDevSpy = vi.spyOn(fetchModule, "fetchModelsDev") as Mock;
     fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter") as Mock;
+    fetchVercelSpy = vi.spyOn(fetchModule, "fetchVercel") as Mock;
   });
 
   afterEach(() => {
@@ -87,6 +91,21 @@ describe("Tokenlens - Catalog Loading", () => {
 
     expect(modelData?.id).toBe("anthropic/claude-3.5");
     expect(fetchModelsDevSpy).toHaveBeenCalled();
+  });
+
+  it("uses vercel catalog", async () => {
+    const mockCatalog = createVercelProvidersFixture();
+    fetchVercelSpy.mockResolvedValue(mockCatalog);
+
+    const client = new Tokenlens({
+      catalog: "vercel",
+      cacheKey: "test-vercel",
+    });
+
+    const modelData = await client.getModelData({ modelId: "openai/gpt-4o" });
+
+    expect(modelData?.id).toBe("openai/gpt-4o");
+    expect(fetchVercelSpy).toHaveBeenCalled();
   });
 
   it("uses custom catalog object without fetching", async () => {

@@ -28,6 +28,21 @@ const OPENROUTER_PROVIDERS: SourceProviders = {
   },
 };
 
+const VERCEL_PROVIDERS: SourceProviders = {
+  openai: {
+    id: "openai",
+    name: "OpenAI",
+    api: "https://ai-gateway.vercel.sh/v1",
+    doc: "https://vercel.com/docs/ai/ai-gateway",
+    env: ["VERCEL_AI_API_KEY"],
+    source: "vercel",
+    schemaVersion: 1,
+    models: {
+      [OPENAI_GPT4O_MODEL.id]: OPENAI_GPT4O_MODEL,
+    },
+  },
+};
+
 const ANTHROPIC_CLAUDE35_MODEL: SourceModel = {
   id: "anthropic/claude-3.5",
   name: "Claude 3.5",
@@ -84,6 +99,10 @@ export function createOpenrouterProvidersFixture(): SourceProviders {
 
 export function createModelsDevProvidersFixture(): SourceProviders {
   return cloneProviders(MODELS_DEV_PROVIDERS);
+}
+
+export function createVercelProvidersFixture(): SourceProviders {
+  return cloneProviders(VERCEL_PROVIDERS);
 }
 
 export function createPackageProvidersFixture(): SourceProviders {

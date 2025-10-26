@@ -1,5 +1,5 @@
 import type { SourceModel, SourceProviders, Usage } from "@tokenlens/core";
-import { fetchModelsDev, fetchOpenrouter } from "@tokenlens/fetch";
+import { fetchModelsDev, fetchOpenrouter, fetchVercel } from "@tokenlens/fetch";
 import type { TokenCosts } from "@tokenlens/helpers";
 import {
   computeTokenCostsForModel,
@@ -59,10 +59,9 @@ export class Tokenlens {
       case "models.dev":
         catalog = await fetchModelsDev();
         break;
-      // TODO implement vercel AI Gateway
-      // case "vercel":
-      //   catalog = [];
-      //   break;
+      case "vercel":
+        catalog = await fetchVercel();
+        break;
       // TODO implement netlify AI Gateway
       // case "netlify":
       //   catalog = [];
@@ -97,6 +96,9 @@ export class Tokenlens {
         break;
       case "models.dev":
         catalog = await fetchModelsDev();
+        break;
+      case "vercel":
+        catalog = await fetchVercel();
         break;
       default:
         throw new Error(`Unknown catalog ID: ${this.catalog}`);

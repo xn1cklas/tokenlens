@@ -1,6 +1,6 @@
 // Unified DTO shared across live fetchers and static generators
 
-export type SourceId = "models.dev" | "openrouter" | "package";
+export type SourceId = "models.dev" | "openrouter" | "vercel" | "package";
 
 export type SourceModel = {
   id: string;

@@ -30,9 +30,9 @@ export function FeaturesSection() {
               </div>
               <h3 className="text-2xl font-bold mb-3">Multi-Source Catalog</h3>
               <p className="text-muted-foreground leading-relaxed mb-6">
-                Auto-fetches from OpenRouter or models.dev with built-in
-                caching. Configurable TTL with jitter to avoid cache stampedes.
-                Always up-to-date model metadata.
+                Auto-fetches from OpenRouter, models.dev, or Vercel AI Gateway
+                with built-in caching. Configurable TTL with jitter to avoid
+                cache stampedes. Always up-to-date model metadata.
               </p>
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2">

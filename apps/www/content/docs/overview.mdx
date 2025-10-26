@@ -14,7 +14,7 @@ description: "What Tokenlens is, why it exists, and core concepts."
 Tokenlens provides provider-aware model metadata and usage utilities for AI applications. It resolves canonical model ids across multiple data sources, normalizes usage payloads, and estimates token costs/context limits with a consistent TypeScript API.
 
 ## Why Tokenlens?
-- **Consistent metadata**: Works with dynamic catalogs such as OpenRouter and models.dev, plus local fixture data.
+- **Consistent metadata**: Works with dynamic catalogs such as OpenRouter, models.dev, and Vercel AI Gateway, plus local fixture data.
 - **Usage normalization**: Understands common SDK payloads (OpenAI, Anthropic, Vercel AI SDK `LanguageModelV2`, etc.).
 - **Cost and context**: Quickly estimate USD costs, check context windows, and inform compaction strategies.
 - **Typed surface**: Ships DTOs for the metadata it returns (`ModelDetails`, `TokenCosts`, etc.).
@@ -23,7 +23,7 @@ Tokenlens provides provider-aware model metadata and usage utilities for AI appl
 
 ### Tokenlens instance
 A `Tokenlens` instance encapsulates:
-- The list of **sources** to load (e.g., `"openrouter"`, `"models.dev"`, `"package"`).
+- The list of **sources** to load (e.g., `"openrouter"`, `"models.dev"`, `"vercel"`, `"package"`).
 - Source **loaders** responsible for fetching and transforming provider catalogs into Tokenlens DTOs.
 - A **cache**, with configurable TTL, used to avoid repeated network requests during a process lifecycle.
 
@@ -38,6 +38,7 @@ Each method operates on the same cached provider metadata, ensuring consistent r
 A *source* identifies a dataset Tokenlens knows how to ingest. Built-in identifiers:
 - `"openrouter"` (default) – live catalog fetched over HTTP.
 - `"models.dev"` – static dataset derived from models.dev.
+- `"vercel"` – live catalog fetched from the Vercel AI Gateway.
 - `"package"` – user-defined loader returning local/fixture data.
 
 Loaders are async functions with the signature `SourceLoader = (fetchImpl) => Promise<SourceProviders>`. Tokenlens merges the returned provider maps in the order sources are specified.

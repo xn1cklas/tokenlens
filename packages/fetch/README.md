@@ -9,11 +9,12 @@
 
 ![TokenLens overview](https://raw.githubusercontent.com/xn1cklas/tokenlens/HEAD/assets/tokenlens.png)
 
-Typed, dependency-free fetchers for the public `models.dev` catalog and the OpenRouter API. Both return the shared TokenLens DTO shape so the rest of the toolchain can consume a consistent model registry.
+Typed, dependency-free fetchers for the public `models.dev` catalog, Vercel AI Gateway, and the OpenRouter API. All return the shared TokenLens DTO shape so the rest of the toolchain can consume a consistent model registry.
 
 Features
 - `fetchModelsDev` normalizes https://models.dev/api.json into TokenLens DTOs
 - `fetchOpenrouter` maps OpenRouter models, pricing, limits, and metadata
+- `fetchVercel` maps Vercel AI Gateway models, pricing, and context limits
 - Pass a custom `fetch` implementation for server/runtime flexibility
 - DTO types (`SourceProvider`, `SourceModel`, …) re-exported for convenience
 
@@ -27,6 +28,7 @@ Quick start
 import {
   fetchModelsDev,
   fetchOpenrouter,
+  fetchVercel,
   type SourceProviders,
 } from "@tokenlens/fetch";
 
@@ -36,10 +38,17 @@ const modelsDevCatalog = await fetchModelsDev({ provider: "openai" });
 // OpenRouter catalog (grouped by provider namespace)
 const openrouterCatalog = await fetchOpenrouter({ model: "gpt" });
 
+// Vercel AI Gateway catalog (grouped by upstream provider)
+const vercelCatalog = await fetchVercel({ provider: "openai" });
+
 const combine = (catalogs: SourceProviders[]): SourceProviders =>
   Object.assign({}, ...catalogs);
 
-const providers = combine([modelsDevCatalog, openrouterCatalog]);
+const providers = combine([
+  modelsDevCatalog,
+  openrouterCatalog,
+  vercelCatalog,
+]);
 ```
 
 API
@@ -47,6 +56,8 @@ API
   - Fetches the public models.dev JSON, normalizes provider metadata and models, and optionally filters.
 - `fetchOpenrouter(options?: { provider?: string; model?: string; fetch?: FetchLike })`
   - Calls `https://openrouter.ai/api/v1/models`, groups models by namespace, and keeps pricing/limit details.
+- `fetchVercel(options?: { provider?: string; model?: string; fetch?: FetchLike })`
+  - Loads `https://ai-gateway.vercel.sh/v1/models`, groups models by upstream provider, and converts pricing.
 - `FetchLike`
   - Minimal fetch contract accepted by both functions. Useful when wiring Node, Deno, Cloudflare Workers, etc.
 
@@ -62,7 +73,7 @@ import type {
 The types mirror the definitions in `@tokenlens/core/dto` and are re-exported here for convenience.
 
 Testing
-- `pnpm test --filter @tokenlens/fetch` runs both unit tests (mocked DTO transforms) and live integration tests hitting models.dev and OpenRouter. Ensure you have network access when running the suite.
+- `pnpm test --filter @tokenlens/fetch` runs both unit tests (mocked DTO transforms) and live integration tests hitting models.dev, Vercel AI Gateway, and OpenRouter. Ensure you have network access when running the suite.
 
 License
 MIT

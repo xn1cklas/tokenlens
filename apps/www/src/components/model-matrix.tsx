@@ -20,16 +20,24 @@ import {
 export function ModelMatrix({
   openrouter,
   modelsdev,
+  vercel,
   lastUpdated,
 }: ModelMatrixProps) {
   const [source, setSource] = useState<SourceValue>("openrouter");
   const [search, setSearch] = useState("");
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
 
-  const currentCatalog = useMemo(
-    () => (source === "openrouter" ? openrouter : modelsdev),
-    [source, openrouter, modelsdev],
-  );
+  const currentCatalog = useMemo(() => {
+    switch (source) {
+      case "modelsdev":
+        return modelsdev;
+      case "vercel":
+        return vercel;
+      case "openrouter":
+      default:
+        return openrouter;
+    }
+  }, [source, openrouter, modelsdev, vercel]);
 
   const models = useMemo(
     () => buildModelsFromCatalog(currentCatalog),

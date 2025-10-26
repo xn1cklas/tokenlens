@@ -11,6 +11,7 @@ Tokenlens fetches provider catalogs via *sources*. This document explains how so
 | -------------- | -------------------------------------- | --------------------------------------------------------------- |
 | `"openrouter"` | Live model metadata from openrouter.ai | Fetches over HTTP using the provided `fetch` implementation.    |
 | `"models.dev"` | Static dataset derived from models.dev | Fetches and transforms the packaged JSON dataset.               |
+| `"vercel"`     | Live catalog from Vercel AI Gateway    | Fetches over HTTP and normalizes OpenAI-compatible responses.   |
 | `"package"`    | User-defined/local data                | Requires you to supply a loader that returns `SourceProviders`. |
 
 ### Ordering & precedence

@@ -1,4 +1,4 @@
-import { fetchModelsDev, fetchOpenrouter } from "@tokenlens/fetch";
+import { fetchModelsDev, fetchOpenrouter, fetchVercel } from "@tokenlens/fetch";
 import { CtaSection } from "./components/CtaSection";
 import { FeaturesSection } from "./components/FeaturesSection";
 import { Hero } from "./components/Hero";
@@ -12,15 +12,15 @@ export const revalidate = 86400; // 1 day
 export default async function HomePage() {
   // No local transformation here; we pass the catalogs directly to the component
 
-  const [openrouterCatalog, modelsdevCatalog] = await Promise.all([
-    fetchOpenrouter(),
-    fetchModelsDev(),
-  ]);
+  const [openrouterCatalog, modelsdevCatalog, vercelCatalog] =
+    await Promise.all([fetchOpenrouter(), fetchModelsDev(), fetchVercel()]);
 
   const modelsdevFinal =
     Object.keys(modelsdevCatalog).length > 0
       ? modelsdevCatalog
       : openrouterCatalog;
+  const vercelFinal =
+    Object.keys(vercelCatalog).length > 0 ? vercelCatalog : openrouterCatalog;
   const lastUpdated = Date.now();
 
   return (
@@ -32,6 +32,7 @@ export default async function HomePage() {
       <ModelsSection
         openrouter={openrouterCatalog}
         modelsdev={modelsdevFinal}
+        vercel={vercelFinal}
         lastUpdated={lastUpdated}
       />
       <CtaSection />

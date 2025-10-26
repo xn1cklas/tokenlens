@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
-import { fetchModelsDev, fetchOpenrouter } from "../src/index.ts";
+import { fetchModelsDev, fetchOpenrouter, fetchVercel } from "../src/index.ts";
 
 describe("live fetchers", () => {
   it("fetchOpenrouter returns catalog with providers and models", async () => {
@@ -37,6 +37,29 @@ describe("live fetchers", () => {
     expect(providerId).toBeTruthy();
     expect(provider.id).toBe(providerId);
     expect(provider.source).toBe("models.dev");
+
+    const modelIds = Object.keys(provider.models);
+    expect(modelIds.length).toBeGreaterThan(0);
+
+    const modelId = modelIds[0] as string;
+    const model = provider.models[modelId];
+    expect(modelId).toBeTruthy();
+    expect(model.id).toBe(modelId);
+    expect(typeof model.name).toBe("string");
+  }, 30000);
+
+  it("fetchVercel returns catalog with providers and models", async () => {
+    const providers = await fetchVercel();
+
+    const providerIds = Object.keys(providers);
+    expect(providerIds.length).toBeGreaterThan(0);
+
+    const providerId = providerIds[0] as string;
+    const provider = providers[providerId];
+    expect(providerId).toBeTruthy();
+    expect(provider.id).toBe(providerId);
+    expect(provider.source).toBe("vercel");
+    expect(provider.env).toContain("VERCEL_AI_API_KEY");
 
     const modelIds = Object.keys(provider.models);
     expect(modelIds.length).toBeGreaterThan(0);

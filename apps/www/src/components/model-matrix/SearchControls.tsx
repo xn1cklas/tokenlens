@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export type SourceValue = "openrouter" | "modelsdev";
+export type SourceValue = "openrouter" | "modelsdev" | "vercel";
 
 export function SearchControls({
   search,
@@ -42,6 +42,7 @@ export function SearchControls({
           <SelectContent>
             <SelectItem value="openrouter">OpenRouter</SelectItem>
             <SelectItem value="modelsdev">Models.dev</SelectItem>
+            <SelectItem value="vercel">Vercel AI Gateway</SelectItem>
           </SelectContent>
         </Select>
       </div>

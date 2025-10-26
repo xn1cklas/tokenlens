@@ -160,6 +160,79 @@ function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
   };
 }
 
+type VercelModelJson = {
+  [key: string]: unknown;
+  id?: string;
+  name?: string;
+  owned_by?: string;
+  created?: number;
+  context_window?: number | string | null;
+  max_tokens?: number | string | null;
+  pricing?: Record<string, unknown>;
+};
+
+function mapVercelModel(model: VercelModelJson): SourceModel {
+  const contextWindow = toNumber(model.context_window);
+  const maxTokens = toNumber(model.max_tokens);
+  const limit =
+    contextWindow !== undefined || maxTokens !== undefined
+      ? {
+          ...(contextWindow !== undefined ? { context: contextWindow } : {}),
+          ...(maxTokens !== undefined ? { output: maxTokens } : {}),
+        }
+      : undefined;
+  const normalized: Record<string, unknown> = {
+    ...(model as Record<string, unknown>),
+    ...(contextWindow !== undefined ? { context_length: contextWindow } : {}),
+    ...(limit !== undefined ? { limit } : {}),
+  };
+  return mapOpenrouterModel(normalized);
+}
+
+export async function fetchVercel(
+  options?: CommonOptions,
+): Promise<SourceProviders> {
+  const res = await fetch("https://ai-gateway.vercel.sh/v1/models");
+  if (!res.ok) {
+    throw new Error(
+      `Failed to fetch Vercel AI Gateway: ${res.status} ${res.statusText}`,
+    );
+  }
+  const parsed = (await res.json()) as {
+    data?: VercelModelJson[];
+  };
+  const list = Array.isArray(parsed?.data) ? parsed.data : [];
+
+  const catalog: SourceProviders = {};
+  for (const model of list) {
+    if (!model) continue;
+    const id = String(model.id ?? "");
+    if (!id) continue;
+    const providerPart = id.includes("/") ? id.split("/")[0] : undefined;
+    const providerId =
+      typeof model.owned_by === "string" && model.owned_by.length > 0
+        ? model.owned_by
+        : (providerPart ?? "vercel");
+    if (!catalog[providerId]) {
+      catalog[providerId] = {
+        id: providerId,
+        name: providerId,
+        api: "https://ai-gateway.vercel.sh/v1",
+        doc: "https://vercel.com/docs/ai/ai-gateway",
+        env: ["VERCEL_AI_API_KEY"],
+        source: "vercel",
+        schemaVersion: 1,
+        models: {},
+      };
+    }
+    const provider = catalog[providerId];
+    if (!provider) continue;
+    provider.models[id] = mapVercelModel(model);
+  }
+
+  return filterCatalog(catalog, options?.provider, options?.model);
+}
+
 export async function fetchOpenrouter(
   options?: CommonOptions,
 ): Promise<SourceProviders> {

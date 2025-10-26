@@ -5,10 +5,12 @@ import type { SourceProvidersLite } from "@/components/model-matrix/types";
 export function ModelsSection({
   openrouter,
   modelsdev,
+  vercel,
   lastUpdated,
 }: {
   openrouter: SourceProvidersLite;
   modelsdev: SourceProvidersLite;
+  vercel: SourceProvidersLite;
   lastUpdated: number;
 }) {
   return (
@@ -27,8 +29,8 @@ export function ModelsSection({
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
               <span>
                 Model data sourced from public directories (OpenRouter,
-                models.dev). While we strive for accuracy, we cannot guarantee
-                100% correctness.
+                models.dev, Vercel AI Gateway). While we strive for accuracy, we
+                cannot guarantee 100% correctness.
               </span>
             </div>
           </div>
@@ -36,6 +38,7 @@ export function ModelsSection({
           <ModelMatrix
             openrouter={openrouter}
             modelsdev={modelsdev}
+            vercel={vercel}
             lastUpdated={lastUpdated}
           />
         </div>

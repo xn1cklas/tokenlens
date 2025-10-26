@@ -14,7 +14,7 @@ Works seamlessly with Vercel AI SDK, OpenAI SDK, Anthropic SDK, and remains SDK-
 
 ## Highlights
 
-- **Multi-source catalog**: Auto-fetches from OpenRouter or models.dev with built-in caching
+- **Multi-source catalog**: Auto-fetches from OpenRouter, models.dev, or Vercel AI Gateway with built-in caching
 - **Simple API**: `computeCostUSD`, `getModelData`, `getContextLimits`, `getContextHealth`, `countTokens`, `estimateCostUSD`
 - **Strong TypeScript**: Full type safety for model IDs, usage objects, and return types
 - **Automatic caching**: Configurable TTL with jitter to avoid cache stampedes
@@ -73,7 +73,7 @@ const tokenlens = new Tokenlens(options?: TokenlensOptions);
 ```
 
 **Options:**
-- `catalog`: `"auto" | "openrouter" | "models.dev"` or custom `SourceProviders` object (default: `"auto"`)
+- `catalog`: `"auto" | "openrouter" | "models.dev" | "vercel"` or custom `SourceProviders` object (default: `"auto"`)
 - `ttlMs`: Cache TTL in milliseconds (default: 24 hours)
 - `cache`: Custom cache adapter implementing `CacheAdapter` interface (default: in-memory cache)
 - `cacheKey`: Custom cache key for the catalog (default: `tokenlens:v2:{catalog}`)

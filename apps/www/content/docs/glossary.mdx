@@ -14,7 +14,7 @@ This file defines canonical terminology used across the TokenLens v2 codebase an
 - Example: `openai/gpt-4o-mini`, `anthropic/claude-3-5-sonnet-20241022`.
 
 ## source
-- The upstream dataset Tokenlens can load (`openrouter`, `models.dev`, or `package`).
+- The upstream dataset Tokenlens can load (`openrouter`, `models.dev`, `vercel`, or `package`).
 - Configured via `TokenlensOptions.sources` or `createTokenlens({ sources })`.
 
 ## source loader
@@ -61,6 +61,10 @@ This file defines canonical terminology used across the TokenLens v2 codebase an
 - External dataset consumed via `https://openrouter.ai/api/v1/models`.
 - In v2 we ingest it into `packages/models/src/openrouter/`.
 
+## Vercel AI Gateway
+- External dataset consumed via `https://ai-gateway.vercel.sh/v1/models`.
+- Accessed live via `fetchVercel` or the `"vercel"` source.
+
 ## package source
 - In-memory catalog provided by Tokenlens for tests/examples.
 - Typically wired via `createTokenlens({ sources: ["package"], loaders: { package: async () => ... } })`.
@@ -104,5 +108,4 @@ Conventions
 - Prefer `provider/model` in code and docs.
 - Reference terms by anchor, e.g., “See docs/glossary.md#model”.
 - New terms must be added here in the same PR.
-
 

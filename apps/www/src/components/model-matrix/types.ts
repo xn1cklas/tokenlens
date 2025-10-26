@@ -27,5 +27,6 @@ export type SourceProvidersLite = Record<
 export interface ModelMatrixProps {
   openrouter: SourceProvidersLite;
   modelsdev: SourceProvidersLite;
+  vercel: SourceProvidersLite;
   lastUpdated: number;
 }
