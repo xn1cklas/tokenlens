@@ -39,7 +39,7 @@
     "access": "public"
   },
   "scripts": {
-    "prebuild": "pnpm --filter @tokenlens/core run build && pnpm --filter @tokenlens/helpers run build && pnpm --filter @tokenlens/fetch run build",
+    "prebuild": "pnpm --filter @tokenlens/core run build && pnpm --filter @tokenlens/helpers run build && pnpm --filter @tokenlens/fetch run build && pnpm --filter @tokenlens/tokenizer run build",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "pnpm run build && vitest --config ../../vitest.config.ts --project tokenlens",
