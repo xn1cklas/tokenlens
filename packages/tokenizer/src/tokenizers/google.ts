@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { TokenlensError } from "@tokenlens/core";
 
 const GOOGLE_MODELS = [
   "gemini-2.5-pro",
@@ -11,7 +12,7 @@ export type GoogleModelId = GoogleModelName | `google/${GoogleModelName}`;
 
 export async function google(modelId: GoogleModelName, data: string) {
   if (!process.env["GOOGLE_API_KEY"]) {
-    throw new Error("GOOGLE_API_KEY is not set");
+    throw new TokenlensError.MissingEnvironmentVariable("GOOGLE_API_KEY");
   }
 
   const ai = new GoogleGenAI({ apiKey: process.env["GOOGLE_API_KEY"] });

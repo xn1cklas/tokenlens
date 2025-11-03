@@ -1,9 +1,8 @@
+import { TokenlensError } from "@tokenlens/core";
 import { compactJson } from "@tokenlens/helpers";
 import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Tokenlens } from "../src/client.js";
-import { BASE_ERROR_CODES } from "../src/error/codes.js";
-import { TokenLensError } from "../src/error/index.js";
 import {
   computeCostUSD as apiComputeCostUSD,
   countTokens as apiCountTokens,
@@ -282,13 +281,12 @@ describe("Tokenlens.getModelData()", () => {
         cacheKey: "test-unknown-model",
       });
 
-      await expect(
-        client.getModelData({ modelId: "unknown/model" }),
-      ).rejects.toThrow(TokenLensError);
+      const result = client.getModelData({ modelId: "unknown/model" });
 
-      await expect(
-        client.getModelData({ modelId: "unknown/model" }),
-      ).rejects.toThrow(BASE_ERROR_CODES.MODEL_NOT_FOUND);
+      await expect(result).rejects.toThrow(TokenlensError.ModelNotFound);
+      await expect(result).rejects.toMatchObject({
+        code: TokenlensError.ModelNotFound.code,
+      });
     });
   });
 
@@ -393,9 +391,12 @@ describe("Tokenlens.computeCostUSD()", () => {
 
       const usage = makeUsage();
 
-      await expect(
-        client.computeCostUSD({ modelId: "unknown/model", usage }),
-      ).rejects.toThrow(TokenLensError);
+      const result = client.computeCostUSD({ modelId: "unknown/model", usage });
+
+      await expect(result).rejects.toThrow(TokenlensError.ModelNotFound);
+      await expect(result).rejects.toMatchObject({
+        code: TokenlensError.ModelNotFound.code,
+      });
     });
   });
 
@@ -477,9 +478,12 @@ describe("Tokenlens.getContextLimits()", () => {
         cacheKey: "test-limits-error",
       });
 
-      await expect(
-        client.getContextLimits({ modelId: "unknown/model" }),
-      ).rejects.toThrow(TokenLensError);
+      const result = client.getContextLimits({ modelId: "unknown/model" });
+
+      await expect(result).rejects.toThrow(TokenlensError.ModelNotFound);
+      await expect(result).rejects.toMatchObject({
+        code: TokenlensError.ModelNotFound.code,
+      });
     });
   });
 

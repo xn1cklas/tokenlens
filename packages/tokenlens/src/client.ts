@@ -1,4 +1,9 @@
-import type { SourceModel, SourceProviders, Usage } from "@tokenlens/core";
+import {
+  type SourceModel,
+  type SourceProviders,
+  TokenlensError,
+  type Usage,
+} from "@tokenlens/core";
 import { fetchModelsDev, fetchOpenrouter, fetchVercel } from "@tokenlens/fetch";
 import type { TokenCosts } from "@tokenlens/helpers";
 import {
@@ -7,8 +12,6 @@ import {
 } from "@tokenlens/helpers";
 import { countTokens, type TokenizerModelId } from "@tokenlens/tokenizer";
 import { jitter, MemoryCache } from "./cache.js";
-import { BASE_ERROR_CODES } from "./error/codes.js";
-import { TokenLensError } from "./error/index.js";
 import { resolveModel } from "./resolve.js";
 import {
   type CacheAdapter,
@@ -67,7 +70,7 @@ export class Tokenlens {
       //   catalog = [];
       //   break;
       default:
-        throw new Error(`Unknown catalog ID: ${this.catalog}`);
+        throw new TokenlensError.InvalidCatalog(this.catalog);
     }
 
     const entry = { value: catalog, expiresAt: now + jitter(this.ttlMs) };
@@ -101,7 +104,7 @@ export class Tokenlens {
         catalog = await fetchVercel();
         break;
       default:
-        throw new Error(`Unknown catalog ID: ${this.catalog}`);
+        throw new TokenlensError.InvalidCatalog(this.catalog);
     }
 
     const entry = { value: catalog, expiresAt: now + jitter(this.ttlMs) };
@@ -167,7 +170,20 @@ export class Tokenlens {
     });
     // If we can't resolve the model within the given catalog throw an error
     if (!resolved.model) {
-      throw new TokenLensError(BASE_ERROR_CODES.MODEL_NOT_FOUND);
+      const catalogId =
+        typeof this.catalog === "string" ? this.catalog : undefined;
+      const providerId =
+        args.provider ??
+        (resolved.providerId ? resolved.providerId : undefined);
+      const meta =
+        resolved.modelId && resolved.modelId !== args.modelId
+          ? { resolvedModelId: resolved.modelId }
+          : undefined;
+      throw new TokenlensError.ModelNotFound(args.modelId, {
+        ...(providerId ? { providerId } : {}),
+        ...(catalogId ? { catalogId } : {}),
+        ...(meta ? { meta } : {}),
+      });
     }
     return computeTokenCostsForModel({
       model: resolved.model,
@@ -257,7 +273,20 @@ export class Tokenlens {
     });
     // If we can't resolve the model within the given catalog throw an error
     if (!resolved.model) {
-      throw new TokenLensError(BASE_ERROR_CODES.MODEL_NOT_FOUND);
+      const catalogId =
+        typeof this.catalog === "string" ? this.catalog : undefined;
+      const providerId =
+        args.provider ??
+        (resolved.providerId ? resolved.providerId : undefined);
+      const meta =
+        resolved.modelId && resolved.modelId !== args.modelId
+          ? { resolvedModelId: resolved.modelId }
+          : undefined;
+      throw new TokenlensError.ModelNotFound(args.modelId, {
+        ...(providerId ? { providerId } : {}),
+        ...(catalogId ? { catalogId } : {}),
+        ...(meta ? { meta } : {}),
+      });
     }
     return resolved.model;
   }
@@ -287,7 +316,13 @@ export class Tokenlens {
     });
     // If we can't resolve the model within the given catalog throw an error
     if (!modelData) {
-      throw new TokenLensError(BASE_ERROR_CODES.MODEL_NOT_FOUND);
+      const catalogId =
+        typeof this.catalog === "string" ? this.catalog : undefined;
+      const providerId = args.provider;
+      throw new TokenlensError.ModelNotFound(args.modelId, {
+        ...(providerId ? { providerId } : {}),
+        ...(catalogId ? { catalogId } : {}),
+      });
     }
     return modelData?.limit;
   }
@@ -329,7 +364,20 @@ export class Tokenlens {
     });
 
     if (!resolved.model) {
-      throw new TokenLensError(BASE_ERROR_CODES.MODEL_NOT_FOUND);
+      const catalogId =
+        typeof this.catalog === "string" ? this.catalog : undefined;
+      const providerId =
+        args.provider ??
+        (resolved.providerId ? resolved.providerId : undefined);
+      const meta =
+        resolved.modelId && resolved.modelId !== args.modelId
+          ? { resolvedModelId: resolved.modelId }
+          : undefined;
+      throw new TokenlensError.ModelNotFound(args.modelId, {
+        ...(providerId ? { providerId } : {}),
+        ...(catalogId ? { catalogId } : {}),
+        ...(meta ? { meta } : {}),
+      });
     }
     return getContextHealth({ model: resolved.model, usage: args.usage });
   }

@@ -1,3 +1,5 @@
+import { TokenlensError } from "@tokenlens/core";
+
 /**
  * Options for JSON to compact string conversion
  */
@@ -48,9 +50,11 @@ export function compactJson(
     try {
       data = JSON.parse(input);
     } catch (error) {
-      throw new Error(
-        `Invalid JSON string: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      const message =
+        error instanceof Error ? error.message : String(error ?? "unknown");
+      throw new TokenlensError.InvalidJson(`Invalid JSON string: ${message}`, {
+        cause: error,
+      });
     }
   } else {
     data = input;
