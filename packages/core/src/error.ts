@@ -71,8 +71,16 @@ export class TokenlensError extends Error {
     this.name = className;
     this.code = code;
 
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, new.target);
+    const captureStackTrace = (
+      Error as ErrorConstructor & {
+        captureStackTrace?: (
+          targetObject: object,
+          constructorOpt?: Function,
+        ) => void;
+      }
+    ).captureStackTrace;
+    if (typeof captureStackTrace === "function") {
+      captureStackTrace(this, new.target);
     }
 
     if (options?.meta) {
