@@ -614,7 +614,7 @@ describe("Tokenlens.estimateCostUSD()", () => {
   describe("standalone function", () => {
     it("works with default gateway", async () => {
       const mockCatalog = createOpenrouterProvidersFixture();
-      fetchModelsDevSpy.mockResolvedValue(mockCatalog);
+      fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
 
       const result = await apiEstimateCostUSD({
         modelId: "openai/gpt-4o",
@@ -769,7 +769,7 @@ describe("Tokenlens - Gateway Management", () => {
 
   it("defaults to 'auto' gateway when not specified", async () => {
     const mockCatalog = createOpenrouterProvidersFixture();
-    fetchModelsDevSpy.mockResolvedValue(mockCatalog);
+    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
 
     // Call without specifying gateway
     await apiComputeCostUSD({
@@ -777,8 +777,8 @@ describe("Tokenlens - Gateway Management", () => {
       usage: makeUsage(),
     });
 
-    // Should use 'auto' which defaults to models.dev
-    expect(fetchModelsDevSpy).toHaveBeenCalledTimes(1);
+    // Should use 'auto' which now defaults to OpenRouter
+    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
   });
 
   it("setSharedTokenlens clears all gateway instances", async () => {
