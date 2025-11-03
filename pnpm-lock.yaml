@@ -203,7 +203,7 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  examples/anthopic-sdk:
+  examples/anthropic-sdk:
     dependencies:
       '@anthropic-ai/sdk':
         specifier: ^0.63.1
@@ -217,7 +217,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^24.5.2
-        version: 24.5.2
+        version: 24.6.2
       tsx:
         specifier: ^4.20.5
         version: 4.20.5
