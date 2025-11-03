@@ -1,6 +1,7 @@
 {
   "name": "vercel-ai-sdk",
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "tsx src/index.ts"
   },

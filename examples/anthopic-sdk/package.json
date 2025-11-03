@@ -1,6 +1,7 @@
 {
   "name": "anthopic-sdk",
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "tsx src/index.ts"
   },
@@ -11,6 +12,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.5.2",
+    "@tokenlens/tsconfig": "workspace:*",
     "tsx": "^4.20.5"
   }
 }

@@ -3,13 +3,12 @@ import Anthropic from "@anthropic-ai/sdk";
 import {
   computeCostUSD,
   countTokens,
-  createTokenlens,
   estimateCostUSD,
   getContextHealth,
 } from "tokenlens";
 
 async function main(): Promise<void> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env["ANTHROPIC_API_KEY"];
   if (!apiKey) {
     console.error("❌ Missing ANTHROPIC_API_KEY environment variable.");
     process.exitCode = 1;
@@ -17,7 +16,6 @@ async function main(): Promise<void> {
   }
 
   const client = new Anthropic({ apiKey });
-  const tokenlens = createTokenlens();
 
   console.log("🎯 TokenLens Anthropic SDK Example\n");
   console.log("=".repeat(60));
