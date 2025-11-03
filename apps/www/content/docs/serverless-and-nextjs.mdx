@@ -1,0 +1,99 @@
+---
+title: "Serverless & Next.js: Use Native Caching"
+description: "Configure Tokenlens to rely on Next.js Data/Full Route Cache using fetch revalidate and tags."
+---
+
+Tokenlens can cache its merged catalog internally, but in serverless frameworks like Next.js it's often better to defer caching to the platform. This guide shows how to disable Tokenlens' internal cache and use Next.js' native caching primitives instead.
+
+> When you rely on the framework's cache, you gain consistent invalidation with `revalidateTag`, `revalidatePath`, and client-side `router.refresh()` along with prefetching behavior. See the Next.js caching guide for details: [Next.js Caching](https://nextjs.org/docs/app/guides/caching).
+
+## Recommended setup
+
+1) Disable Tokenlens' internal cache by setting `ttlMs: 0`.
+
+2) Forward Next.js' `fetch` (which supports Data Cache, `next.revalidate`, and cache tags) into Tokenlens via the `fetch` option. Apply your desired `revalidate` interval and `tags`.
+
+```ts
+// app/lib/tokenlens.ts
+import { createTokenlens } from "tokenlens";
+
+export const tokenlens = createTokenlens({
+  // Disable Tokenlens' own cache; let Next.js own caching.
+  ttlMs: 0,
+  // Use Next.js fetch with Data Cache features (revalidate + tags)
+  fetch: (input, init) =>
+    fetch(input, {
+      ...init,
+      next: {
+        revalidate: 60 * 60, // Revalidate at most once per hour
+        tags: ["tokenlens:catalog"],
+      },
+    }),
+});
+```
+
+Use the instance anywhere in Server Components, Route Handlers, or Server Actions:
+
+```ts
+// app/api/models/route.ts
+import { NextResponse } from "next/server";
+import { tokenlens } from "@/lib/tokenlens";
+
+export async function GET() {
+  // First call will populate Next.js Data Cache; subsequent GETs use cached result
+  // until the revalidation window elapses or you explicitly revalidate.
+  const details = await tokenlens.getModelData({ modelId: "openai/gpt-4o-mini" });
+  return NextResponse.json(details);
+}
+```
+
+## Invalidation with tags
+
+Because the underlying network calls are tagged, you can purge the cache with `revalidateTag`:
+
+```ts
+// app/admin/revalidate/route.ts
+import { revalidateTag } from "next/cache";
+
+export async function POST() {
+  revalidateTag("tokenlens:catalog");
+  return new Response("OK");
+}
+```
+
+- **`revalidateTag`** clears Data Cache entries associated with that tag. This will also revalidate cached route output that depends on those fetches.
+- **`revalidatePath`** clears the Data Cache and invalidates the Full Route Cache for a specific path, re-rendering server segments under that path.
+- **`router.refresh`** only clears the client Router Cache; it does not invalidate the Data Cache or Full Route Cache.
+
+See: [Next.js Caching](https://nextjs.org/docs/app/guides/caching).
+
+## Notes for dynamic routes and runtime
+
+- Using dynamic APIs like `cookies`/`headers` opts a route out of the Full Route Cache, which is expected for authenticated views. Data Cache for `fetch` still applies. Reference: [Next.js Caching](https://nextjs.org/docs/app/guides/caching).
+- If you want to opt all fetches out of the Data Cache for a segment, you can use segment config like `export const fetchCache = 'default-no-store'`. For Tokenlens, prefer the per-request `fetch(..., { next: { ... } })` control shown above.
+
+## Alternative: memoize with React cache
+
+For non-HTTP data sources or to avoid repeated computation within a single request, you can memoize with React's `cache`:
+
+```ts
+// app/lib/get-model.ts
+import { cache } from "react";
+import { tokenlens } from "@/lib/tokenlens";
+
+export const getModel = cache(async (modelId: string) => {
+  return tokenlens.getModelData({ modelId });
+});
+```
+
+> `fetch` with `GET`/`HEAD` is automatically memoized by React, but `cache` is useful if you wrap other methods or non-HTTP work. See [Next.js Caching](https://nextjs.org/docs/app/guides/caching).
+
+## Summary
+
+- Set `ttlMs: 0` to disable Tokenlens' internal cache.
+- Forward Next.js' `fetch` into Tokenlens and configure `next.revalidate` and `next.tags`.
+- Invalidate with `revalidateTag("tokenlens:catalog")`, or use `revalidatePath`/`router.refresh` based on your UX needs.
+- Keep dynamic route caveats in mind when using cookies/headers.
+
+For general caching options in Tokenlens (custom adapters, Redis, etc.), see [Sources & Caching](./sources-and-caching.md).
+

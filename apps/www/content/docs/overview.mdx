@@ -23,25 +23,25 @@ Tokenlens provides provider-aware model metadata and usage utilities for AI appl
 
 ### Tokenlens instance
 A `Tokenlens` instance encapsulates:
-- The list of **sources** to load (e.g., `"openrouter"`, `"models.dev"`, `"vercel"`, `"package"`).
-- Source **loaders** responsible for fetching and transforming provider catalogs into Tokenlens DTOs.
-- A **cache**, with configurable TTL, used to avoid repeated network requests during a process lifecycle.
+- The **catalog** to load (`"auto"` – alias for OpenRouter, `"openrouter"`, `"models.dev"`, `"vercel"`, or a custom `SourceProviders` object).
+- Cache behaviour (`ttlMs`, `cache`, and `cacheKey`) that controls how long a loaded catalog is reused.
+- Optional wiring such as a custom cache adapter suited to your runtime.
 
-The instance exposes three primary methods:
-- `describeModel({ modelId, provider? })`
+The instance exposes helper methods that all operate on the same cached catalog:
+- `getModelData({ modelId, provider? })`
 - `computeCostUSD({ modelId, provider?, usage })`
 - `getContextLimits({ modelId, provider? })`
+- `getContextHealth({ modelId, provider?, usage })`
+- `countTokens({ modelId, data })` and `estimateCostUSD({ modelId, data, provider? })`
 
-Each method operates on the same cached provider metadata, ensuring consistent results.
+### Catalogs
+Tokenlens ships with gateway identifiers that point at hosted catalogs:
+- `"auto"` – alias for the OpenRouter gateway (default when no catalog is provided).
+- `"openrouter"` – live OpenRouter API.
+- `"models.dev"` – curated dataset derived from models.dev.
+- `"vercel"` – Vercel AI Gateway models endpoint.
 
-### Sources & loaders
-A *source* identifies a dataset Tokenlens knows how to ingest. Built-in identifiers:
-- `"openrouter"` (default) – live catalog fetched over HTTP.
-- `"models.dev"` – static dataset derived from models.dev.
-- `"vercel"` – live catalog fetched from the Vercel AI Gateway.
-- `"package"` – user-defined loader returning local/fixture data.
-
-Loaders are async functions with the signature `SourceLoader = (fetchImpl) => Promise<SourceProviders>`. Tokenlens merges the returned provider maps in the order sources are specified.
+Pass one of these identifiers via `catalog` to switch gateways, or supply your own `SourceProviders` object to run entirely on local fixture data (useful for tests and offline tooling).
 
 ### Caching
 Tokenlens caches provider metadata via an in-memory adapter (`MemoryCache`) by default. Features:
@@ -50,16 +50,16 @@ Tokenlens caches provider metadata via an in-memory adapter (`MemoryCache`) by d
 - On fetch errors, Tokenlens falls back to the last cached entry if available.
 
 ### Standalone helpers
-The root module also exports `computeCostUSD`, `describeModel`, and `getContextLimits` helpers. The first call to any helper lazily creates a shared `Tokenlens` instance with default options (OpenRouter source, in-memory cache). Use them when the defaults match your needs.
+The root module also exports `computeCostUSD`, `getModelData`, `getContextLimits`, `getContextHealth`, `countTokens`, and `estimateCostUSD`. The first call to any helper lazily creates a shared `Tokenlens` instance with default options (`catalog: "auto"`—the OpenRouter gateway—and an in-memory cache). Use the `gateway` option (for example, `{ gateway: "models.dev" }`) or instantiate via `createTokenlens()` when you need a different catalog.
 
-When you require custom configuration (multiple sources, custom cache, fixture loaders), instantiate an explicit Tokenlens client via `createTokenlens` and reuse it within your application.
+When you require custom configuration (specific gateway, custom cache, fixture catalogs), instantiate an explicit Tokenlens client via `createTokenlens` and reuse it within your application.
 
 ## Architecture Diagram
 
 ```
 ┌─────────────┐     ┌────────────────────┐
-│  Tokenlens  │────▶│  Source Loaders    │
-└─────┬───────┘     │ (openrouter, ...) │
+│  Tokenlens  │────▶│  Catalog Gateway  │
+└─────┬───────┘     │   (auto, ...)     │
       │              └────────────────────┘
       │ providers
       ▼
@@ -70,9 +70,10 @@ When you require custom configuration (multiple sources, custom cache, fixture l
          ▼
  ┌────────────────────────────┐
  │  Helpers / Methods         │
- │  • describeModel           │
- │  • computeCostUSD         │
+ │  • getModelData            │
+ │  • computeCostUSD          │
  │  • getContextLimits        │
+ │  • getContextHealth        │
  └────────────────────────────┘
 ```
 
@@ -83,7 +84,7 @@ When you require custom configuration (multiple sources, custom cache, fixture l
 - You want to merge live provider data with in-app fixture data while keeping a single lookup API.
 
 ## Next steps
-- [Getting Started](./getting-started.md)
-- [Sources & Caching](./sources-and-caching.md)
-- [Integration Guides](./integrations/vercel-ai-sdk.md)
-- [Glossary](./glossary.md)
+- [Getting Started](./getting-started.mdx)
+- [Sources & Caching](./sources-and-caching.mdx)
+- [Integration Guides](./integrations/vercel-ai-sdk.mdx)
+- [Glossary](./glossary.mdx)

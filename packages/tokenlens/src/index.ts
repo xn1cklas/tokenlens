@@ -232,7 +232,12 @@ export function setSharedTokenlens(tokenlens?: Tokenlens) {
   }
 }
 
-export type { SourceModel, SourceProviders, Usage } from "@tokenlens/core";
+export type {
+  SourceId,
+  SourceModel,
+  SourceProviders,
+  Usage,
+} from "@tokenlens/core";
 export type { ModelDetails, TokenlensOptions };
 export type { ContextHealth, TokenCosts } from "@tokenlens/helpers";
 // Re-export helper utilities

@@ -12,7 +12,7 @@ export function SiteFooter() {
           </div>
           <div className="flex items-center gap-6">
             <Link
-              href="https://github.com/tokenlens/tokenlens"
+              href="https://github.com/xn1cklas/tokenlens"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               GitHub
@@ -30,7 +30,7 @@ export function SiteFooter() {
               Documentation
             </Link>
             <Link
-              href="#"
+              href="https://github.com/xn1cklas/tokenlens/blob/main/LICENSE"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               License

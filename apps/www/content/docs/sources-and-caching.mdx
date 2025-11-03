@@ -1,84 +1,66 @@
 ---
-title: "Sources & Caching"
-description: "How sources and loaders work in Tokenlens and how to configure caching."
+title: "Catalogs & Caching"
+description: "How Tokenlens loads catalogs and how caching can be configured."
 ---
 
-Tokenlens fetches provider catalogs via *sources*. This document explains how sources and loaders work, how catalogs are merged, and how you can customise caching to fit your runtime.
+Tokenlens loads provider catalogs through the `catalog` option. This document explains how to pick the right catalog for your use case, how to inject your own data, and how caching works.
 
-## Sources
+## Built-in catalogs
 
-| Source id      | Description                            | Loader behaviour                                                |
-| -------------- | -------------------------------------- | --------------------------------------------------------------- |
-| `"openrouter"` | Live model metadata from openrouter.ai | Fetches over HTTP using the provided `fetch` implementation.    |
-| `"models.dev"` | Static dataset derived from models.dev | Fetches and transforms the packaged JSON dataset.               |
-| `"vercel"`     | Live catalog from Vercel AI Gateway    | Fetches over HTTP and normalizes OpenAI-compatible responses.   |
-| `"package"`    | User-defined/local data                | Requires you to supply a loader that returns `SourceProviders`. |
+Pass one of the supported identifiers to `createTokenlens({ catalog })` or the class constructor to opt into a hosted catalog. Omitting `catalog` falls back to the OpenRouter catalog when you instantiate `Tokenlens`; the module-level helpers continue to pass `"auto"` (an alias for OpenRouter) unless you override the `gateway` option.
 
-### Ordering & precedence
+| Catalog id    | Description                                                                 |
+| ------------- | --------------------------------------------------------------------------- |
+| `"auto"`      | Alias for the OpenRouter gateway (default for module-level helpers).        |
+| `"openrouter"`| Live catalog fetched from OpenRouter.                                       |
+| `"models.dev"`| Curated dataset derived from models.dev.                                    |
+| `"vercel"`    | Live catalog from the Vercel AI Gateway.                                    |
 
-When you pass multiple sources (e.g. `sources: ["package", "openrouter"]`), Tokenlens loads them in order and merges the results. Providers/models defined in earlier sources take precedence when identifiers collide; later sources fill in gaps.
+Instance helpers cache the loaded catalog, so repeated method calls stay fast as long as the data remains fresh.
+
+### Per-call overrides
+
+The module-level helpers (`getModelData`, `computeCostUSD`, etc.) accept an optional `gateway` property. This lets you reuse the shared helper instance while forcing a specific catalog on a single call:
 
 ```ts
-const tokenlens = createTokenlens({
-  sources: ["package", "openrouter"],
-  loaders: {
-    package: async () => fixtureProviders,
-  },
+import { computeCostUSD } from "tokenlens";
+
+const costs = await computeCostUSD({
+  modelId: "openai/gpt-4o-mini",
+  gateway: "vercel",
+  usage: { input_tokens: 1_000, output_tokens: 250 },
 });
 ```
 
-In this example, `fixtureProviders` overrides specific models, while OpenRouter supplies the rest.
+## Custom catalogs
 
-## Loaders
-
-Each source is backed by a loader: `(fetchImpl: FetchLike) => Promise<SourceProviders>`. Built-in loaders live in `packages/tokenlens/src/default-loaders.ts`. You can override them in two ways:
-
-1. **Provide loaders** via `TokenlensOptions.loaders`:
-   ```ts
-   createTokenlens({
-     loaders: {
-       "models.dev": customModelsDevLoader,
-     },
-   });
-   ```
-2. **Install new sources** by adding identifiers to `sources` and providing corresponding loaders.
-
-### Writing a custom loader
+When you need deterministic data (tests, offline tooling, demos), provide your own `SourceProviders` object:
 
 ```ts
+import { createTokenlens } from "tokenlens";
 import type { SourceProviders } from "tokenlens";
-import type { SourceLoader } from "tokenlens/internal"; // or replicate the signature
 
-const packageLoader: SourceLoader = async () => {
-  // Return SourceProviders: { providerId: SourceProvider }
-  return {
-    demo: {
-      id: "demo",
-      source: "package",
-      models: {
-        "demo/chat": {
-          id: "demo/chat",
-          name: "Chat Demo",
-          cost: { input: 1, output: 1 },
-          limit: { context: 128_000 },
-        },
+const fixtureCatalog: SourceProviders = {
+  demo: {
+    id: "demo",
+    models: {
+      "demo/chat": {
+        id: "demo/chat",
+        name: "Chat Demo",
+        cost: { input: 1, output: 1 },
+        limit: { context: 128_000 },
       },
     },
-  } satisfies SourceProviders;
+  },
 };
-```
-
-## Fetch implementation
-
-Tokenlens requires a `fetch` function to load remote sources. By default it reads from the global environment (`globalThis.fetch`). If your runtime lacks a global fetch (older Node versions, custom environments), pass your own implementation via `TokenlensOptions.fetch`:
-
-```ts
-import fetch from "cross-fetch";
 
 const tokenlens = createTokenlens({
-  fetch,
+  catalog: fixtureCatalog,
+  ttlMs: 0, // disable caching for predictable reloads
 });
 ```
+
+Passing a `SourceProviders` object bypasses remote fetching entirely—Tokenlens uses the structure you provide as-is.
 
 ## Caching
 
@@ -87,17 +69,25 @@ Tokenlens caches the merged provider catalog to avoid repeated network calls. Th
 ### Key options
 
 - `ttlMs`: cache duration in milliseconds (default `24 * 60 * 60 * 1000`).
-- `cacheKey`: unique identifier for the cached entry. When running multiple instances with different source sets, specify unique keys to avoid collisions.
-- `cache`: custom adapter implementing `{ get(key), set(key, entry), delete?(key) }`.
+- `cacheKey`: unique identifier for the cached entry. When running multiple instances with different catalogs, specify unique keys to avoid collisions.
+- `cache`: custom adapter implementing `{ get(key), set(key, entry), delete?(key) }` where `entry` is `{ value: SourceProviders; expiresAt: number }`.
 
 ### Example: Redis-backed cache adapter
 
 ```ts
 import { createClient as createRedisClient } from "redis";
-import type { CacheAdapter, CacheEntry } from "tokenlens/internal";
+import { createTokenlens } from "tokenlens";
+import type { SourceProviders } from "tokenlens";
 
 const redis = createRedisClient();
 await redis.connect();
+
+type CacheEntry = { value: SourceProviders; expiresAt: number };
+type CacheAdapter = {
+  get(key: string): Promise<CacheEntry | undefined> | CacheEntry | undefined;
+  set(key: string, entry: CacheEntry): Promise<void> | void;
+  delete?(key: string): Promise<void> | void;
+};
 
 const redisCache: CacheAdapter = {
   async get(key) {
@@ -121,25 +111,25 @@ const tokenlens = createTokenlens({
 
 ### No caching
 
-Set `ttlMs: 0` to force Tokenlens to reload sources on every call—useful for short-lived test runs.
+Set `ttlMs: 0` to force Tokenlens to reload the catalog on every call—useful for short-lived test runs.
 
 ### Error handling
 
-If a loader throws an error and a cached value is available, Tokenlens returns the cached value instead of propagating the error. To force a fresh load, call `Tokenlens#refresh(true)`.
+If fetching the catalog fails and a cached value is available, Tokenlens returns the cached value instead of propagating the error. To force a fresh load, call `Tokenlens#refresh(true)`.
 
 ## Refreshing & invalidation
 
 Instances expose:
 
-- `tokenlens.refresh(force?: boolean)`: reloads sources when the cache is stale, or immediately when `force` is true.
+- `tokenlens.refresh(force?: boolean)`: reloads the catalog when the cache is stale, or immediately when `force` is true.
 - `tokenlens.invalidate()`: clears the cache entry so the next call triggers a reload.
 
 These hooks are useful when you know provider metadata has changed and you want the new values immediately.
 
 ## Summary
 
-- Specify sources in the order you want them merged.
-- Override or add loaders for custom datasets.
+- Pick a built-in `catalog` (`"auto"`, `"openrouter"`, `"models.dev"`, `"vercel"`) or supply your own `SourceProviders`.
+- Override `gateway` per call when using the shared helpers.
 - Configure caching behaviour with `ttlMs`, `cache`, and `cacheKey`.
 - Use `refresh()` / `invalidate()` for manual control when needed.
 

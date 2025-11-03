@@ -11,7 +11,7 @@ import {
 } from "tokenlens";
 
 async function main(): Promise<void> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env["OPENAI_API_KEY"];
   if (!apiKey) {
     console.error("❌ Missing OPENAI_API_KEY environment variable.");
     process.exitCode = 1;
