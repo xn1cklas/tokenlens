@@ -298,7 +298,7 @@ import type {
   TokenCosts,
   TokenlensOptions,
   CacheAdapter,
-  GatewayId,
+  SourceId,
 } from "tokenlens";
 ```
 
@@ -315,6 +315,7 @@ const testCatalog = {
     models: {
       "test-model": {
         id: "test-model",
+        canonical_id: "test-model",
         name: "Test Model",
         limit: { context: 4096, output: 2048 },
         cost: { input: 1, output: 2 },
