@@ -14,7 +14,7 @@ export function ModelsSection({
   lastUpdated: number;
 }) {
   return (
-    <section id="models" className="py-24 sm:py-32 bg-card/30">
+    <section id="docs" className="py-24 sm:py-32 bg-card/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
