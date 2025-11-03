@@ -13,11 +13,11 @@ yarn add tokenlens
 pnpm add tokenlens
 ```
 
-Tokenlens ships TypeScript types out of the box. Node.js 18+ (or a Fetch-compatible runtime) is required for the default OpenRouter loader.
+Tokenlens ships TypeScript types out of the box. Node.js 18+ (or a Fetch-compatible runtime) is required for the hosted catalogs (OpenRouter, `auto`, etc.).
 
 ## 2. Quick usage (standalone helpers)
 
-If you just need cost and context utilities, import the top-level helpers. They automatically reuse a lazily-created Tokenlens instance configured with the default `openrouter` source.
+If you just need metadata, cost, or context helpers, import the top-level functions. They reuse a lazily-created Tokenlens instance configured with the default `catalog: "auto"` setting (which resolves providers via the hosted catalog service). To pin a specific gateway (for example, the OpenRouter default used by `createTokenlens()`), pass `{ gateway: "openrouter" }` to the helper or instantiate your own client.
 
 ```ts
 import {
@@ -28,44 +28,31 @@ import {
 
 const usage = { inputTokens: 2_000, outputTokens: 500 };
 
-const details = await describeModel({
-  modelId: "openai/gpt-4o-mini",
-});
+const details = await getModelData({ modelId: "openai/gpt-4o-mini" });
+const costs = await computeCostUSD({ modelId: "openai/gpt-4o-mini", usage });
+const limits = await getContextLimits({ modelId: "openai/gpt-4o-mini" });
 
 console.log(details?.id);             // "openai/gpt-4o-mini"
 console.log(details?.limit?.context); // combined token limit
-console.log(details?.cost?.input);    // per-million pricing hints
+console.log(costs.totalTokenCostUSD); // USD estimate for provided usage
+console.log(limits?.context);         // context window in tokens
 ```
-
-> If you call `describeModel` without a `usage` payload, the `costs` field is `undefined`. Use `details.model?.cost` for the per‑million pricing hints in that case.
 
 ## 3. Create a configured instance
 
-Use `createTokenlens` when you need to override sources, caches, or loaders:
+Use `createTokenlens` when you need to pin a specific catalog, adjust caching, or supply fixture data:
 
 ```ts
-import { createTokenlens, type TokenlensOptions } from "tokenlens";
+import {
+  createTokenlens,
+  type TokenlensOptions,
+  type SourceProviders,
+} from "tokenlens";
 
 const options: TokenlensOptions = {
-  sources: ["openrouter", "package"],
-  ttlMs: 10 * 60 * 1000,           // refresh provider data every 10 minutes
-  cacheKey: "tokenlens:openrouter", // optional custom cache key (helps when multiple instances coexist)
-  loaders: {
-    package: async () => ({
-      demo: {
-        id: "demo",
-        source: "package",
-        models: {
-          "demo/chat": {
-            id: "demo/chat",
-            name: "Chat Demo",
-            cost: { input: 1, output: 1 },
-            limit: { context: 128_000, output: 4_096 },
-          },
-        },
-      },
-    }),
-  },
+  catalog: "openrouter",             // choose a built-in gateway
+  ttlMs: 10 * 60 * 1000,             // refresh provider data every 10 minutes
+  cacheKey: "tokenlens:openrouter",  // optional custom cache key
 };
 
 const tokenlens = createTokenlens(options);
@@ -76,6 +63,26 @@ const cost = await tokenlens.computeCostUSD({
 });
 
 console.log(cost.totalTokenCostUSD);
+
+// Provide your own catalog data (useful during tests)
+const fixtureCatalog: SourceProviders = {
+  demo: {
+    id: "demo",
+    models: {
+      "demo/chat": {
+        id: "demo/chat",
+        name: "Chat Demo",
+        cost: { input: 1, output: 1 },
+        limit: { context: 128_000, output: 4_096 },
+      },
+    },
+  },
+};
+
+const fixtureTokenlens = createTokenlens({
+  catalog: fixtureCatalog,
+  ttlMs: 0, // always reload
+});
 ```
 
 ### Controlling caching
@@ -87,9 +94,9 @@ console.log(cost.totalTokenCostUSD);
 
 | Use case                                          | Recommended approach                                                                |
 | ------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Default OpenRouter data and minimal setup         | Call the top-level helpers (`computeCostUSD`, `describeModel`, `getContextLimits`). |
-| Multiple sources, fixture data, or custom caching | Create your own instance via `createTokenlens` and reuse it within your app.        |
-| Need directive control over provider data merging | Provide explicit `sources` and `loaders` in `createTokenlens`.                      |
+| Default catalog and minimal setup                 | Call the top-level helpers (`computeCostUSD`, `getModelData`, `getContextLimits`).  |
+| Specific gateway or custom TTL/cache              | Create your own instance via `createTokenlens` and reuse it within your app.        |
+| Fixture or offline catalogs                       | Pass a `SourceProviders` object via `catalog` when creating the instance.           |
 
 ## 5. TypeScript types
 
@@ -98,9 +105,13 @@ Tokenlens re-exports the primary DTOs so you can import them from the root packa
 ```ts
 import type { Usage, ModelDetails, TokenCosts, TokenlensOptions } from "tokenlens";
 
-const describe = await describeModel({
+const details = await getModelData({
   modelId: "openai/gpt-4o-mini",
-  usage: { inputTokens: 1_000, outputTokens: 200 } satisfies Usage,
+});
+
+const costs = await computeCostUSD({
+  modelId: "openai/gpt-4o-mini",
+  usage: { input_tokens: 1_000, output_tokens: 200 } satisfies Usage,
 });
 ```
 

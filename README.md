@@ -73,9 +73,9 @@ const tokenlens = new Tokenlens(options?: TokenlensOptions);
 ```
 
 **Options:**
-- `catalog`: `"auto" | "openrouter" | "models.dev" | "vercel"` or custom `SourceProviders` object (default: `"auto"`)
+- `catalog`: `"auto" | "openrouter" | "models.dev" | "vercel"` or custom `SourceProviders` object (default: `"openrouter"`; pass `"auto"` to probe gateways automatically)
 - `ttlMs`: Cache TTL in milliseconds (default: 24 hours)
-- `cache`: Custom cache adapter implementing `CacheAdapter` interface (default: in-memory cache)
+- `cache`: Custom cache adapter with `{ get(key), set(key, entry), delete?(key) }` methods where `entry` is `{ value: SourceProviders; expiresAt: number }` (default: in-memory cache)
 - `cacheKey`: Custom cache key for the catalog (default: `tokenlens:v2:{catalog}`)
 
 ### Methods
@@ -268,22 +268,30 @@ const customTokenlens = new Tokenlens({
 ### Custom cache adapter
 
 ```ts
-import { Tokenlens, type CacheAdapter } from "tokenlens";
+import { Tokenlens } from "tokenlens";
+import type { SourceProviders } from "tokenlens";
+
+type CacheEntry = { value: SourceProviders; expiresAt: number };
+type CacheAdapter = {
+  get(key: string): Promise<CacheEntry | undefined> | CacheEntry | undefined;
+  set(key: string, entry: CacheEntry): Promise<void> | void;
+  delete?(key: string): Promise<void> | void;
+};
 
 const redisCache: CacheAdapter = {
   async get(key: string) {
     const data = await redis.get(key);
-    return data ? JSON.parse(data) : null;
+    return data ? (JSON.parse(data) as CacheEntry) : undefined;
   },
-  async set(key: string, value: any) {
-    await redis.set(key, JSON.stringify(value));
+  async set(key: string, entry: CacheEntry) {
+    await redis.set(key, JSON.stringify(entry));
   },
   async delete(key: string) {
     await redis.del(key);
-  }
+  },
 };
 
-const tokenlens = new Tokenlens({ 
+const tokenlens = new Tokenlens({
   cache: redisCache,
   ttlMs: 60 * 60 * 1000, // 1 hour
 });
@@ -295,10 +303,9 @@ const tokenlens = new Tokenlens({
 import type {
   Usage,
   SourceModel,
+  SourceProviders,
   TokenCosts,
   TokenlensOptions,
-  CacheAdapter,
-  SourceId,
 } from "tokenlens";
 ```
 

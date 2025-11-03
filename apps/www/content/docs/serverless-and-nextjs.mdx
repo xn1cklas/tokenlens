@@ -42,7 +42,7 @@ import { tokenlens } from "@/lib/tokenlens";
 export async function GET() {
   // First call will populate Next.js Data Cache; subsequent GETs use cached result
   // until the revalidation window elapses or you explicitly revalidate.
-  const details = await tokenlens.describeModel({ modelId: "openai/gpt-4o-mini" });
+  const details = await tokenlens.getModelData({ modelId: "openai/gpt-4o-mini" });
   return NextResponse.json(details);
 }
 ```
@@ -82,7 +82,7 @@ import { cache } from "react";
 import { tokenlens } from "@/lib/tokenlens";
 
 export const getModel = cache(async (modelId: string) => {
-  return tokenlens.describeModel({ modelId });
+  return tokenlens.getModelData({ modelId });
 });
 ```
 
@@ -96,5 +96,4 @@ export const getModel = cache(async (modelId: string) => {
 - Keep dynamic route caveats in mind when using cookies/headers.
 
 For general caching options in Tokenlens (custom adapters, Redis, etc.), see [Sources & Caching](./sources-and-caching.md).
-
 

@@ -66,28 +66,29 @@ The middleware calls `tokenlens.computeCostUSD` internally using the model metad
 
 ## Custom Tokenlens instances
 
-If you need to control sources or caching, create your own Tokenlens instance and pass it to the middleware or call its methods directly.
+If you need to pin a specific catalog or customise caching, create your own Tokenlens instance and pass it to the middleware or call its methods directly.
 
 ```ts
 import { createTokenlens } from "tokenlens";
 import { createOpenAI } from "@ai-sdk/openai";
 import { tokenlensMiddleware } from "@tokenlens/vercel";
 
-const tokenlens = createTokenlens({
-  sources: ["openrouter", "package"],
-  loaders: {
-    package: async () => testProviders,
-  },
-});
+const tokenlens = createTokenlens({ catalog: "openrouter" });
 
 const model = createOpenAI({ apiKey: process.env.OPENAI_API_KEY })
   .text("gpt-4o-mini")
   .withMiddleware(tokenlensMiddleware(tokenlens));
+
+// or provide fixture data directly (testProviders: SourceProviders)
+const fixtureTokenlens = createTokenlens({
+  catalog: testProviders,
+  ttlMs: 0,
+});
 ```
 
 ## Testing integrations
 
-Use Tokenlens' `package` source and fixture catalogs during tests:
+Use a fixture catalog during tests to avoid network variability:
 
 ```ts
 import { createTokenlens } from "tokenlens";
@@ -96,10 +97,7 @@ import { createLanguageModel } from "@ai-sdk/provider";
 import { testProviders } from "../fixtures/providers";
 
 const tokenlens = createTokenlens({
-  sources: ["package"],
-  loaders: {
-    package: async () => testProviders,
-  },
+  catalog: testProviders,
   ttlMs: 0, // always refresh in tests
 });
 
@@ -112,6 +110,6 @@ This isolates integration tests from external API fluctuations while ensuring To
 ## Summary
 
 - Tokenlens understands Vercel AI SDK model metadata (`modelId`, `provider`/`providerId`).
-- Pass usage payloads directly to `computeCostUSD` or `describeModel`.
+- Pass usage payloads directly to `computeCostUSD` or fetch metadata via `getModelData`.
 - Use `@tokenlens/vercel` middleware to automatically compute costs when generating responses.
-- Customise sources, loaders, and caching via `createTokenlens` when needed.
+- Customise the catalog and caching (e.g., fixtures, TTL, cache adapter) via `createTokenlens` when needed.
