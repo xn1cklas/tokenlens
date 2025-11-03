@@ -12,8 +12,18 @@ export const revalidate = 86400; // 1 day
 export default async function HomePage() {
   // No local transformation here; we pass the catalogs directly to the component
 
-  const [openrouterCatalog, modelsdevCatalog, vercelCatalog] =
-    await Promise.all([fetchOpenrouter(), fetchModelsDev(), fetchVercel()]);
+  const results = await Promise.allSettled([
+    fetchOpenrouter(),
+    fetchModelsDev(),
+    fetchVercel(),
+  ]);
+
+  const openrouterCatalog =
+    results[0].status === "fulfilled" ? results[0].value : {};
+  const modelsdevCatalog =
+    results[1].status === "fulfilled" ? results[1].value : {};
+  const vercelCatalog =
+    results[2].status === "fulfilled" ? results[2].value : {};
 
   const modelsdevFinal =
     Object.keys(modelsdevCatalog).length > 0
