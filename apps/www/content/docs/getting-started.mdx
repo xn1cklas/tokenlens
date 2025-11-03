@@ -13,11 +13,11 @@ yarn add tokenlens
 pnpm add tokenlens
 ```
 
-Tokenlens ships TypeScript types out of the box. Node.js 18+ (or a Fetch-compatible runtime) is required for the hosted catalogs (OpenRouter, `auto`, etc.).
+Tokenlens ships TypeScript types out of the box. Node.js 18+ (or a Fetch-compatible runtime) is required for the hosted catalogs (OpenRouter default, models.dev, Vercel, etc.).
 
 ## 2. Quick usage (standalone helpers)
 
-If you just need metadata, cost, or context helpers, import the top-level functions. They reuse a lazily-created Tokenlens instance configured with the default `catalog: "auto"` setting (which resolves providers via the hosted catalog service). To pin a specific gateway (for example, the OpenRouter default used by `createTokenlens()`), pass `{ gateway: "openrouter" }` to the helper or instantiate your own client.
+If you just need metadata, cost, or context helpers, import the top-level functions. They reuse a lazily-created Tokenlens instance configured with the default `catalog: "auto"` setting (an alias for the OpenRouter gateway). To use a different dataset (for example, models.dev), pass `{ gateway: "models.dev" }` to the helper or instantiate your own client with `createTokenlens({ catalog: "models.dev" })`.
 
 ```ts
 import {

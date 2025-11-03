@@ -7,14 +7,14 @@ Tokenlens v2 replaces the all-in-one helper bundle with a focused client that lo
 
 ## Quick Checklist
 - Replace legacy helpers with `getModelData`, `computeCostUSD`, and `getContextLimits` (either via dedicated `Tokenlens` instances or top-level helpers that reuse the shared instance internally).
-- Swap static catalog imports for your own `Tokenlens` instance when you need a specific catalog or fixture data.
+- Swap static catalog imports for your own `Tokenlens` instance when you need a specific catalog or fixture data (the default `auto` catalog now resolves to OpenRouter).
 - Remove conversation/compaction helpers (`shouldCompact`, `contextHealth`, etc.) from production code; re-implement app-specific logic on top of `getModelData`+`computeCostUSD`.
 - Delete usages of registry globals (`MODEL_IDS`, `resolveModel`, etc.); rely on `tokenlens.refresh()` (or your fixture catalog) if you truly need the raw provider map.
-- Update docs/README snippets to use the new API names and call out the default OpenRouter catalog (set `catalog: "auto"` for automatic selection).
+- Update docs/README snippets to use the new API names and note that omitting `catalog` (or using `catalog: "auto"`) selects the OpenRouter gateway.
 
 ## The Tokenlens class at a glance
-- **Single responsibility**: load provider data from a selected `catalog` (falls back to `openrouter`; pass `catalog: "auto"` to probe available gateways) and expose consistent helpers (`getModelData`, `computeCostUSD`, `getContextLimits`, `getContextHealth`, etc.).
-- **Lazy shared instance**: module-level helpers create a default instance on first use; without options they use the `"auto"` gateway, so override with `{ gateway: "openrouter" }` (or another id) when needed.
+- **Single responsibility**: load provider data from a selected `catalog` (defaults to the OpenRouter gateway, including when `catalog: "auto"` is provided) and expose consistent helpers (`getModelData`, `computeCostUSD`, `getContextLimits`, `getContextHealth`, etc.).
+- **Lazy shared instance**: module-level helpers create a default instance on first use; without options they use the OpenRouter catalog (the same data returned by `{ catalog: "auto" }`), so override with another id when needed.
 - **Custom instances**: `createTokenlens(options)` lets you choose a catalog (gateway id or `SourceProviders`), tweak TTL, or plug in your own cache adapter.
 - **Caching**: by default, provider catalogs are cached in-memory for 24 hours with jitter. Control this via `ttlMs` or a custom `cache`. Errors fall back to the last cached value when possible.
 - **Flexible catalogs**: switch gateways on a per-instance basis with `catalog`, or override on individual helper calls via the `gateway` option.
@@ -140,7 +140,7 @@ const catalog = await fetchModels();
 **New**
 ```ts
 const providers = await tokenlens.refresh(); // defaults to the OpenRouter catalog
-// or configure: createTokenlens({ catalog: "auto" }) / createTokenlens({ catalog: "models.dev" })
+// or configure: createTokenlens({ catalog: "openrouter" }) / createTokenlens({ catalog: "models.dev" })
 ```
 
 ### 5. Recreate conversation/cost rollups as needed

@@ -7,11 +7,11 @@ Tokenlens loads provider catalogs through the `catalog` option. This document ex
 
 ## Built-in catalogs
 
-Pass one of the supported identifiers to `createTokenlens({ catalog })` or the class constructor to opt into a hosted catalog. Omitting `catalog` falls back to the OpenRouter catalog when you instantiate `Tokenlens`; the module-level helpers continue to pass `"auto"` unless you override the `gateway` option.
+Pass one of the supported identifiers to `createTokenlens({ catalog })` or the class constructor to opt into a hosted catalog. Omitting `catalog` falls back to the OpenRouter catalog when you instantiate `Tokenlens`; the module-level helpers continue to pass `"auto"` (an alias for OpenRouter) unless you override the `gateway` option.
 
 | Catalog id    | Description                                                                 |
 | ------------- | --------------------------------------------------------------------------- |
-| `"auto"`      | Smart selection backed by the Tokenlens catalog service (default for module-level helpers).  |
+| `"auto"`      | Alias for the OpenRouter gateway (default for module-level helpers).        |
 | `"openrouter"`| Live catalog fetched from OpenRouter.                                       |
 | `"models.dev"`| Curated dataset derived from models.dev.                                    |
 | `"vercel"`    | Live catalog from the Vercel AI Gateway.                                    |

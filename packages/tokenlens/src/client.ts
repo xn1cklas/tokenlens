@@ -51,7 +51,7 @@ export class Tokenlens {
     let catalog: SourceProviders;
     switch (this.catalog) {
       case "auto":
-        catalog = await fetchModelsDev();
+        catalog = await fetchOpenrouter();
         break;
       case "openrouter":
         catalog = await fetchOpenrouter();
@@ -89,7 +89,7 @@ export class Tokenlens {
     let catalog: SourceProviders;
     switch (this.catalog) {
       case "auto":
-        catalog = await fetchModelsDev();
+        catalog = await fetchOpenrouter();
         break;
       case "openrouter":
         catalog = await fetchOpenrouter();
