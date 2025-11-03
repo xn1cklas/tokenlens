@@ -8,6 +8,9 @@ import {
   getContextHealth,
 } from "tokenlens";
 
+const MODEL_ID = "openai/gpt-4o-mini";
+const PROVIDER = "openai";
+
 async function main(): Promise<void> {
   const apiKey = process.env["OPENAI_API_KEY"];
   if (!apiKey) {
@@ -29,27 +32,32 @@ async function main(): Promise<void> {
   const prompt = "Explain how token usage affects AI application costs.";
 
   const estimate = await estimateCostUSD({
-    modelId: "gpt-4o",
+    modelId: MODEL_ID,
     data: prompt,
   });
 
   console.log(`Prompt: "${prompt}"`);
-  console.log(`Estimated input tokens: ${estimate.inputTokens}`);
-  console.log(`Estimated cost: $${estimate.totalTokenCostUSD.toFixed(6)}`);
+  console.log(`Estimated input tokens: ${estimate.inputTokens ?? 0}`);
+  console.log(
+    `Estimated cost: $${(estimate.totalTokenCostUSD ?? 0).toFixed(6)}`,
+  );
 
   // Example 2: Count tokens with local tokenizer (no API call)
   console.log("\n🔢 Example 2: Local Token Counting");
   console.log("-".repeat(60));
 
-  const tokenCount = await countTokens({ modelId: "gpt-4o", data: prompt });
+  const tokenCount = await countTokens({ modelId: MODEL_ID, data: prompt });
   console.log(`Tokens (local): ${tokenCount}`);
 
   // Example 3: Make actual API call and track costs
   console.log("\n💬 Example 3: Actual API Call with Cost Tracking");
   console.log("-".repeat(60));
 
+  // Extract model name from MODEL_ID (format: "openai/gpt-4o-mini")
+  const modelName = MODEL_ID.split("/")[1] || "gpt-4o-mini";
+
   const completion = await client.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: modelName,
     messages: [{ role: "user", content: prompt }],
     max_tokens: 150,
   });
@@ -60,7 +68,7 @@ async function main(): Promise<void> {
   const { usage } = completion;
   if (usage) {
     const costs = await computeCostUSD({
-      modelId: "gpt-4o-mini",
+      modelId: MODEL_ID,
       usage: {
         input_tokens: usage.prompt_tokens,
         output_tokens: usage.completion_tokens,
@@ -72,20 +80,22 @@ async function main(): Promise<void> {
     console.log(`  Output tokens: ${usage.completion_tokens}`);
     console.log(`  Total tokens:  ${usage.total_tokens}`);
     console.log(`\nCost breakdown:`);
-    console.log(`  Input cost:  $${costs.inputTokenCostUSD?.toFixed(6)}`);
-    console.log(`  Output cost: $${costs.outputTokenCostUSD?.toFixed(6)}`);
-    console.log(`  Total cost:  $${costs.totalTokenCostUSD?.toFixed(6)}`);
+    console.log(`  Input cost:  $${(costs.inputTokenCostUSD ?? 0).toFixed(6)}`);
+    console.log(
+      `  Output cost: $${(costs.outputTokenCostUSD ?? 0).toFixed(6)}`,
+    );
+    console.log(`  Total cost:  $${(costs.totalTokenCostUSD ?? 0).toFixed(6)}`);
   }
 
   // Example 4: Monitor context health
   console.log("\n🏥 Example 4: Context Health Monitoring");
   console.log("-".repeat(60));
 
-  const model = await tokenlens.getModelData({ modelId: "gpt-4o-mini" });
+  const model = await tokenlens.getModelData({ modelId: MODEL_ID });
 
   if (usage && model) {
     const health = await getContextHealth({
-      modelId: "gpt-4o",
+      modelId: MODEL_ID,
       usage: {
         input_tokens: usage.prompt_tokens,
         output_tokens: usage.completion_tokens,
@@ -94,17 +104,16 @@ async function main(): Promise<void> {
 
     if (health) {
       console.log(
-        `Context window: ${health.totalTokens.toLocaleString()} tokens`,
+        `Context window: ${(health.totalTokens ?? 0).toLocaleString()} tokens`,
       );
       console.log(
-        `Used: ${health.usedTokens.toLocaleString()} tokens (${health.usedPercentage.toFixed(1)}%)`,
+        `Used: ${(health.usedTokens ?? 0).toLocaleString()} tokens (${(health.usedPercentage ?? 0).toFixed(1)}%)`,
       );
       console.log(
-        `Remaining: ${health.remainingTokens.toLocaleString()} tokens (${health.remainingPercentage.toFixed(1)}%)`,
+        `Remaining: ${(health.remainingTokens ?? 0).toLocaleString()} tokens (${(health.remainingPercentage ?? 0).toFixed(1)}%)`,
       );
-      console.log(
-        `Status: ${health.status.toUpperCase()} ${getHealthEmoji(health.status)}`,
-      );
+      const status = health.status ?? "unknown";
+      console.log(`Status: ${status.toUpperCase()} ${getHealthEmoji(status)}`);
     }
   }
 
@@ -126,7 +135,7 @@ async function main(): Promise<void> {
   let totalOutputTokens = 0;
 
   for (const msg of conversation) {
-    const tokens = await countTokens({ modelId: "gpt-4o", data: msg.content });
+    const tokens = await countTokens({ modelId: MODEL_ID, data: msg.content });
     if (tokens) {
       if (msg.role === "user") {
         totalInputTokens += tokens;
@@ -137,14 +146,14 @@ async function main(): Promise<void> {
   }
 
   const conversationCost = await computeCostUSD({
-    modelId: "gpt-4o",
+    modelId: MODEL_ID,
     usage: {
       input_tokens: totalInputTokens,
       output_tokens: totalOutputTokens,
     },
   });
 
-  totalCost = conversationCost.totalTokenCostUSD || 0;
+  totalCost = conversationCost.totalTokenCostUSD ?? 0;
 
   console.log(`Conversation turns: ${conversation.length}`);
   console.log(`Total input tokens: ${totalInputTokens}`);
