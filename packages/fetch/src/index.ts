@@ -249,7 +249,8 @@ export async function fetchOpenrouter(
 
   const catalog: SourceProviders = {};
   for (const m of list) {
-    const id = String(m["id"] ?? "");
+    const id = String(m["id"] ?? "").trim();
+    if (!id) continue;
     const providerPart = id.includes("/") ? id.split("/")[0] : undefined;
     const provider = providerPart ?? "openrouter";
     if (!catalog[provider]) {
