@@ -2,8 +2,9 @@
   "name": "tokenlens-monorepo",
   "private": true,
   "workspaces": [
+    "apps/*",
     "packages/*",
-    "apps/*"
+    "examples/*"
   ],
   "scripts": {
     "dev": "turbo dev",
