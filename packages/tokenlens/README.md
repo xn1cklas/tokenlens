@@ -29,14 +29,13 @@ Install
 Quick Start
 ```ts
 import {
-  type ModelId,
   modelMeta,
   percentOfContextUsed,
   tokensRemaining,
   costFromUsage,
 } from 'tokenlens';
 
-const id: ModelId = 'openai:gpt-4.1';
+const id = 'openai:gpt-4.1';
 // Works with provider usage or Vercel AI SDK usage
 const usage = { prompt_tokens: 3200, completion_tokens: 400 };
 
