@@ -1,4 +1,8 @@
-import type { SourceModel, SourceProviders } from "@tokenlens/core";
+import {
+  type SourceModel,
+  type SourceProviders,
+  TokenlensError,
+} from "@tokenlens/core";
 
 export type {
   SourceId,
@@ -38,9 +42,11 @@ export async function fetchModelsDev(
 ): Promise<SourceProviders> {
   const res = await fetch("https://models.dev/api.json");
   if (!res.ok) {
-    throw new Error(
-      `Failed to fetch models.dev: ${res.status} ${res.statusText}`,
-    );
+    throw new TokenlensError.FetchFailed({
+      target: "models.dev",
+      status: res.status,
+      statusText: res.statusText,
+    });
   }
   type ModelsDevProviderJson = {
     id?: string;
@@ -194,9 +200,11 @@ export async function fetchVercel(
 ): Promise<SourceProviders> {
   const res = await fetch("https://ai-gateway.vercel.sh/v1/models");
   if (!res.ok) {
-    throw new Error(
-      `Failed to fetch Vercel AI Gateway: ${res.status} ${res.statusText}`,
-    );
+    throw new TokenlensError.FetchFailed({
+      target: "Vercel AI Gateway",
+      status: res.status,
+      statusText: res.statusText,
+    });
   }
   const parsed = (await res.json()) as {
     data?: VercelModelJson[];
@@ -238,9 +246,11 @@ export async function fetchOpenrouter(
 ): Promise<SourceProviders> {
   const res = await fetch("https://openrouter.ai/api/v1/models");
   if (!res.ok) {
-    throw new Error(
-      `Failed to fetch OpenRouter: ${res.status} ${res.statusText}`,
-    );
+    throw new TokenlensError.FetchFailed({
+      target: "OpenRouter",
+      status: res.status,
+      statusText: res.statusText,
+    });
   }
   const parsed = (await res.json()) as {
     data?: Array<Record<string, unknown>>;

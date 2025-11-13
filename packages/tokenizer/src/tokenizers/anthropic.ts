@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { TokenlensError } from "@tokenlens/core";
 
 const ANTHROPIC_MODELS = [
   "claude-sonnet-4-5",
@@ -16,7 +17,7 @@ export type AnthropicModelId =
 
 export async function anthropic(modelId: AnthropicModelName, data: string) {
   if (!process.env["ANTHROPIC_API_KEY"]) {
-    throw new Error("ANTHROPIC_API_KEY is not set");
+    throw new TokenlensError.MissingEnvironmentVariable("ANTHROPIC_API_KEY");
   }
 
   const client = new Anthropic({ apiKey: process.env["ANTHROPIC_API_KEY"] });

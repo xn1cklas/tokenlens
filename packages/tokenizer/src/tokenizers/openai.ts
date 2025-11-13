@@ -1,4 +1,5 @@
 import { get_encoding } from "@dqbd/tiktoken";
+import { TokenlensError } from "@tokenlens/core";
 
 const OPENAI_MODELS_O200K = ["gpt-4o", "gpt-4o-mini", "gpt-5"] as const;
 
@@ -34,9 +35,9 @@ export async function openai(
   data: string,
 ): Promise<number> {
   if (!OPENAI_MODELS.some((m) => modelId.startsWith(m))) {
-    throw new Error(
-      `Unknown OpenAI model: ${modelId}. Supported models: ${OPENAI_MODELS.join(", ")}`,
-    );
+    throw new TokenlensError.UnsupportedTokenizerModel(modelId, {
+      supportedModels: OPENAI_MODELS,
+    });
   }
 
   const encodingType = getEncodingForModel(modelId);
@@ -49,8 +50,11 @@ export async function openai(
     return count;
   } catch (error) {
     encoding.free();
-    throw new Error(
-      `Failed to encode text with ${encodingType}: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    const cause =
+      error instanceof Error ? error : new Error(String(error ?? "unknown"));
+    throw new TokenlensError.TokenizerEncodingFailed(modelId, encodingType, {
+      cause,
+      meta: { errorMessage: cause.message },
+    });
   }
 }

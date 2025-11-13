@@ -1,3 +1,4 @@
+import { TokenlensError } from "./error.js";
 import { toModelId } from "./id.js";
 import type { Model, Provider, Status } from "./types.js";
 
@@ -79,7 +80,7 @@ export function createRegistry(all: readonly Model[]) {
   }
   function assertModelId(value: string): asserts value is string {
     if (!isModelId(value)) {
-      throw new Error(`Unknown model id: ${value}`);
+      throw new TokenlensError.UnknownModelId(value);
     }
   }
   function listModels(filter?: {
