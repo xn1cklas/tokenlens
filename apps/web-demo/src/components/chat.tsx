@@ -1,7 +1,6 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { getContext, normalizeUsage } from "@tokenlens/helpers";
 import type { LanguageModelUsage, UIMessage } from "ai";
 import { GlobeIcon, MicIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -28,16 +27,24 @@ import { Response } from "@/components/ai-elements/response";
 import { Context } from "./ai-elements/context";
 
 const models = [
-  { id: "gpt-4o", name: "GPT-4o" },
-  { id: "gpt-5", name: "GPT-5" },
-  { id: "claude-opus-4-20250514", name: "Claude 4 Opus" },
+  { id: "gpt-4o", name: "GPT-4o", context: 128_000 },
+  { id: "gpt-5", name: "GPT-5", context: 200_000 },
+  { id: "claude-opus-4-20250514", name: "Claude 4 Opus", context: 200_000 },
 ];
 
 type AppUIMessage = UIMessage<unknown, { usage: LanguageModelUsage }>;
 
+function normalizeUsage(usage: LanguageModelUsage) {
+  return {
+    input: usage.inputTokens ?? 0,
+    output: usage.outputTokens ?? 0,
+    total: usage.totalTokens,
+  };
+}
+
 const InputDemo = () => {
   const [text, setText] = useState<string>("");
-  const [model, setModel] = useState<string>(models[0].id);
+  const [model, setModel] = useState<string>(models[0]?.id ?? "gpt-4o");
   const [usage, setUsage] = useState<LanguageModelUsage | undefined>(undefined);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -62,13 +69,9 @@ const InputDemo = () => {
     },
   });
 
-  const catalog = useMemo(() => catalogFromProviders([vercelModels]), []);
-
   const contextMax = useMemo(() => {
-    // Resolve from selected model within the selected provider source.
-    const cw = getContextWindow(model, { catalog });
-    return cw.combinedMax ?? cw.inputMax ?? 0;
-  }, [model, catalog]);
+    return models.find((entry) => entry.id === model)?.context ?? 0;
+  }, [model]);
 
   const usedTokens = useMemo(() => {
     // Prefer explicit usage data part captured via onData
