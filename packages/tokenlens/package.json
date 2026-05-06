@@ -14,14 +14,6 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./providers/*": {
-      "types": "./dist/exports/providers/*.d.ts",
-      "default": "./dist/exports/providers/*.js"
-    },
-    "./models": {
-      "types": "./dist/exports/models.d.ts",
-      "default": "./dist/exports/models.js"
-    },
     "./helpers": {
       "types": "./dist/exports/helpers.d.ts",
       "default": "./dist/exports/helpers.js"

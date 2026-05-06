@@ -27,6 +27,18 @@ function project(
 }
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      "@tokenlens/core": resolve(repoRoot, "packages/core/src/index.ts"),
+      "@tokenlens/fetch": resolve(repoRoot, "packages/fetch/src/index.ts"),
+      "@tokenlens/helpers": resolve(repoRoot, "packages/helpers/src/index.ts"),
+      "@tokenlens/tokenizer": resolve(
+        repoRoot,
+        "packages/tokenizer/src/index.ts",
+      ),
+      tokenlens: resolve(repoRoot, "packages/tokenlens/src/index.ts"),
+    },
+  },
   test: {
     coverage: {
       reporter: ["text", "json", "html"],
@@ -36,7 +48,6 @@ export default defineConfig({
       project("core", "packages/core", ["tests/**/*.test.ts"]),
       project("helpers", "packages/helpers", ["tests/**/*.spec.ts"]),
       project("fetch", "packages/fetch", ["tests/**/*.spec.ts"]),
-      project("models", "packages/models", ["tests/**/*.spec.ts"]),
       project("tokenizer", "packages/tokenizer", ["tests/**/*.spec.ts"], {
         globals: true,
       }),
