@@ -16,6 +16,10 @@ type CommonOptions = {
   model?: string;
 };
 
+type VercelOptions = CommonOptions & {
+  includeEndpointDetails?: boolean;
+};
+
 function filterCatalog(
   catalog: SourceProviders,
   provider?: string,
@@ -177,26 +181,91 @@ type VercelModelJson = {
   pricing?: Record<string, unknown>;
 };
 
-function mapVercelModel(model: VercelModelJson): SourceModel {
-  const contextWindow = toNumber(model.context_window);
-  const maxTokens = toNumber(model.max_tokens);
+type VercelEndpointJson = {
+  provider_name?: string;
+  tag?: string;
+  context_length?: number | string | null;
+  max_completion_tokens?: number | string | null;
+  max_prompt_tokens?: number | string | null;
+  pricing?: Record<string, unknown>;
+};
+
+type VercelModelEndpointsJson = {
+  [key: string]: unknown;
+  endpoints?: VercelEndpointJson[];
+};
+
+function selectVercelEndpoint(
+  model: VercelModelJson,
+  endpoints?: VercelEndpointJson[],
+): VercelEndpointJson | undefined {
+  if (!endpoints?.length) return undefined;
+  if (typeof model.owned_by !== "string" || model.owned_by.length === 0) {
+    return endpoints[0];
+  }
+  return (
+    endpoints.find(
+      (endpoint) =>
+        endpoint.provider_name === model.owned_by ||
+        endpoint.tag === model.owned_by,
+    ) ?? endpoints[0]
+  );
+}
+
+function mapVercelModel(
+  model: VercelModelJson,
+  endpointDetails?: VercelModelEndpointsJson,
+): SourceModel {
+  const endpoint = selectVercelEndpoint(model, endpointDetails?.endpoints);
+  const contextWindow =
+    toNumber(endpoint?.context_length) ?? toNumber(model.context_window);
+  const maxTokens =
+    toNumber(endpoint?.max_completion_tokens) ?? toNumber(model.max_tokens);
+  const maxPromptTokens = toNumber(endpoint?.max_prompt_tokens);
   const limit =
-    contextWindow !== undefined || maxTokens !== undefined
+    contextWindow !== undefined ||
+    maxPromptTokens !== undefined ||
+    maxTokens !== undefined
       ? {
           ...(contextWindow !== undefined ? { context: contextWindow } : {}),
+          ...(maxPromptTokens !== undefined ? { input: maxPromptTokens } : {}),
           ...(maxTokens !== undefined ? { output: maxTokens } : {}),
         }
       : undefined;
   const normalized: Record<string, unknown> = {
     ...(model as Record<string, unknown>),
+    ...(endpoint?.pricing !== undefined ? { pricing: endpoint.pricing } : {}),
     ...(contextWindow !== undefined ? { context_length: contextWindow } : {}),
     ...(limit !== undefined ? { limit } : {}),
   };
   return mapOpenrouterModel(normalized);
 }
 
+export async function fetchVercelModelEndpoints(
+  modelId: string,
+): Promise<VercelModelEndpointsJson> {
+  const encodedModelId = modelId
+    .split("/")
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+  const res = await fetch(
+    `https://ai-gateway.vercel.sh/v1/models/${encodedModelId}/endpoints`,
+  );
+  if (!res.ok) {
+    throw new TokenlensError.FetchFailed({
+      target: `Vercel AI Gateway endpoints for ${modelId}`,
+      status: res.status,
+      statusText: res.statusText,
+    });
+  }
+  const parsed = (await res.json()) as {
+    data?: VercelModelEndpointsJson;
+  };
+  return parsed.data ?? {};
+}
+
 export async function fetchVercel(
-  options?: CommonOptions,
+  options?: VercelOptions,
 ): Promise<SourceProviders> {
   const res = await fetch("https://ai-gateway.vercel.sh/v1/models");
   if (!res.ok) {
@@ -210,9 +279,31 @@ export async function fetchVercel(
     data?: VercelModelJson[];
   };
   const list = Array.isArray(parsed?.data) ? parsed.data : [];
+  const filteredList = list.filter((model) => {
+    if (!model) return false;
+    const id = String(model.id ?? "");
+    if (!id) return false;
+    const providerPart = id.includes("/") ? id.split("/")[0] : undefined;
+    const providerId =
+      typeof model.owned_by === "string" && model.owned_by.length > 0
+        ? model.owned_by
+        : (providerPart ?? "vercel");
+    if (options?.provider && providerId !== options.provider) return false;
+    return options?.model ? id.includes(options.model) : true;
+  });
+  const endpointDetailsByModel = new Map<string, VercelModelEndpointsJson>();
+
+  if (options?.includeEndpointDetails) {
+    await Promise.all(
+      filteredList.map(async (model) => {
+        const id = String(model.id ?? "");
+        endpointDetailsByModel.set(id, await fetchVercelModelEndpoints(id));
+      }),
+    );
+  }
 
   const catalog: SourceProviders = {};
-  for (const model of list) {
+  for (const model of filteredList) {
     if (!model) continue;
     const id = String(model.id ?? "");
     if (!id) continue;
@@ -235,10 +326,10 @@ export async function fetchVercel(
     }
     const provider = catalog[providerId];
     if (!provider) continue;
-    provider.models[id] = mapVercelModel(model);
+    provider.models[id] = mapVercelModel(model, endpointDetailsByModel.get(id));
   }
 
-  return filterCatalog(catalog, options?.provider, options?.model);
+  return catalog;
 }
 
 export async function fetchOpenrouter(

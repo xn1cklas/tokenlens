@@ -14,7 +14,7 @@ Typed, dependency-free fetchers for the public `models.dev` catalog, Vercel AI G
 Features
 - `fetchModelsDev` normalizes https://models.dev/api.json into TokenLens DTOs
 - `fetchOpenrouter` maps OpenRouter models, pricing, limits, and metadata
-- `fetchVercel` maps Vercel AI Gateway models, pricing, and context limits
+- `fetchVercel` maps Vercel AI Gateway models, pricing, and context limits, with optional endpoint-level enrichment for filtered models
 - Pass a custom `fetch` implementation for server/runtime flexibility
 - DTO types (`SourceProvider`, `SourceModel`, …) re-exported for convenience
 
@@ -41,6 +41,13 @@ const openrouterCatalog = await fetchOpenrouter({ model: "gpt" });
 // Vercel AI Gateway catalog (grouped by upstream provider)
 const vercelCatalog = await fetchVercel({ provider: "openai" });
 
+// Vercel AI Gateway endpoint details for a specific model
+const claudeCatalog = await fetchVercel({
+  provider: "anthropic",
+  model: "claude-sonnet-4",
+  includeEndpointDetails: true,
+});
+
 const combine = (catalogs: SourceProviders[]): SourceProviders =>
   Object.assign({}, ...catalogs);
 
@@ -56,8 +63,11 @@ API
   - Fetches the public models.dev JSON, normalizes provider metadata and models, and optionally filters.
 - `fetchOpenrouter(options?: { provider?: string; model?: string; fetch?: FetchLike })`
   - Calls `https://openrouter.ai/api/v1/models`, groups models by namespace, and keeps pricing/limit details.
-- `fetchVercel(options?: { provider?: string; model?: string; fetch?: FetchLike })`
+- `fetchVercel(options?: { provider?: string; model?: string; includeEndpointDetails?: boolean; fetch?: FetchLike })`
   - Loads `https://ai-gateway.vercel.sh/v1/models`, groups models by upstream provider, and converts pricing.
+  - When `includeEndpointDetails` is true, also loads `https://ai-gateway.vercel.sh/v1/models/{provider}/{model}/endpoints` for each matched model and prefers endpoint-level pricing/context data.
+- `fetchVercelModelEndpoints(modelId: string)`
+  - Loads endpoint details for one Vercel AI Gateway model id, for example `anthropic/claude-sonnet-4`.
 - `FetchLike`
   - Minimal fetch contract accepted by both functions. Useful when wiring Node, Deno, Cloudflare Workers, etc.
 
