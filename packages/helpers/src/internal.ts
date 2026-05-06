@@ -39,6 +39,7 @@ export function normalizeUsage(usage: Usage): NormalizedUsage {
     num(u["cache_read_tokens"]) ??
     num(u["cacheReads"]) ??
     num(u["cacheReadTokens"]) ??
+    num(u["cachedInputTokens"]) ??
     undefined;
   const cacheWrites =
     num(u["cache_write_tokens"]) ??

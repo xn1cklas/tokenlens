@@ -1,9 +1,10 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import { normalizeUsage } from "@tokenlens/helpers";
 import type { LanguageModelUsage, UIMessage } from "ai";
 import { GlobeIcon, MicIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Conversation,
   ConversationContent,
@@ -33,14 +34,6 @@ const models = [
 ];
 
 type AppUIMessage = UIMessage<unknown, { usage: LanguageModelUsage }>;
-
-function normalizeUsage(usage: LanguageModelUsage) {
-  return {
-    input: usage.inputTokens ?? 0,
-    output: usage.outputTokens ?? 0,
-    total: usage.totalTokens,
-  };
-}
 
 const InputDemo = () => {
   const [text, setText] = useState<string>("");
@@ -94,12 +87,6 @@ const InputDemo = () => {
     ),
     [contextMax, usedTokens, usage, model],
   );
-
-  // Optional: add a single log after usage arrives
-  useEffect(() => {
-    if (!usage) return;
-    normalizeUsage(usage); // touch to ensure tree-shake-safe import usage
-  }, [usage]);
 
   return (
     <div className="max-w-4xl mx-auto p-6 relative size-full rounded-lg border h-[600px]">

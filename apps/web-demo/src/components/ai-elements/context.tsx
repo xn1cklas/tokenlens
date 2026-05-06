@@ -1,5 +1,6 @@
 "use client";
 
+import { normalizeUsage } from "@tokenlens/helpers";
 import type { LanguageModelUsage } from "ai";
 import type { ComponentProps } from "react";
 import {
@@ -7,7 +8,6 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 export type ContextProps = ComponentProps<"button"> & {
@@ -33,17 +33,6 @@ const ICON_VIEWBOX = 24;
 const ICON_CENTER = 12;
 const ICON_RADIUS = 10;
 const ICON_STROKE_WIDTH = 2;
-
-function normalizeUsage(usage?: LanguageModelUsage) {
-  return {
-    input: usage?.inputTokens ?? 0,
-    output: usage?.outputTokens ?? 0,
-    total: usage?.totalTokens,
-    reasoningTokens: usage?.reasoningTokens,
-    cacheReads: usage?.cachedInputTokens,
-    cacheWrites: undefined,
-  };
-}
 
 const formatTokens = (tokens?: number) => {
   if (tokens === undefined) {
@@ -143,8 +132,8 @@ export const Context = ({
   const used = formatTokens(safeUsed);
   const total = formatTokens(safeMax);
 
-  const uNorm = normalizeUsage(usage);
-  const costText = undefined;
+  const uNorm = normalizeUsage(usage ?? {});
+  const showUsageBreakdown = showBreakdown || usage !== undefined;
 
   const segInput = Math.max(0, uNorm.input ?? 0);
   const segOutput = Math.max(0, uNorm.output ?? 0);
@@ -170,20 +159,14 @@ export const Context = ({
             {displayPct}
           </span>
           <ContextIcon percent={usedPercent} />
-          {costText && (
-            <span className="ml-1 text-muted-foreground">• {costText}</span>
-          )}
         </button>
       </HoverCardTrigger>
       <HoverCardContent align="center" className="w-fit p-3">
         <div className="min-w-[240px] space-y-2">
           <p className="text-center text-sm">
             {displayPct} • {used} / {total} tokens
-            {costText ? (
-              <span className="ml-1 text-muted-foreground">• {costText}</span>
-            ) : null}
           </p>
-          {true && (
+          {showUsageBreakdown && (
             <div className="space-y-2">
               <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                 <div
@@ -281,15 +264,6 @@ export const Context = ({
                 <span className="text-muted-foreground">Output</span>
                 <span>{formatTokens(uNorm.output)}</span>
               </div>
-              {costText && (
-                <>
-                  <Separator className="mt-1" />
-                  <div className="flex items-center justify-between pt-1 text-xs">
-                    <span className="text-muted-foreground">Total cost</span>
-                    <span>{costText}</span>
-                  </div>
-                </>
-              )}
             </div>
           )}
         </div>
