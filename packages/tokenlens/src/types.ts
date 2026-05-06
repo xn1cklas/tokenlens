@@ -5,7 +5,6 @@ export const GATEWAY_IDS = [
   "openrouter",
   "models.dev",
   "vercel",
-  "package",
 ] as const;
 export type GatewayId = (typeof GATEWAY_IDS)[number];
 
@@ -19,6 +18,7 @@ export interface CacheAdapter {
 
 export type TokenlensOptions = {
   catalog?: GatewayId | SourceProviders;
+  overrides?: SourceProviders;
   ttlMs?: number;
   fetch?: typeof globalThis.fetch;
   cache?: CacheAdapter;

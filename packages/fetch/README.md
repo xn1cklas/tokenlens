@@ -52,14 +52,12 @@ const providers = combine([
 ```
 
 API
-- `fetchModelsDev(options?: { provider?: string; model?: string; fetch?: FetchLike })`
+- `fetchModelsDev(options?: { provider?: string; model?: string; fetch?: typeof globalThis.fetch })`
   - Fetches the public models.dev JSON, normalizes provider metadata and models, and optionally filters.
-- `fetchOpenrouter(options?: { provider?: string; model?: string; fetch?: FetchLike })`
+- `fetchOpenrouter(options?: { provider?: string; model?: string; fetch?: typeof globalThis.fetch })`
   - Calls `https://openrouter.ai/api/v1/models`, groups models by namespace, and keeps pricing/limit details.
-- `fetchVercel(options?: { provider?: string; model?: string; fetch?: FetchLike })`
+- `fetchVercel(options?: { provider?: string; model?: string; fetch?: typeof globalThis.fetch })`
   - Loads `https://ai-gateway.vercel.sh/v1/models`, groups models by upstream provider, and converts pricing.
-- `FetchLike`
-  - Minimal fetch contract accepted by both functions. Useful when wiring Node, Deno, Cloudflare Workers, etc.
 
 DTO exports
 ```ts

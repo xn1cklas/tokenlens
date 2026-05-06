@@ -24,6 +24,7 @@ export type ModelDetails = SourceModel | undefined;
 
 export class Tokenlens {
   private readonly catalog: GatewayId | SourceProviders;
+  private readonly overrides: SourceProviders | undefined;
   private readonly ttlMs: number;
   private readonly cache: CacheAdapter;
   private readonly cacheKey: string;
@@ -32,6 +33,7 @@ export class Tokenlens {
   constructor(options?: TokenlensOptions) {
     // use automode as default
     this.catalog = options?.catalog ?? GATEWAY_IDS[1];
+    this.overrides = options?.overrides;
     this.ttlMs = options?.ttlMs ?? 24 * 60 * 60 * 1000;
     this.cache = options?.cache ?? new MemoryCache();
     this.fetchImpl = options?.fetch ?? globalThis.fetch;
@@ -69,48 +71,52 @@ export class Tokenlens {
 
   private async loadCatalog(): Promise<SourceProviders> {
     if (typeof this.catalog === "object") {
-      return Promise.resolve(this.catalog);
+      return Promise.resolve(mergeCatalogs(this.catalog, this.overrides));
     }
 
     const now = Date.now();
     const cached = await this.cache.get(this.cacheKey);
-    if (cached && cached.expiresAt > now) return cached.value;
+    if (cached && cached.expiresAt > now) {
+      return mergeCatalogs(cached.value, this.overrides);
+    }
 
     let catalog: SourceProviders;
     try {
       catalog = await this.fetchCatalog();
     } catch (error) {
-      if (cached) return cached.value;
+      if (cached) return mergeCatalogs(cached.value, this.overrides);
       throw error;
     }
 
     const entry = { value: catalog, expiresAt: now + jitter(this.ttlMs) };
     await this.cache.set(this.cacheKey, entry);
-    return catalog;
+    return mergeCatalogs(catalog, this.overrides);
   }
 
   async refresh(force?: boolean): Promise<SourceProviders> {
     if (typeof this.catalog === "object") {
-      return Promise.resolve(this.catalog);
+      return Promise.resolve(mergeCatalogs(this.catalog, this.overrides));
     }
 
     const now = Date.now();
     const cached = await this.cache.get(this.cacheKey);
     if (!force) {
-      if (cached && cached.expiresAt > now) return cached.value;
+      if (cached && cached.expiresAt > now) {
+        return mergeCatalogs(cached.value, this.overrides);
+      }
     }
 
     let catalog: SourceProviders;
     try {
       catalog = await this.fetchCatalog();
     } catch (error) {
-      if (cached) return cached.value;
+      if (cached) return mergeCatalogs(cached.value, this.overrides);
       throw error;
     }
 
     const entry = { value: catalog, expiresAt: now + jitter(this.ttlMs) };
     await this.cache.set(this.cacheKey, entry);
-    return catalog;
+    return mergeCatalogs(catalog, this.overrides);
   }
 
   async invalidate(): Promise<void> {
@@ -382,4 +388,73 @@ export class Tokenlens {
     }
     return getContextHealth({ model: resolved.model, usage: args.usage });
   }
+}
+
+function mergeCatalogs(
+  base: SourceProviders,
+  overrides?: SourceProviders,
+): SourceProviders {
+  if (!overrides) return base;
+
+  const merged: SourceProviders = {};
+  for (const [providerId, provider] of Object.entries(base)) {
+    merged[providerId] = {
+      ...provider,
+      models: { ...(provider.models ?? {}) },
+      ...(provider.extras ? { extras: { ...provider.extras } } : {}),
+    };
+  }
+
+  for (const [providerId, providerOverride] of Object.entries(overrides)) {
+    const existingProvider = merged[providerId];
+    if (!existingProvider) {
+      merged[providerId] = {
+        ...providerOverride,
+        models: { ...(providerOverride.models ?? {}) },
+        ...(providerOverride.extras
+          ? { extras: { ...providerOverride.extras } }
+          : {}),
+      };
+      continue;
+    }
+
+    const nextModels = { ...(existingProvider.models ?? {}) };
+    for (const [modelId, modelOverride] of Object.entries(
+      providerOverride.models ?? {},
+    )) {
+      const existingModel = nextModels[modelId];
+      if (!existingModel) {
+        nextModels[modelId] = modelOverride;
+        continue;
+      }
+
+      const mergedModel = { ...existingModel, ...modelOverride };
+      if (existingModel.cost || modelOverride.cost) {
+        mergedModel.cost = { ...existingModel.cost, ...modelOverride.cost };
+      }
+      if (existingModel.limit || modelOverride.limit) {
+        mergedModel.limit = { ...existingModel.limit, ...modelOverride.limit };
+      }
+      nextModels[modelId] = mergedModel;
+    }
+
+    const mergedProvider = {
+      ...existingProvider,
+      ...providerOverride,
+      models: nextModels,
+    };
+    const env = providerOverride.env ?? existingProvider.env;
+    if (env) {
+      mergedProvider.env = env;
+    }
+    if (existingProvider.extras || providerOverride.extras) {
+      mergedProvider.extras = {
+        ...existingProvider.extras,
+        ...providerOverride.extras,
+      };
+    }
+    merged[providerId] = mergedProvider;
+  }
+
+  return merged;
 }

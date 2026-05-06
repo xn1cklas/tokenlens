@@ -74,6 +74,7 @@ const tokenlens = new Tokenlens(options?: TokenlensOptions);
 
 **Options:**
 - `catalog`: `"auto" | "openrouter" | "models.dev" | "vercel"` or custom `SourceProviders` object (default: `"openrouter"`; `"auto"` is an alias for the same OpenRouter gateway)
+- `overrides`: Custom `SourceProviders` object merged over the base catalog. Use this for local price or limit corrections while preserving hosted metadata.
 - `ttlMs`: Cache TTL in milliseconds (default: 24 hours)
 - `cache`: Custom cache adapter with `{ get(key), set(key, entry), delete?(key) }` methods where `entry` is `{ value: SourceProviders; expiresAt: number }` (default: in-memory cache)
 - `cacheKey`: Custom cache key for the catalog (default: `tokenlens:v2:{catalog}`)
@@ -253,6 +254,7 @@ const customCatalog = {
     models: {
       "gpt-custom": {
         id: "gpt-custom",
+        canonical_id: "gpt-custom",
         name: "Custom GPT",
         // ... model metadata
       }
@@ -262,6 +264,25 @@ const customCatalog = {
 
 const customTokenlens = new Tokenlens({ 
   catalog: customCatalog 
+});
+
+// Or patch prices/limits on top of a hosted catalog
+const pricedTokenlens = new Tokenlens({
+  catalog: "openrouter",
+  overrides: {
+    openai: {
+      id: "openai",
+      source: "package",
+      models: {
+        "openai/gpt-4o-mini": {
+          id: "openai/gpt-4o-mini",
+          canonical_id: "openai/gpt-4o-mini",
+          name: "GPT-4o Mini",
+          cost: { input: 1, output: 2 },
+        },
+      },
+    },
+  },
 });
 ```
 
@@ -322,6 +343,7 @@ const testCatalog = {
     models: {
       "test-model": {
         id: "test-model",
+        canonical_id: "test-model",
         name: "Test Model",
         limit: { context: 4096, output: 2048 },
         cost: { input: 1, output: 2 },
