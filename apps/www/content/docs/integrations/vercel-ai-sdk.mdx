@@ -3,14 +3,14 @@ title: "Vercel AI SDK Integration"
 description: "Compute costs from Vercel AI SDK usage and attach metadata via middleware."
 ---
 
-Tokenlens integrates seamlessly with the Vercel AI SDK by accepting `LanguageModelV2` metadata. This guide shows you how to estimate costs from Vercel usage payloads and how to attach Tokenlens cost hints to SDK responses.
+Tokenlens integrates seamlessly with the Vercel AI SDK by accepting AI SDK v5 `LanguageModelV2` and AI SDK v6 `LanguageModelV3` metadata. This guide shows you how to estimate costs from Vercel usage payloads and how to attach Tokenlens cost hints to SDK responses.
 
 ## Installing dependencies
 
-Install Tokenlens and the AI SDK provider packages you use. The examples below cover OpenAI, Anthropic, and xAI—install only the providers relevant to your project:
+Install Tokenlens, the Vercel AI SDK adapter, and the AI SDK provider packages you use. The examples below cover OpenAI, Anthropic, and xAI—install only the providers relevant to your project:
 
 ```bash
-pnpm add tokenlens @ai-sdk/openai @ai-sdk/anthropic @ai-sdk/xai
+pnpm add tokenlens @tokenlens/vercel @ai-sdk/openai @ai-sdk/anthropic @ai-sdk/xai
 ```
 
 > Tokenlens works with any provider supported by the Vercel AI SDK; the examples below cover OpenAI, Anthropic, and xAI.
@@ -44,25 +44,32 @@ Tokenlens normalizes provider ids that include namespaces (e.g., `openai.respons
 
 ## Attaching cost metadata via middleware
 
-Tokenlens provides a middleware helper for the Vercel AI SDK that adds cost information to the `providerMetadata` of generated responses.
+Tokenlens provides middleware helpers for AI SDK v5 and v6 that add cost information to the `providerMetadata` of generated responses.
 
 ```ts
-import { tokenlensMiddleware } from "@tokenlens/vercel";
+import { withTokenlens } from "@tokenlens/vercel";
 import { createTokenlens } from "tokenlens";
 import { anthropic } from "@ai-sdk/anthropic";
+import { generateText } from "ai";
 
 const tokenlens = createTokenlens();
 
-const middleware = tokenlensMiddleware(tokenlens);
+const model = withTokenlens(
+  anthropic("claude-3-5-sonnet-20241022"),
+  tokenlens,
+);
 
-const model = anthropic("claude-3-5-sonnet-20241022").withMiddleware(middleware);
-
-const result = await model.invoke("Hello!");
+const result = await generateText({
+  model,
+  prompt: "Hello!",
+});
 
 console.log(result.providerMetadata?.tokenlens?.costs); // Token cost breakdown
 ```
 
 The middleware calls `tokenlens.computeCostUSD` internally using the model metadata and usage provided by the SDK.
+
+Use `withTokenlensV5` or `tokenlensMiddlewareV5` when you want explicit AI SDK v5 names, and `withTokenlensV6` or `tokenlensMiddlewareV6` for explicit AI SDK v6 names. The default `withTokenlens` helper follows the installed AI SDK major.
 
 ## Custom Tokenlens instances
 
@@ -71,13 +78,14 @@ If you need to pin a specific catalog or customise caching, create your own Toke
 ```ts
 import { createTokenlens } from "tokenlens";
 import { createOpenAI } from "@ai-sdk/openai";
-import { tokenlensMiddleware } from "@tokenlens/vercel";
+import { withTokenlens } from "@tokenlens/vercel";
 
 const tokenlens = createTokenlens({ catalog: "openrouter" });
 
-const model = createOpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  .text("gpt-4o-mini")
-  .withMiddleware(tokenlensMiddleware(tokenlens));
+const model = withTokenlens(
+  createOpenAI({ apiKey: process.env.OPENAI_API_KEY })("gpt-4o-mini"),
+  tokenlens,
+);
 
 // or provide fixture data directly (testProviders: SourceProviders)
 const fixtureTokenlens = createTokenlens({
@@ -92,8 +100,8 @@ Use a fixture catalog during tests to avoid network variability:
 
 ```ts
 import { createTokenlens } from "tokenlens";
-import { tokenlensMiddleware } from "@tokenlens/vercel";
-import { createLanguageModel } from "@ai-sdk/provider";
+import { withTokenlens } from "@tokenlens/vercel";
+import { openai } from "@ai-sdk/openai";
 import { testProviders } from "../fixtures/providers";
 
 const tokenlens = createTokenlens({
@@ -101,8 +109,7 @@ const tokenlens = createTokenlens({
   ttlMs: 0, // always refresh in tests
 });
 
-const model = createLanguageModel({ modelId: "openai/gpt-5", provider: "openai" })
-  .withMiddleware(tokenlensMiddleware(tokenlens));
+const model = withTokenlens(openai("gpt-5"), tokenlens);
 ```
 
 This isolates integration tests from external API fluctuations while ensuring Tokenlens still performs the same cost calculations as in production.
