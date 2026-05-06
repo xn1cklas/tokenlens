@@ -9,6 +9,14 @@ const sharedTestOptions = {
 
 const repoRoot = fileURLToPath(new URL(".", import.meta.url));
 
+const workspaceAliases = {
+  "@tokenlens/core": resolve(repoRoot, "packages/core/src/index.ts"),
+  "@tokenlens/fetch": resolve(repoRoot, "packages/fetch/src/index.ts"),
+  "@tokenlens/helpers": resolve(repoRoot, "packages/helpers/src/index.ts"),
+  "@tokenlens/tokenizer": resolve(repoRoot, "packages/tokenizer/src/index.ts"),
+  tokenlens: resolve(repoRoot, "packages/tokenlens/src/index.ts"),
+};
+
 function project(
   name: string,
   relativeRoot: string,
@@ -17,6 +25,9 @@ function project(
 ) {
   return defineProject({
     root: resolve(repoRoot, relativeRoot),
+    resolve: {
+      alias: workspaceAliases,
+    },
     test: {
       ...sharedTestOptions,
       ...extraTestOptions,
@@ -28,16 +39,7 @@ function project(
 
 export default defineConfig({
   resolve: {
-    alias: {
-      "@tokenlens/core": resolve(repoRoot, "packages/core/src/index.ts"),
-      "@tokenlens/fetch": resolve(repoRoot, "packages/fetch/src/index.ts"),
-      "@tokenlens/helpers": resolve(repoRoot, "packages/helpers/src/index.ts"),
-      "@tokenlens/tokenizer": resolve(
-        repoRoot,
-        "packages/tokenizer/src/index.ts",
-      ),
-      tokenlens: resolve(repoRoot, "packages/tokenlens/src/index.ts"),
-    },
+    alias: workspaceAliases,
   },
   test: {
     coverage: {
