@@ -76,6 +76,7 @@
   },
   "homepage": "https://github.com/xn1cklas/tokenlens/tree/HEAD/packages/tokenlens#readme",
   "devDependencies": {
+    "@types/node": "^24.5.2",
     "typescript": "^5.9.3"
   },
   "dependencies": {

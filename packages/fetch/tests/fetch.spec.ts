@@ -1,6 +1,85 @@
 import { writeFile } from "node:fs/promises";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { fetchModelsDev, fetchOpenrouter, fetchVercel } from "../src/index.ts";
+
+const jsonResponse = (body: unknown): Response =>
+  ({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    json: async () => body,
+  }) as Response;
+
+describe("fetch injection", () => {
+  it("fetchOpenrouter uses the provided fetch implementation", async () => {
+    const fetchImpl = vi.fn<typeof globalThis.fetch>(async () =>
+      jsonResponse({
+        data: [
+          {
+            id: "openai/gpt-4o",
+            name: "GPT-4o",
+            pricing: { prompt: "0.0000025", completion: "0.00001" },
+            context_length: 128_000,
+          },
+        ],
+      }),
+    );
+
+    const providers = await fetchOpenrouter({ fetch: fetchImpl });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "https://openrouter.ai/api/v1/models",
+    );
+    expect(providers.openai.models["openai/gpt-4o"]?.cost?.input).toBe(2.5);
+  });
+
+  it("fetchModelsDev uses the provided fetch implementation", async () => {
+    const fetchImpl = vi.fn<typeof globalThis.fetch>(async () =>
+      jsonResponse({
+        openai: {
+          id: "openai",
+          models: {
+            "openai/gpt-4o": {
+              id: "openai/gpt-4o",
+              canonical_id: "openai/gpt-4o",
+              name: "GPT-4o",
+            },
+          },
+        },
+      }),
+    );
+
+    const providers = await fetchModelsDev({ fetch: fetchImpl });
+
+    expect(fetchImpl).toHaveBeenCalledWith("https://models.dev/api.json");
+    expect(providers.openai.models["openai/gpt-4o"]?.name).toBe("GPT-4o");
+  });
+
+  it("fetchVercel uses the provided fetch implementation", async () => {
+    const fetchImpl = vi.fn<typeof globalThis.fetch>(async () =>
+      jsonResponse({
+        data: [
+          {
+            id: "openai/gpt-4o",
+            name: "GPT-4o",
+            owned_by: "openai",
+            pricing: { prompt: "0.0000025", completion: "0.00001" },
+            context_window: 128_000,
+          },
+        ],
+      }),
+    );
+
+    const providers = await fetchVercel({ fetch: fetchImpl });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "https://ai-gateway.vercel.sh/v1/models",
+    );
+    expect(providers.openai.models["openai/gpt-4o"]?.limit?.context).toBe(
+      128_000,
+    );
+  });
+});
 
 describe("live fetchers", () => {
   it("fetchOpenrouter returns catalog with providers and models", async () => {
