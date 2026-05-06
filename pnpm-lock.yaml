@@ -256,6 +256,9 @@ importers:
         specifier: workspace:*
         version: link:../../packages/tokenlens
     devDependencies:
+      '@types/node':
+        specifier: ^24.5.2
+        version: 24.6.2
       tsx:
         specifier: ^4.20.5
         version: 4.20.5
@@ -375,6 +378,9 @@ importers:
         specifier: workspace:*
         version: link:../tokenizer
     devDependencies:
+      '@types/node':
+        specifier: ^24.5.2
+        version: 24.6.2
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

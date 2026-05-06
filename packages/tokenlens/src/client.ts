@@ -27,18 +27,43 @@ export class Tokenlens {
   private readonly ttlMs: number;
   private readonly cache: CacheAdapter;
   private readonly cacheKey: string;
+  private readonly fetchImpl: typeof globalThis.fetch;
 
   constructor(options?: TokenlensOptions) {
     // use automode as default
     this.catalog = options?.catalog ?? GATEWAY_IDS[1];
     this.ttlMs = options?.ttlMs ?? 24 * 60 * 60 * 1000;
     this.cache = options?.cache ?? new MemoryCache();
+    this.fetchImpl = options?.fetch ?? globalThis.fetch;
 
     // only cache when we load the catalog form a gateway
     if (typeof this.catalog === "string") {
       this.cacheKey = options?.cacheKey ?? `tokenlens:v2:${this.catalog}`;
     } else {
       this.cacheKey = options?.cacheKey ?? "";
+    }
+  }
+
+  private async fetchCatalog(): Promise<SourceProviders> {
+    if (typeof this.catalog === "object") {
+      return Promise.resolve(this.catalog);
+    }
+
+    switch (this.catalog) {
+      case "auto":
+        return fetchOpenrouter({ fetch: this.fetchImpl });
+      case "openrouter":
+        return fetchOpenrouter({ fetch: this.fetchImpl });
+      case "models.dev":
+        return fetchModelsDev({ fetch: this.fetchImpl });
+      case "vercel":
+        return fetchVercel({ fetch: this.fetchImpl });
+      // TODO implement netlify AI Gateway
+      // case "netlify":
+      //   catalog = [];
+      //   break;
+      default:
+        throw new TokenlensError.InvalidCatalog(this.catalog);
     }
   }
 
@@ -52,25 +77,11 @@ export class Tokenlens {
     if (cached && cached.expiresAt > now) return cached.value;
 
     let catalog: SourceProviders;
-    switch (this.catalog) {
-      case "auto":
-        catalog = await fetchOpenrouter();
-        break;
-      case "openrouter":
-        catalog = await fetchOpenrouter();
-        break;
-      case "models.dev":
-        catalog = await fetchModelsDev();
-        break;
-      case "vercel":
-        catalog = await fetchVercel();
-        break;
-      // TODO implement netlify AI Gateway
-      // case "netlify":
-      //   catalog = [];
-      //   break;
-      default:
-        throw new TokenlensError.InvalidCatalog(this.catalog);
+    try {
+      catalog = await this.fetchCatalog();
+    } catch (error) {
+      if (cached) return cached.value;
+      throw error;
     }
 
     const entry = { value: catalog, expiresAt: now + jitter(this.ttlMs) };
@@ -84,27 +95,17 @@ export class Tokenlens {
     }
 
     const now = Date.now();
+    const cached = await this.cache.get(this.cacheKey);
     if (!force) {
-      const cached = await this.cache.get(this.cacheKey);
       if (cached && cached.expiresAt > now) return cached.value;
     }
 
     let catalog: SourceProviders;
-    switch (this.catalog) {
-      case "auto":
-        catalog = await fetchOpenrouter();
-        break;
-      case "openrouter":
-        catalog = await fetchOpenrouter();
-        break;
-      case "models.dev":
-        catalog = await fetchModelsDev();
-        break;
-      case "vercel":
-        catalog = await fetchVercel();
-        break;
-      default:
-        throw new TokenlensError.InvalidCatalog(this.catalog);
+    try {
+      catalog = await this.fetchCatalog();
+    } catch (error) {
+      if (cached) return cached.value;
+      throw error;
     }
 
     const entry = { value: catalog, expiresAt: now + jitter(this.ttlMs) };

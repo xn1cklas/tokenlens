@@ -5,7 +5,6 @@ import {
   compactJson,
   computeCostUSD,
   countTokens,
-  createTokenlens,
   estimateCostUSD,
   getContextHealth,
 } from "tokenlens";
@@ -17,8 +16,6 @@ async function main(): Promise<void> {
     process.exitCode = 1;
     return;
   }
-
-  const tokenlens = createTokenlens();
 
   console.log("🎯 TokenLens + Vercel AI SDK Example\n");
   console.log("=".repeat(60));
@@ -145,7 +142,7 @@ async function main(): Promise<void> {
     `Decision: ${estimate.totalTokenCostUSD > 0.01 ? "⚠️ High cost" : "✅ Proceed"}`,
   );
 
-  console.log("\n" + "=".repeat(60));
+  console.log(`\n${"=".repeat(60)}`);
   console.log("✅ Example completed successfully!");
 }
 

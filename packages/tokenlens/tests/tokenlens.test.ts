@@ -75,6 +75,22 @@ describe("Tokenlens - Catalog Loading", () => {
     expect(fetchOpenrouterSpy).toHaveBeenCalled();
   });
 
+  it("passes custom fetch to the catalog fetcher", async () => {
+    const mockCatalog = createOpenrouterProvidersFixture();
+    const fetchImpl = vi.fn<typeof globalThis.fetch>();
+    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
+
+    const client = new Tokenlens({
+      catalog: "openrouter",
+      cacheKey: "test-custom-fetch",
+      fetch: fetchImpl,
+    });
+
+    await client.getModelData({ modelId: "openai/gpt-4o" });
+
+    expect(fetchOpenrouterSpy).toHaveBeenCalledWith({ fetch: fetchImpl });
+  });
+
   it("uses models.dev catalog", async () => {
     const mockCatalog = createModelsDevProvidersFixture();
     fetchModelsDevSpy.mockResolvedValue(mockCatalog);
@@ -218,6 +234,30 @@ describe("Tokenlens - Caching", () => {
     await client.getModelData({ modelId: "openai/gpt-4o" });
 
     expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("falls back to stale cache when fetching a fresh catalog fails", async () => {
+    const staleCatalog = createOpenrouterProvidersFixture();
+    const cache: CacheAdapter = {
+      get: vi.fn(() => ({
+        value: staleCatalog,
+        expiresAt: Date.now() - 1,
+      })),
+      set: vi.fn(),
+    };
+    fetchOpenrouterSpy.mockRejectedValue(new Error("network failed"));
+
+    const client = new Tokenlens({
+      catalog: "openrouter",
+      cache,
+      cacheKey: "test-stale-fallback",
+    });
+
+    const modelData = await client.getModelData({ modelId: "openai/gpt-4o" });
+
+    expect(modelData?.id).toBe("openai/gpt-4o");
+    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
+    expect(cache.set).not.toHaveBeenCalled();
   });
 });
 
@@ -508,13 +548,11 @@ describe("Tokenlens.getContextLimits()", () => {
 
 describe("Tokenlens.estimateCostUSD()", () => {
   let fetchOpenrouterSpy: Mock;
-  let fetchModelsDevSpy: Mock;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     const fetchModule = await import("@tokenlens/fetch");
     fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter") as Mock;
-    fetchModelsDevSpy = vi.spyOn(fetchModule, "fetchModelsDev") as Mock;
   });
 
   afterEach(() => {

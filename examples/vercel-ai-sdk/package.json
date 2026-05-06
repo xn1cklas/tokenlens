@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "tsx src/index.ts"
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.35",
@@ -12,6 +13,7 @@
     "tokenlens": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "^24.5.2",
     "tsx": "^4.20.5"
   }
 }

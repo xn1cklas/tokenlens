@@ -66,6 +66,9 @@ jobs:
       - name: Build packages only (turbo)
         run: pnpm turbo run build --filter=./packages/*
 
+      - name: Typecheck examples
+        run: pnpm turbo run typecheck --filter=./examples/*
+
   test:
     name: Test
     runs-on: ubuntu-latest

@@ -9,7 +9,6 @@ import {
 } from "tokenlens";
 
 const MODEL_ID = "openai/gpt-4o-mini";
-const PROVIDER = "openai";
 
 async function main(): Promise<void> {
   const apiKey = process.env["OPENAI_API_KEY"];
@@ -160,7 +159,7 @@ async function main(): Promise<void> {
   console.log(`Total output tokens: ${totalOutputTokens}`);
   console.log(`Estimated cost: $${totalCost.toFixed(6)}`);
 
-  console.log("\n" + "=".repeat(60));
+  console.log(`\n${"=".repeat(60)}`);
   console.log("✅ Example completed successfully!");
 }
 
