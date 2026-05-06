@@ -47,11 +47,11 @@ This file defines canonical terminology used across the TokenLens v2 codebase an
 
 ## models.dev
 - External dataset consumed via `https://models.dev/api.json`.
-- In v2 we ingest it into `packages/models/src/modelsdev/`.
+- In v2 Tokenlens can fetch it live with the `"models.dev"` catalog.
 
 ## OpenRouter
 - External dataset consumed via `https://openrouter.ai/api/v1/models`.
-- In v2 we ingest it into `packages/models/src/openrouter/`.
+- In v2 Tokenlens can fetch it live with the `"openrouter"` catalog.
 
 ## Vercel AI Gateway
 - External dataset consumed via `https://ai-gateway.vercel.sh/v1/models`.
@@ -77,7 +77,8 @@ This file defines canonical terminology used across the TokenLens v2 codebase an
 
 ## Tokenlens (class)
 - Configurable client responsible for loading catalogs, caching provider metadata, and exposing helpers (`getModelData`, `computeCostUSD`, `getContextLimits`, `getContextHealth`, `estimateCostUSD`, `countTokens`).
-- Instances share a cache unless `cacheKey` is overridden.
+- Each instance uses its own in-memory cache by default.
+- Instances can share cached data by passing the same external cache adapter and `cacheKey`.
 
 ## createTokenlens
 - Convenience factory that instantiates `Tokenlens` with sensible defaults (OpenRouter catalog when none provided; `{ catalog: "auto" }` is equivalent to the same OpenRouter gateway).

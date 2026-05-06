@@ -12,9 +12,9 @@ Reference: Zod repository (`https://github.com/colinhacks/zod`).
 ## Snapshot of our current setup
 
 - **Monorepo**: pnpm workspaces, Turborepo, packages under `packages/*`, apps under `apps/*`.
-- **CI**: Lint (Biome), Build (turbo), Test (vitest) on Node 20; weekly models.dev sync workflow.
+- **CI**: Lint (Biome), Build (turbo), Test (vitest), and example typechecks on Node 20.
 - **Formatting/Lint**: Biome configured; lefthook pre-commit runs formatting.
-- **Publishing**: `tokenlens` published; scoped packages `@tokenlens/core` and `@tokenlens/models` exist but lack full publish metadata.
+- **Publishing**: `tokenlens` published; scoped packages such as `@tokenlens/core`, `@tokenlens/fetch`, `@tokenlens/helpers`, and `@tokenlens/tokenizer` exist but need consistent publish metadata.
 - **Module format**: ESM with minimal `exports` fields.
 - **Testing**: Vitest in `tokenlens`; no coverage thresholds; no type-level API tests.
 
@@ -63,7 +63,7 @@ Reference: Zod repository (`https://github.com/colinhacks/zod`).
   - Document and pin `packageManager` at root and enforce via CI
 
 - **Package publishing hygiene**
-  - Add `publishConfig.access: public` for scoped packages (`@tokenlens/core`, `@tokenlens/models`)
+  - Add `publishConfig.access: public` for scoped packages.
   - Fill package metadata (`repository`, `homepage`, `bugs`, `license`, `funding`) for all packages
   - Include `LICENSE` and `README` in published `files` array for all packages
 
@@ -97,7 +97,6 @@ Reference: Zod repository (`https://github.com/colinhacks/zod`).
 ## References
 
 - Zod repository: [`https://github.com/colinhacks/zod`](https://github.com/colinhacks/zod)
-
 
 
 
