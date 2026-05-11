@@ -38,8 +38,8 @@ import { Tokenlens } from "tokenlens";
 const tokenlens = new Tokenlens();
 
 // Get model metadata
-const model = await tokenlens.getModelData({ 
-  modelId: "openai/gpt-4o-mini" 
+const model = await tokenlens.getModelData({
+  modelId: "openai/gpt-4o-mini"
 });
 
 // Compute costs from usage
@@ -57,8 +57,8 @@ const costs = await tokenlens.computeCostUSD({
 console.log(`Total cost: $${costs.totalTokenCostUSD.toFixed(6)}`);
 
 // Get context limits
-const limits = await tokenlens.getContextLimits({ 
-  modelId: "openai/gpt-4o-mini" 
+const limits = await tokenlens.getContextLimits({
+  modelId: "openai/gpt-4o-mini"
 });
 
 console.log(`Context: ${limits?.context} tokens`);
@@ -226,9 +226,9 @@ TokenLens supports multiple model ID formats:
 await tokenlens.getModelData({ modelId: "openai/gpt-4o-mini" });
 
 // Separate provider parameter
-await tokenlens.getModelData({ 
-  modelId: "gpt-4o-mini", 
-  provider: "openai" 
+await tokenlens.getModelData({
+  modelId: "gpt-4o-mini",
+  provider: "openai"
 });
 
 // Model only (searches across providers, may be ambiguous)
@@ -243,8 +243,8 @@ await tokenlens.getModelData({ modelId: "gpt-4o-mini" });
 import { Tokenlens } from "tokenlens";
 
 // Use models.dev instead of OpenRouter
-const tokenlens = new Tokenlens({ 
-  catalog: "models.dev" 
+const tokenlens = new Tokenlens({
+  catalog: "models.dev"
 });
 
 // Or provide your own catalog
@@ -262,8 +262,8 @@ const customCatalog = {
   }
 };
 
-const customTokenlens = new Tokenlens({ 
-  catalog: customCatalog 
+const customTokenlens = new Tokenlens({
+  catalog: customCatalog
 });
 
 // Or patch prices/limits on top of a hosted catalog
@@ -352,8 +352,8 @@ const testCatalog = {
   }
 };
 
-const tokenlens = new Tokenlens({ 
-  catalog: testCatalog 
+const tokenlens = new Tokenlens({
+  catalog: testCatalog
 });
 ```
 

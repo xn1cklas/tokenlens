@@ -28,4 +28,3 @@ pnpm --filter openai-sdk start
 ```
 
 The script logs the model output, raw usage from OpenAI, the cost estimate computed by `tokenlens`, and remaining context tokens relative to the model limit.
-

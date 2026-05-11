@@ -37,7 +37,7 @@ import { countTokens } from "@tokenlens/tokenizer";
 await countTokens("gpt-4o", "Hello world");
 // => 2
 
-await countTokens("claude-sonnet-4-5", "Hello world");  
+await countTokens("claude-sonnet-4-5", "Hello world");
 // => 3
 
 await countTokens("gemini-2.5-pro", "Hello world");
@@ -64,7 +64,7 @@ await countTokens("future-model-xyz", "Hello world");
 Routes to correct tokenizer based on model name:
 - `gpt-*` or `openai/*` → OpenAI tiktoken (local)
 - `claude-*` or `anthropic/*` → Anthropic API
-- `gemini-*` or `google/*` → Google API  
+- `gemini-*` or `google/*` → Google API
 - Unknown → Falls back to GPT-5 tiktoken
 
 ## Supported Models
