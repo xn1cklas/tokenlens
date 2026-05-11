@@ -1,5 +1,4 @@
 import { generateText } from "ai";
-import { MockLanguageModelV2 } from "ai/test";
 import type { Tokenlens } from "tokenlens";
 import { expect, test, vi } from "vitest";
 import {
@@ -33,17 +32,47 @@ const tokenlens: Pick<Tokenlens, "computeCostUSD"> = {
   computeCostUSD: computeCostUSDMock,
 };
 
-const mockModel = new MockLanguageModelV2({
+const createMockModel = (options?: {
+  provider?: string;
+  modelId?: string;
+}): Parameters<typeof withTokenlens>[0] => ({
+  specificationVersion: "v2",
+  provider: options?.provider ?? "mock-provider",
+  modelId: options?.modelId ?? "mock-model-id",
+  supportedUrls: {},
   doGenerate: async () => ({
     finishReason: "stop",
     usage: {
-      inputTokens: inputTokens,
-      outputTokens: outputTokens,
-      totalTokens: totalTokens,
+      inputTokens,
+      outputTokens,
+      totalTokens,
     },
     content: [{ type: "text", text: "Hello, world!" }],
     warnings: [],
   }),
+  doStream: async () => ({
+    stream: new ReadableStream({
+      start(controller) {
+        controller.enqueue({
+          type: "finish",
+          usage: {
+            inputTokens,
+            outputTokens,
+            totalTokens,
+          },
+          finishReason: "stop",
+        });
+        controller.close();
+      },
+    }),
+  }),
+});
+
+const mockModel = createMockModel();
+
+const gatewayModel = createMockModel({
+  provider: "gateway",
+  modelId: "openai/gpt-5",
 });
 
 const sampleCosts = {
@@ -105,8 +134,39 @@ test("wrapVercelLanguageModel", async () => {
   expect(computeCostUSDMock).toHaveBeenCalledTimes(1);
 });
 
+test("withTokenlens resolves gateway-prefixed model ids without forcing gateway provider", async () => {
+  computeCostUSDMock.mockClear();
+  computeCostUSDMock.mockImplementation(async ({ modelId, provider }) => {
+    expect(modelId).toBe("openai/gpt-5");
+    expect(provider).toBeUndefined();
+    return {
+      ...sampleCosts,
+      ratesUsed: {
+        inputPerMTokens: inputTokenCostUSD * 1_000_000,
+        outputPerMTokens: outputTokenCostUSD * 1_000_000,
+      },
+    };
+  });
+
+  const model = withTokenlens(gatewayModel, tokenlens);
+
+  await generateText({
+    model,
+    prompt: "Hello, how are you?",
+  });
+
+  expect(computeCostUSDMock).toHaveBeenCalledTimes(1);
+});
+
 test("withTokenlensV5 wraps AI SDK v5 models explicitly", async () => {
   computeCostUSDMock.mockClear();
+  computeCostUSDMock.mockImplementation(async () => ({
+    ...sampleCosts,
+    ratesUsed: {
+      inputPerMTokens: inputTokenCostUSD * 1_000_000,
+      outputPerMTokens: outputTokenCostUSD * 1_000_000,
+    },
+  }));
 
   const model = withTokenlensV5(mockModel, tokenlens);
 

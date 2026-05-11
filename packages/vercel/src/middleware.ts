@@ -120,12 +120,18 @@ const computeCosts = async ({
   tokenlens: TokenlensClient;
   model: { modelId: string; provider: string };
   usage: unknown;
-}) =>
-  tokenlens.computeCostUSD({
+}) => {
+  const provider =
+    model.provider === "gateway" && model.modelId.includes("/")
+      ? undefined
+      : model.provider;
+
+  return tokenlens.computeCostUSD({
     modelId: model.modelId,
-    provider: model.provider,
+    ...(provider !== undefined ? { provider } : {}),
     usage: toTokenlensUsage(usage),
   });
+};
 
 /**
  * Middleware to add token costs to the usage.

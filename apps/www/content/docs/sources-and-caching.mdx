@@ -96,7 +96,7 @@ const tokenlens = createTokenlens({
 
 ## Caching
 
-Tokenlens caches the merged provider catalog to avoid repeated network calls. The default adapter is an in-memory `MemoryCache` with a 24h TTL.
+Tokenlens caches the raw provider catalog to avoid repeated network calls. Returned values include any per-instance `overrides`, which are applied after reading from the cache. The default adapter is an in-memory `MemoryCache` with a 24h TTL.
 
 ### Key options
 
