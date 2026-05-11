@@ -18,7 +18,7 @@
     "sync:readme": "node scripts/sync-readmes.mjs root",
     "sync:pkg-readmes": "node scripts/sync-readmes.mjs packages",
     "sync:readmes": "node scripts/sync-readmes.mjs",
-    "pre-release": "pnpm format --fix && pnpm run build && pnpm run test:run",
+    "pre-release": "pnpm format --fix && pnpm run build && pnpm run typecheck && pnpm run test:run",
     "prerelease": "pnpm run pre-release",
     "release": "pnpm -r publish --access public --filter=\"@tokenlens/*\" --filter=tokenlens",
     "release:force": "pnpm -r publish --access public --filter=\"@tokenlens/*\" --filter=tokenlens --no-git-checks"
