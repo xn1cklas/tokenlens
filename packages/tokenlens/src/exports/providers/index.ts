@@ -27,6 +27,7 @@ export * as modelscope from "./modelscope.js";
 export * as moonshotai_cn from "./moonshotai-cn.js";
 export * as moonshotai from "./moonshotai.js";
 export * as morph from "./morph.js";
+export * as nearai from "./nearai.js";
 export * as nvidia from "./nvidia.js";
 export * as openai from "./openai.js";
 export * as opencode from "./opencode.js";

@@ -16,4 +16,19 @@ describe("@tokenlens/models getModels", () => {
     expect(typeof (prov as { id?: string }).id).toBe("string");
     expect(typeof (prov as { models?: unknown }).models).toBe("object");
   });
+
+  it("includes NEAR AI Cloud provider metadata", () => {
+    const catalog = getModels();
+    const nearai = catalog.nearai;
+
+    expect(nearai.id).toBe("nearai");
+    expect(nearai.name).toBe("NEAR AI Cloud");
+    expect(nearai.api).toBe("https://cloud-api.near.ai/v1");
+    expect(nearai.npm).toBe("@ai-sdk/openai-compatible");
+    expect(nearai.env).toContain("NEARAI_API_KEY");
+    expect(Object.keys(nearai.models).length).toBeGreaterThan(0);
+    expect(nearai.models["openai/gpt-oss-120b"]?.limit.context).toBeGreaterThan(
+      0,
+    );
+  });
 });

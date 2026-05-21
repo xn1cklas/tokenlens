@@ -28,6 +28,7 @@ import modelscopeModels from "./providers/modelscope.js";
 import moonshotaiModels from "./providers/moonshotai.js";
 import moonshotai_cnModels from "./providers/moonshotai-cn.js";
 import morphModels from "./providers/morph.js";
+import nearaiModels from "./providers/nearai.js";
 import nvidiaModels from "./providers/nvidia.js";
 import openaiModels from "./providers/openai.js";
 import opencodeModels from "./providers/opencode.js";
@@ -77,6 +78,7 @@ export const providersCatalog = {
   moonshotai: moonshotaiModels,
   "moonshotai-cn": moonshotai_cnModels,
   morph: morphModels,
+  nearai: nearaiModels,
   nvidia: nvidiaModels,
   openai: openaiModels,
   opencode: opencodeModels,
