@@ -1,3 +1,4 @@
+import { TokenlensError } from "./error.js";
 import { toModelId } from "./id.js";
 import type { Model, Provider, Status } from "./types.js";
 
@@ -42,17 +43,18 @@ export function createRegistry(all: readonly Model[]) {
     const out: Model[] = [];
 
     // Try canonical direct match (already lowercase comparisons below)
-    if ((models as Record<string, Model>)[key]) {
-      out.push((models as Record<string, Model>)[key]);
+    const directMatch = (models as Record<string, Model>)[key];
+    if (directMatch) {
+      out.push(directMatch);
     }
 
     // Normalize gateway style ids to canonical for matching
     const normalized = toModelId(input);
     if (normalized) {
       const nkey = normalized.toLowerCase();
-      if ((models as Record<string, Model>)[nkey]) {
-        const m = (models as Record<string, Model>)[nkey];
-        if (!out.includes(m)) out.push(m);
+      const normalizedMatch = (models as Record<string, Model>)[nkey];
+      if (normalizedMatch && !out.includes(normalizedMatch)) {
+        out.push(normalizedMatch);
       }
     }
 
@@ -78,7 +80,7 @@ export function createRegistry(all: readonly Model[]) {
   }
   function assertModelId(value: string): asserts value is string {
     if (!isModelId(value)) {
-      throw new Error(`Unknown model id: ${value}`);
+      throw new TokenlensError.UnknownModelId(value);
     }
   }
   function listModels(filter?: {

@@ -1,14 +1,13 @@
 "use client";
 
+import { normalizeUsage } from "@tokenlens/helpers";
 import type { LanguageModelUsage } from "ai";
 import type { ComponentProps } from "react";
-import { breakdownTokens, estimateCost, normalizeUsage } from "tokenlens";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 export type ContextProps = ComponentProps<"button"> & {
@@ -65,22 +64,6 @@ const formatPercent = (value: number) => {
     : `${rounded.toFixed(1)}%`;
 };
 
-const formatUSD = (value?: number) => {
-  if (value === undefined || !Number.isFinite(value)) return undefined;
-  const abs = Math.abs(value);
-  // Finer precision for very small amounts common in LLM pricing
-  let decimals = 2;
-  if (abs < 0.001) decimals = 5;
-  else if (abs < 0.01) decimals = 4;
-  else if (abs < 0.1) decimals = 3;
-  else if (abs < 10) decimals = 2;
-  else decimals = 1;
-  const text = value.toFixed(decimals);
-  // Trim trailing zeros/decimal if not needed (e.g., 1.2300 -> 1.23, 2.0 -> 2)
-  const trimmed = text.replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1");
-  return `$${trimmed}`;
-};
-
 type ContextIconProps = {
   percent: number; // 0 - 100
 };
@@ -130,7 +113,7 @@ export const Context = ({
   maxTokens,
   usedTokens,
   usage,
-  modelId,
+  modelId: _modelId,
   showBreakdown,
   ...props
 }: ContextProps) => {
@@ -149,17 +132,13 @@ export const Context = ({
   const used = formatTokens(safeUsed);
   const total = formatTokens(safeMax);
 
-  const uNorm = normalizeUsage(usage);
-  const uBreakdown = breakdownTokens(usage);
-  const costUSD = modelId
-    ? estimateCost({ modelId, usage: uNorm }).totalUSD
-    : undefined;
-  const costText = formatUSD(costUSD);
+  const uNorm = normalizeUsage(usage ?? {});
+  const showUsageBreakdown = showBreakdown || usage !== undefined;
 
   const segInput = Math.max(0, uNorm.input ?? 0);
   const segOutput = Math.max(0, uNorm.output ?? 0);
-  const segCacheR = Math.max(0, uBreakdown.cacheReads ?? 0);
-  const segCacheW = Math.max(0, uBreakdown.cacheWrites ?? 0);
+  const segCacheR = Math.max(0, uNorm.cacheReads ?? 0);
+  const segCacheW = Math.max(0, uNorm.cacheWrites ?? 0);
   const denom = safeMax > 0 ? safeMax : 1;
   const w = (n: number) =>
     `${Math.min(100, Math.max(0, (n / denom) * 100)).toFixed(2)}%`;
@@ -180,20 +159,14 @@ export const Context = ({
             {displayPct}
           </span>
           <ContextIcon percent={usedPercent} />
-          {costText && (
-            <span className="ml-1 text-muted-foreground">• {costText}</span>
-          )}
         </button>
       </HoverCardTrigger>
       <HoverCardContent align="center" className="w-fit p-3">
         <div className="min-w-[240px] space-y-2">
           <p className="text-center text-sm">
             {displayPct} • {used} / {total} tokens
-            {costText ? (
-              <span className="ml-1 text-muted-foreground">• {costText}</span>
-            ) : null}
           </p>
-          {true && (
+          {showUsageBreakdown && (
             <div className="space-y-2">
               <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                 <div
@@ -238,7 +211,7 @@ export const Context = ({
                     />
                     Cache Hits
                   </span>
-                  <span>{fmtOrUnknown(uBreakdown.cacheReads)}</span>
+                  <span>{fmtOrUnknown(uNorm.cacheReads)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-muted-foreground">
@@ -248,7 +221,7 @@ export const Context = ({
                     />
                     Cache Writes
                   </span>
-                  <span>{fmtOrUnknown(uBreakdown.cacheWrites)}</span>
+                  <span>{fmtOrUnknown(uNorm.cacheWrites)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-muted-foreground">
@@ -277,11 +250,11 @@ export const Context = ({
             <div className="mt-1 space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Cache Hits</span>
-                <span>{fmtOrUnknown(uBreakdown.cacheReads)}</span>
+                <span>{fmtOrUnknown(uNorm.cacheReads)}</span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Cache Writes</span>
-                <span>{fmtOrUnknown(uBreakdown.cacheWrites)}</span>
+                <span>{fmtOrUnknown(uNorm.cacheWrites)}</span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Input</span>
@@ -291,15 +264,6 @@ export const Context = ({
                 <span className="text-muted-foreground">Output</span>
                 <span>{formatTokens(uNorm.output)}</span>
               </div>
-              {costText && (
-                <>
-                  <Separator className="mt-1" />
-                  <div className="flex items-center justify-between pt-1 text-xs">
-                    <span className="text-muted-foreground">Total cost</span>
-                    <span>{costText}</span>
-                  </div>
-                </>
-              )}
             </div>
           )}
         </div>

@@ -1,0 +1,169 @@
+---
+title: "Catalogs & Caching"
+description: "How Tokenlens loads catalogs and how caching can be configured."
+---
+
+Tokenlens loads provider catalogs through the `catalog` option. This document explains how to pick the right catalog for your use case, how to inject your own data, and how caching works.
+
+## Built-in catalogs
+
+Pass one of the supported identifiers to `createTokenlens({ catalog })` or the class constructor to opt into a hosted catalog. Omitting `catalog` falls back to the OpenRouter catalog when you instantiate `Tokenlens`; the module-level helpers continue to pass `"auto"` (an alias for OpenRouter) unless you override the `gateway` option.
+
+| Catalog id    | Description                                                                 |
+| ------------- | --------------------------------------------------------------------------- |
+| `"auto"`      | Alias for the OpenRouter gateway (default for module-level helpers).        |
+| `"openrouter"`| Live catalog fetched from OpenRouter.                                       |
+| `"models.dev"`| Curated dataset derived from models.dev.                                    |
+| `"vercel"`    | Live catalog from the Vercel AI Gateway.                                    |
+
+Instance helpers cache the loaded catalog, so repeated method calls stay fast as long as the data remains fresh.
+
+### Per-call gateway selection
+
+The module-level helpers (`getModelData`, `computeCostUSD`, etc.) accept an optional `gateway` property. This lets you reuse the shared helper instance while forcing a specific catalog on a single call:
+
+```ts
+import { computeCostUSD } from "tokenlens";
+
+const costs = await computeCostUSD({
+  modelId: "openai/gpt-4o-mini",
+  gateway: "vercel",
+  usage: { input_tokens: 1_000, output_tokens: 250 },
+});
+```
+
+## Custom catalogs
+
+When you need deterministic data (tests, offline tooling, demos), provide your own `SourceProviders` object:
+
+```ts
+import { createTokenlens } from "tokenlens";
+import type { SourceProviders } from "tokenlens";
+
+const fixtureCatalog: SourceProviders = {
+  demo: {
+    id: "demo",
+    models: {
+      "demo/chat": {
+        id: "demo/chat",
+        canonical_id: "demo/chat",
+        name: "Chat Demo",
+        cost: { input: 1, output: 1 },
+        limit: { context: 128_000 },
+      },
+    },
+  },
+};
+
+const tokenlens = createTokenlens({
+  catalog: fixtureCatalog,
+  ttlMs: 0, // disable caching for predictable reloads
+});
+```
+
+Passing a `SourceProviders` object bypasses remote fetching entirely—Tokenlens uses the structure you provide as-is.
+
+## Catalog overrides
+
+Use `overrides` when you want a hosted catalog as the base but need local corrections, such as custom pricing, private model limits, or provider metadata that has not landed upstream yet. Override fields win over the base catalog; nested `cost` and `limit` objects are merged so you only need to provide the fields you want to change.
+
+```ts
+import { createTokenlens } from "tokenlens";
+import type { SourceProviders } from "tokenlens";
+
+const priceOverrides: SourceProviders = {
+  openai: {
+    id: "openai",
+    source: "package",
+    models: {
+      "openai/gpt-4o-mini": {
+        id: "openai/gpt-4o-mini",
+        canonical_id: "openai/gpt-4o-mini",
+        name: "GPT-4o Mini",
+        cost: { input: 1, output: 2 },
+      },
+    },
+  },
+};
+
+const tokenlens = createTokenlens({
+  catalog: "openrouter",
+  overrides: priceOverrides,
+});
+```
+
+`source: "package"` is useful provenance for local or package-provided data. It is not a value for the `catalog` option.
+
+## Caching
+
+Tokenlens caches the raw provider catalog to avoid repeated network calls. Returned values include any per-instance `overrides`, which are applied after reading from the cache. The default adapter is an in-memory `MemoryCache` with a 24h TTL.
+
+### Key options
+
+- `ttlMs`: cache duration in milliseconds (default `24 * 60 * 60 * 1000`).
+- `cacheKey`: unique identifier for the cached entry. When running multiple instances with different catalogs, specify unique keys to avoid collisions.
+- `cache`: custom adapter implementing `{ get(key), set(key, entry), delete?(key) }` where `entry` is `{ value: SourceProviders; expiresAt: number }`.
+
+### Example: Redis-backed cache adapter
+
+```ts
+import { createClient as createRedisClient } from "redis";
+import { createTokenlens } from "tokenlens";
+import type { SourceProviders } from "tokenlens";
+
+const redis = createRedisClient();
+await redis.connect();
+
+type CacheEntry = { value: SourceProviders; expiresAt: number };
+type CacheAdapter = {
+  get(key: string): Promise<CacheEntry | undefined> | CacheEntry | undefined;
+  set(key: string, entry: CacheEntry): Promise<void> | void;
+  delete?(key: string): Promise<void> | void;
+};
+
+const redisCache: CacheAdapter = {
+  async get(key) {
+    const raw = await redis.get(key);
+    return raw ? (JSON.parse(raw) as CacheEntry) : undefined;
+  },
+  async set(key, entry) {
+    await redis.set(key, JSON.stringify(entry));
+  },
+  async delete(key) {
+    await redis.del(key);
+  },
+};
+
+const tokenlens = createTokenlens({
+  cache: redisCache,
+  cacheKey: "tokenlens:openrouter",
+  ttlMs: 30 * 60 * 1000,
+});
+```
+
+### No caching
+
+Set `ttlMs: 0` to force Tokenlens to reload the catalog on every call—useful for short-lived test runs.
+
+### Error handling
+
+If fetching the catalog fails and a cached value is available, Tokenlens returns the cached value instead of propagating the error. To force a fresh load, call `Tokenlens#refresh(true)`.
+
+## Refreshing & invalidation
+
+Instances expose:
+
+- `tokenlens.refresh(force?: boolean)`: reloads the catalog when the cache is stale, or immediately when `force` is true.
+- `tokenlens.invalidate()`: clears the cache entry so the next call triggers a reload.
+
+These hooks are useful when you know provider metadata has changed and you want the new values immediately.
+
+## Summary
+
+- Pick a built-in `catalog` (`"auto"`, `"openrouter"`, `"models.dev"`, `"vercel"`) or supply your own `SourceProviders`.
+- Use `overrides` for local price/limit corrections on top of a hosted catalog.
+- Override `gateway` per call when using the shared helpers.
+- Configure caching behaviour with `ttlMs`, `cache`, and `cacheKey`.
+- Use `refresh()` / `invalidate()` for manual control when needed.
+
+Next: [Integration with Vercel AI SDK](./integrations/vercel-ai-sdk.md)

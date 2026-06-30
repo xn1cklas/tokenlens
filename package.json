@@ -8,29 +8,28 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo run build --filter=\"@tokenlens/*\" --filter=tokenlens",
-    "typecheck": "turbo run typecheck --filter=\"@tokenlens/*\"",
-    "test": "turbo run test --filter=\"@tokenlens/*\"",
-    "test:run": "turbo run test:run --filter=\"@tokenlens/*\"",
-    "test:live": "turbo run test:live --filter=\"@tokenlens/*\"",
-    "format": "biome format --write .",
-    "format:fix": "biome format --write --fix .",
-    "lint": "biome check .",
-    "sync:models": "turbo run sync:models --filter=\"@tokenlens/models\"",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test --filter=\"./packages/*\"",
+    "test:run": "turbo run test:run --filter=\"./packages/*\"",
+    "test:live": "turbo run test:live --filter=\"./packages/*\"",
+    "format": "biome check --write .",
+    "format:fix": "biome check --write --fix .",
     "sync:providers": "pnpm --filter tokenlens run prebuild",
     "sync:readme": "node scripts/sync-readmes.mjs root",
     "sync:pkg-readmes": "node scripts/sync-readmes.mjs packages",
     "sync:readmes": "node scripts/sync-readmes.mjs",
-    "pre-release": "pnpm --filter \"@tokenlens/models\" run sync:models && pnpm --filter tokenlens run gen:providers && pnpm format --fix && pnpm run build && pnpm run test:run && pnpm --filter tokenlens run bench:lookup:run",
+    "pre-release": "pnpm format --fix && pnpm run build && pnpm run typecheck && pnpm run test:run",
     "prerelease": "pnpm run pre-release",
     "release": "pnpm -r publish --access public --filter=\"@tokenlens/*\" --filter=tokenlens",
     "release:force": "pnpm -r publish --access public --filter=\"@tokenlens/*\" --filter=tokenlens --no-git-checks"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.2",
-    "@changesets/cli": "^2.29.6",
-    "lefthook": "^1.12.3",
-    "turbo": "^2.5.6",
-    "typescript": "^5.9.2"
+    "@biomejs/biome": "^2.2.4",
+    "@changesets/cli": "^2.29.7",
+    "lefthook": "^1.13.4",
+    "turbo": "^2.5.8",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   },
   "packageManager": "pnpm@10.5.1+sha512.c424c076bd25c1a5b188c37bb1ca56cc1e136fbf530d98bcb3289982a08fd25527b8c9c4ec113be5e3393c39af04521dd647bcf1d0801eaf8ac6a7b14da313af"
 }

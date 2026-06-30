@@ -1,12 +1,10 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { getContextWindow, normalizeUsage } from "@tokenlens/helpers";
-import { catalogFromProviders } from "@tokenlens/models/api";
-import vercelModels from "@tokenlens/models/vercel";
+import { normalizeUsage } from "@tokenlens/helpers";
 import type { LanguageModelUsage, UIMessage } from "ai";
 import { GlobeIcon, MicIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Conversation,
   ConversationContent,
@@ -30,16 +28,16 @@ import { Response } from "@/components/ai-elements/response";
 import { Context } from "./ai-elements/context";
 
 const models = [
-  { id: "gpt-4o", name: "GPT-4o" },
-  { id: "gpt-5", name: "GPT-5" },
-  { id: "claude-opus-4-20250514", name: "Claude 4 Opus" },
+  { id: "gpt-4o", name: "GPT-4o", context: 128_000 },
+  { id: "gpt-5", name: "GPT-5", context: 200_000 },
+  { id: "claude-opus-4-20250514", name: "Claude 4 Opus", context: 200_000 },
 ];
 
 type AppUIMessage = UIMessage<unknown, { usage: LanguageModelUsage }>;
 
 const InputDemo = () => {
   const [text, setText] = useState<string>("");
-  const [model, setModel] = useState<string>(models[0].id);
+  const [model, setModel] = useState<string>(models[0]?.id ?? "gpt-4o");
   const [usage, setUsage] = useState<LanguageModelUsage | undefined>(undefined);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -64,13 +62,9 @@ const InputDemo = () => {
     },
   });
 
-  const catalog = useMemo(() => catalogFromProviders([vercelModels]), []);
-
   const contextMax = useMemo(() => {
-    // Resolve from selected model within the selected provider source.
-    const cw = getContextWindow(model, { catalog });
-    return cw.combinedMax ?? cw.inputMax ?? 0;
-  }, [model, catalog]);
+    return models.find((entry) => entry.id === model)?.context ?? 0;
+  }, [model]);
 
   const usedTokens = useMemo(() => {
     // Prefer explicit usage data part captured via onData
@@ -93,12 +87,6 @@ const InputDemo = () => {
     ),
     [contextMax, usedTokens, usage, model],
   );
-
-  // Optional: add a single log after usage arrives
-  useEffect(() => {
-    if (!usage) return;
-    normalizeUsage(usage); // touch to ensure tree-shake-safe import usage
-  }, [usage]);
 
   return (
     <div className="max-w-4xl mx-auto p-6 relative size-full rounded-lg border h-[600px]">

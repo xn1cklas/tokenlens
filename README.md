@@ -6,156 +6,364 @@ TokenLens
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 
-Typed model metadata and context/cost utilities that help AI apps answer: Does this fit? What will it cost? Should we compact now? How much budget is left for the next turn?
+Typed model metadata and cost/context helpers for LLM applications. TokenLens provides a simple client that fetches model catalogs from multiple sources and offers utilities to answer: *Does this fit? What will it cost? How healthy is my context?*
 
-Works great with the Vercel AI SDK out of the box, and remains SDK‑agnostic.
+Works seamlessly with Vercel AI SDK, OpenAI SDK, Anthropic SDK, and remains SDK-agnostic.
 
 ![TokenLens overview](https://raw.githubusercontent.com/xn1cklas/tokenlens/HEAD/assets/tokenlens.png)
 
-Highlights
-- Canonical model registry with alias resolution and minimal metadata you can trust.
-- Strong TypeScript surface: `ModelId` autocomplete and safe helpers.
-- Usage normalization across providers and SDKs (incl. Vercel AI SDK fields).
-- Context budgeting: remaining tokens, percent used, and next-turn budget.
-- Compaction helpers: when to compact and how many tokens to remove.
-- Cost estimation: fast, rough USD costs using source‑linked pricing when available.
-- Conversation utilities: sum usage, estimate conversation cost, measure context rot.
+## Highlights
 
-Install
-- npm: `npm i tokenlens`
-- pnpm: `pnpm add tokenlens`
-- yarn: `yarn add tokenlens`
+- **Multi-source catalog**: Auto-fetches from OpenRouter, models.dev, or Vercel AI Gateway with built-in caching
+- **Simple API**: `computeCostUSD`, `getModelData`, `getContextLimits`, `getContextHealth`, `countTokens`, `estimateCostUSD`
+- **Strong TypeScript**: Full type safety for model IDs, usage objects, and return types
+- **Automatic caching**: Configurable TTL with jitter to avoid cache stampedes
+- **Provider/model resolution**: Supports `provider/model`, `model` only, or separate provider parameter
 
-Quick Start
+## Install
+
+```bash
+npm install tokenlens
+# or
+pnpm add tokenlens
+# or
+yarn add tokenlens
+```
+
+## Quick Start
+
 ```ts
-import { fetchModels } from 'tokenlens';
-import { getContext, getTokenCosts, getUsage } from '@tokenlens/helpers';
+import { Tokenlens } from "tokenlens";
 
-// 1) Get providers (or import getModels() for a static set)
-const openai = await fetchModels('openai'); // or getModels() synchronously
+const tokenlens = new Tokenlens();
 
-// 2) Use flexible ids: 'provider/model', 'provider:id', or providerless 'model'
-const modelId = 'openai/gpt-4o-mini';
-const usage = { prompt_tokens: 3200, completion_tokens: 400 };
+// Get model metadata
+const model = await tokenlens.getModelData({
+  modelId: "openai/gpt-4o-mini"
+});
 
-// Context caps only
-const { maxInput, maxOutput, maxTotal } = getContext(modelId, openai);
+// Compute costs from usage
+const costs = await tokenlens.computeCostUSD({
+  modelId: "openai/gpt-4o-mini",
+  usage: {
+    input_tokens: 1000,
+    output_tokens: 500,
+    reasoning_tokens: 0,
+    cacheReads: 0,
+    cacheWrites: 0,
+  }
+});
 
-// Cost breakdown only
-const {
-  inputUSD,
-  outputUSD,
-  reasoningUSD,
-  cacheReadUSD,
-  cacheWriteUSD,
-  totalUSD,
-} = getTokenCosts(modelId, usage, openai);
+console.log(`Total cost: $${costs.totalTokenCostUSD.toFixed(6)}`);
 
-// Or both together
-const usageData = getUsage(modelId, usage, openai);
+// Get context limits
+const limits = await tokenlens.getContextLimits({
+  modelId: "openai/gpt-4o-mini"
+});
 
-console.log({
-  maxInput,
-  maxOutput,
-  maxTotal,
-  inputUSD,
-  outputUSD,
-  reasoningUSD,
-  cacheReadUSD,
-  cacheWriteUSD,
-  totalUSD,
-  usageData,
+console.log(`Context: ${limits?.context} tokens`);
+```
+
+## API Reference
+
+### Constructor
+
+```ts
+const tokenlens = new Tokenlens(options?: TokenlensOptions);
+```
+
+**Options:**
+- `catalog`: `"auto" | "openrouter" | "models.dev" | "vercel"` or custom `SourceProviders` object (default: `"openrouter"`; `"auto"` is an alias for the same OpenRouter gateway)
+- `overrides`: Custom `SourceProviders` object merged over the base catalog. Use this for local price or limit corrections while preserving hosted metadata.
+- `ttlMs`: Cache TTL in milliseconds (default: 24 hours)
+- `cache`: Custom cache adapter with `{ get(key), set(key, entry), delete?(key) }` methods where `entry` is `{ value: SourceProviders; expiresAt: number }` (default: in-memory cache)
+- `cacheKey`: Custom cache key for the catalog (default: `tokenlens:v2:{catalog}`)
+
+### Methods
+
+#### `getModelData(args)`
+
+Get full model metadata including pricing, limits, and provider information.
+
+```ts
+const model = await tokenlens.getModelData({
+  modelId: "openai/gpt-4o-mini",
+  provider?: "openai", // optional, useful when modelId doesn't include provider
 });
 ```
 
-Focused API
-- fetchModels: fetch providers (models.dev dataset)
-- getModels: static providers registry
-- getContext(modelId, providers): returns caps `{ inputMax?, outputMax?, totalMax? }` (combinedMax remains as legacy alias)
-- getTokenCosts(modelId, usage, providers): returns `{ inputUSD?, outputUSD?, reasoningUSD?, cacheReadUSD?, cacheWriteUSD?, totalUSD? }`
-- getUsage(modelId, usage, providers, reserveOutput?): returns `{ context, costUSD }`
+**Returns:** `Promise<SourceModel | undefined>`
 
-Deprecations
-- Most other helpers are now deprecated in favor of the focused API above, including but not limited to:
-  - Usage: `normalizeUsage`, `breakdownTokens`, `consumedTokens`
-  - Context: `getContextWindow`, `remainingContext`, `percentRemaining`, `fitsContext`, `pickModelFor`
-  - Cost: `estimateCost`
-  - Compaction: `shouldCompact`, `contextHealth`, `tokensToCompact`
-  - Conversation: `sumUsage`, `estimateConversationCost`, `computeContextRot`, `nextTurnBudget`
-  - Sugar: `modelMeta`, `percentOfContextUsed`, `tokensRemaining`, `costFromUsage`
+#### `computeCostUSD(args)`
 
-Notes
-- ID normalization is automatic: accepts `provider/model`, `provider:id`, and providerless `model`.
-- Version dots are normalized to dashes in the model segment (e.g., `claude-3.5-haiku` → `claude-3-5-haiku`).
-- Cost outputs are estimates based on models.dev pricing fields. For authoritative cost numbers, read pricing and usage metrics from your model provider's API responses at runtime.
-Async Fetch (models.dev)
+Calculate token costs in USD based on actual usage.
 
 ```ts
-import {
-  fetchModels,
-  FetchModelsError,
-  type ModelCatalog,
-  type ProviderInfo,
-  type ProviderModel,
-} from 'tokenlens';
-
-// 1) Fetch all providers (Node 18+ or modern browsers with global fetch)
-const providers: ModelCatalog = await fetchModels();
-
-// 2) Fetch by provider key (e.g. 'openai', 'anthropic', 'deepseek')
-const openai: ProviderInfo | undefined = await fetchModels({ provider: 'openai' });
-
-// 3) Fetch a specific model within a provider
-const gpto: ProviderModel | undefined = await fetchModels({ provider: 'openai', model: 'gpt-4o' });
-
-// 4) Search for a model across providers when provider is omitted
-const matches: Array<{ provider: string; model: ProviderModel }> = await fetchModels({ model: 'gpt-4.1' });
-
-// 5) Error handling with typed error codes
-try {
-  await fetchModels();
-} catch (err) {
-  if (err instanceof FetchModelsError) {
-    // err.code is one of: 'UNAVAILABLE' | 'NETWORK' | 'HTTP' | 'PARSE'
-    console.error('Fetch failed:', err.code, err.status, err.message);
-  } else {
-    throw err;
+const costs = await tokenlens.computeCostUSD({
+  modelId: "openai/gpt-4o-mini",
+  provider?: "openai", // optional
+  usage: {
+    input_tokens: 1000,
+    output_tokens: 500,
+    reasoning_tokens: 0,
+    cacheReads: 0,
+    cacheWrites: 0,
   }
-}
-
-// 6) Provide a custom fetch (for Node < 18 or custom runtimes)
-// import fetch from 'cross-fetch' or 'undici'
-// const providers = await fetchModels({ fetch });
+});
 ```
 
-
-Context Budgeting & Compaction
-- These helpers are deprecated; prefer `getContext` and your own compaction logic.
-
-Advanced
-- Caps strategy: `remainingContext` supports `strategy: 'provider-default' | 'combined' | 'input-only'`.
-  - `provider-default` (default): prefers `combinedMax` when available; otherwise uses `inputMax`.
-  - `combined`: always uses `combinedMax` (falls back to `inputMax` if missing).
-  - `input-only`: uses only `inputMax` for remaining/percent calculations.
-- Defaults: `shouldCompact` defaults to `threshold: 0.85`; `contextHealth` defaults to `warnAt: 0.75`, `compactAt: 0.85`.
-
-Conversation Utilities
-- Deprecated in favor of higher-level conversation budgeting tools.
-
-Listing Models
+**Returns:** `Promise<TokenCosts>`
 ```ts
-import { listModels } from 'tokenlens';
-
-const stableOpenAI = listModels({ provider: 'openai', status: 'stable' });
+{
+  inputTokenCostUSD: number;
+  outputTokenCostUSD: number;
+  reasoningTokenCostUSD: number;
+  cacheReadTokenCostUSD: number;
+  cacheWriteTokenCostUSD: number;
+  totalTokenCostUSD: number;
+}
 ```
 
-Data Source & Sync
-- Primary source: models.dev (https://github.com/sst/models.dev). We periodically sync our registry from their dataset.
-- Official provider pages are used where applicable; if numbers aren’t explicit, fields remain undefined.
-- Sync locally: `pnpm -C packages/tokenlens sync:models`
+#### `estimateCostUSD(args)`
 
-Acknowlegements
-- Big thanks to the sst/models.dev maintainers and community for keeping model information current: https://github.com/sst/models.dev
+Estimate costs by counting tokens in text before making an API call.
 
-License
+```ts
+const estimate = await tokenlens.estimateCostUSD({
+  modelId: "gpt-4o", // can use short form or full provider/model
+  provider?: "openai", // optional
+  data: "Write a story about a robot",
+});
+
+console.log(`Estimated cost: $${estimate.totalTokenCostUSD.toFixed(6)}`);
+console.log(`Input tokens: ${estimate.inputTokens}`);
+```
+
+**Returns:** `Promise<TokenCosts & { inputTokens: number }>`
+
+#### `countTokens(args)`
+
+Count tokens in text for a given model.
+
+```ts
+const tokens = await tokenlens.countTokens({
+  modelId: "gpt-4o",
+  data: "Hello, world!",
+});
+
+console.log(`Tokens: ${tokens}`);
+```
+
+**Returns:** `Promise<number | undefined>`
+
+#### `getContextLimits(args)`
+
+Get context, input, and output token limits for a model.
+
+```ts
+const limits = await tokenlens.getContextLimits({
+  modelId: "openai/gpt-4o-mini",
+  provider?: "openai", // optional
+});
+
+console.log(`Context: ${limits?.context}`);
+console.log(`Input: ${limits?.input}`);
+console.log(`Output: ${limits?.output}`);
+```
+
+**Returns:** `Promise<{ context?: number; input?: number; output?: number } | undefined>`
+
+#### `getContextHealth(args)`
+
+Calculate context window health metrics.
+
+```ts
+const health = await tokenlens.getContextHealth({
+  modelId: "openai/gpt-4o-mini",
+  provider?: "openai", // optional
+  usage: {
+    input_tokens: 50000,
+    output_tokens: 10000,
+  }
+});
+
+console.log(`Status: ${health.status}`); // "healthy" | "warning" | "critical"
+console.log(`Used: ${health.usedPercentage.toFixed(1)}%`);
+console.log(`Remaining: ${health.remainingTokens} tokens`);
+```
+
+**Returns:** Context health metrics including:
+- `status`: `"healthy"` (<70%), `"warning"` (70-90%), or `"critical"` (>90%)
+- `totalTokens`, `usedTokens`, `remainingTokens`
+- `usedPercentage`, `remainingPercentage`
+
+#### `refresh(force?)`
+
+Manually refresh the catalog from the source.
+
+```ts
+const providers = await tokenlens.refresh(true); // force refresh
+```
+
+**Returns:** `Promise<SourceProviders>`
+
+#### `invalidate()`
+
+Clear the cached catalog.
+
+```ts
+await tokenlens.invalidate();
+```
+
+**Returns:** `Promise<void>`
+
+## Model ID Formats
+
+TokenLens supports multiple model ID formats:
+
+```ts
+// Full provider/model format
+await tokenlens.getModelData({ modelId: "openai/gpt-4o-mini" });
+
+// Separate provider parameter
+await tokenlens.getModelData({
+  modelId: "gpt-4o-mini",
+  provider: "openai"
+});
+
+// Model only (searches across providers, may be ambiguous)
+await tokenlens.getModelData({ modelId: "gpt-4o-mini" });
+```
+
+## Custom Configuration
+
+### Using a custom catalog source
+
+```ts
+import { Tokenlens } from "tokenlens";
+
+// Use models.dev instead of OpenRouter
+const tokenlens = new Tokenlens({
+  catalog: "models.dev"
+});
+
+// Or provide your own catalog
+const customCatalog = {
+  openai: {
+    id: "openai",
+    models: {
+      "gpt-custom": {
+        id: "gpt-custom",
+        canonical_id: "gpt-custom",
+        name: "Custom GPT",
+        // ... model metadata
+      }
+    }
+  }
+};
+
+const customTokenlens = new Tokenlens({
+  catalog: customCatalog
+});
+
+// Or patch prices/limits on top of a hosted catalog
+const pricedTokenlens = new Tokenlens({
+  catalog: "openrouter",
+  overrides: {
+    openai: {
+      id: "openai",
+      source: "package",
+      models: {
+        "openai/gpt-4o-mini": {
+          id: "openai/gpt-4o-mini",
+          canonical_id: "openai/gpt-4o-mini",
+          name: "GPT-4o Mini",
+          cost: { input: 1, output: 2 },
+        },
+      },
+    },
+  },
+});
+```
+
+### Custom cache adapter
+
+```ts
+import { Tokenlens } from "tokenlens";
+import type { SourceProviders } from "tokenlens";
+
+type CacheEntry = { value: SourceProviders; expiresAt: number };
+type CacheAdapter = {
+  get(key: string): Promise<CacheEntry | undefined> | CacheEntry | undefined;
+  set(key: string, entry: CacheEntry): Promise<void> | void;
+  delete?(key: string): Promise<void> | void;
+};
+
+const redisCache: CacheAdapter = {
+  async get(key: string) {
+    const data = await redis.get(key);
+    return data ? (JSON.parse(data) as CacheEntry) : undefined;
+  },
+  async set(key: string, entry: CacheEntry) {
+    await redis.set(key, JSON.stringify(entry));
+  },
+  async delete(key: string) {
+    await redis.del(key);
+  },
+};
+
+const tokenlens = new Tokenlens({
+  cache: redisCache,
+  ttlMs: 60 * 60 * 1000, // 1 hour
+});
+```
+
+## Type Exports
+
+```ts
+import type {
+  Usage,
+  SourceModel,
+  SourceProviders,
+  TokenCosts,
+  TokenlensOptions,
+} from "tokenlens";
+```
+
+## Testing
+
+For testing, provide a custom catalog to avoid network calls:
+
+```ts
+import { Tokenlens } from "tokenlens";
+
+const testCatalog = {
+  openai: {
+    id: "openai",
+    models: {
+      "test-model": {
+        id: "test-model",
+        canonical_id: "test-model",
+        name: "Test Model",
+        limit: { context: 4096, output: 2048 },
+        cost: { input: 1, output: 2 },
+      }
+    }
+  }
+};
+
+const tokenlens = new Tokenlens({
+  catalog: testCatalog
+});
+```
+
+## Further Reading
+
+- [Migration Guide (v1 to v2)](docs/migrations/migration-v1-to-v2.md)
+- [Glossary](docs/glossary.md)
+- [Sources & Caching](docs/sources-and-caching.md)
+- [Testing Guide](docs/testing.md)
+
+## License
+
 MIT

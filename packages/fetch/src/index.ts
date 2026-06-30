@@ -1,173 +1,380 @@
-/**
- * Thin async client for the models.dev API (https://models.dev/api.json).
- *
- * - Defaults to returning the full JSON catalog.
- * - Optionally filter by `provider` (e.g. "deepseek", "vercel") and/or `model` (e.g. "gpt-4o").
- * - No runtime dependencies. Uses `globalThis.fetch` if available, or accept a custom `fetch` via options.
- *
- * Note: This returns the raw models.dev schema as-is. Any higher-level formatting can be layered on later.
- */
-
-// Minimal "fetch-like" contract to avoid depending on DOM lib types in this package.
-export type FetchLike = (
-  input: string,
-  init?: { signal?: unknown } & Record<string, unknown>,
-  // deno-lint-ignore no-explicit-any
-) => Promise<{
-  ok: boolean;
-  status: number;
-  statusText: string;
-  json(): Promise<unknown>;
-  text(): Promise<string>;
-}>;
-
-import type {
-  ModelCatalog,
-  ProviderInfo,
-  ProviderModel,
+import {
+  type SourceModel,
+  type SourceProviders,
+  TokenlensError,
 } from "@tokenlens/core";
-export { getModelMeta } from "@tokenlens/core";
 
-export type FetchModelsOptions = {
-  /** Filter by provider key (e.g. "deepseek", "xai", "vercel"). */
+export type {
+  SourceId,
+  SourceModel,
+  SourceProvider,
+  SourceProviders,
+} from "@tokenlens/core";
+
+type CommonOptions = {
   provider?: string;
-  /** Filter by model id within a provider (or search across providers when provider is omitted). */
   model?: string;
-  /** Inject a custom fetch implementation (e.g. from undici/cross-fetch). */
-  fetch?: FetchLike;
-  /** Optional AbortSignal or similar. */
-  signal?: unknown;
-  /** Override base URL for testing. Defaults to https://models.dev/api.json */
-  baseUrl?: string;
+  fetch?: typeof globalThis.fetch;
 };
 
-/** Coded error for better ergonomics in consumers */
-export class FetchModelsError extends Error {
-  readonly code: "NETWORK" | "HTTP" | "PARSE" | "UNAVAILABLE";
-  readonly status?: number;
-  constructor(opts: {
-    code: FetchModelsError["code"];
-    message: string;
-    status?: number;
-  }) {
-    super(opts.message);
-    this.name = "FetchModelsError";
-    this.code = opts.code;
-    this.status = opts.status;
+type VercelOptions = CommonOptions & {
+  includeEndpointDetails?: boolean;
+};
+
+function filterCatalog(
+  catalog: SourceProviders,
+  provider?: string,
+  model?: string,
+): SourceProviders {
+  const out: SourceProviders = {};
+  for (const [provKey, prov] of Object.entries(catalog)) {
+    if (provider && provKey !== provider) continue;
+    const models = prov.models || {};
+    const filteredModels = model
+      ? Object.fromEntries(
+          Object.entries(models).filter(([id]) => id.includes(model)),
+        )
+      : models;
+    if (Object.keys(filteredModels).length > 0 || !model) {
+      out[provKey] = { ...prov, models: filteredModels };
+    }
   }
+  return out;
 }
 
-// Overloads for strong return types depending on filters
-export async function fetchModels(): Promise<ModelCatalog>;
-export async function fetchModels(
-  provider: string,
-): Promise<ProviderInfo | undefined>;
-export async function fetchModels(opts: {
-  provider?: undefined;
-  model?: undefined;
-  fetch?: FetchLike;
-  signal?: unknown;
-  baseUrl?: string;
-}): Promise<ModelCatalog>;
-export async function fetchModels(opts: {
-  provider: string;
-  model?: undefined;
-  fetch?: FetchLike;
-  signal?: unknown;
-  baseUrl?: string;
-}): Promise<ProviderInfo | undefined>;
-export async function fetchModels(opts: {
-  provider?: undefined;
-  model: string;
-  fetch?: FetchLike;
-  signal?: unknown;
-  baseUrl?: string;
-}): Promise<Array<{ provider: string; model: ProviderModel }>>;
-export async function fetchModels(opts: {
-  provider: string;
-  model: string;
-  fetch?: FetchLike;
-  signal?: unknown;
-  baseUrl?: string;
-}): Promise<ProviderModel | undefined>;
-
-/**
- * Fetches the models.dev catalog and optionally filters results by provider and/or model.
- *
- * Error handling:
- * - Throws FetchModelsError with code: 'UNAVAILABLE' (no fetch present), 'NETWORK', 'HTTP', or 'PARSE'.
- */
-export async function fetchModels(
-  opts: FetchModelsOptions | string = {},
-): Promise<
-  | ModelCatalog
-  | ProviderInfo
-  | ProviderModel
-  | Array<{ provider: string; model: ProviderModel }>
-  | undefined
-> {
-  if (typeof opts === "string") {
-    return fetchModels({ provider: opts });
-  }
-  const url = opts.baseUrl ?? "https://models.dev/api.json";
-  const fetchImpl: FetchLike | undefined =
-    opts.fetch ?? (globalThis as { fetch?: FetchLike }).fetch;
-
-  if (typeof fetchImpl !== "function") {
-    throw new FetchModelsError({
-      code: "UNAVAILABLE",
-      message:
-        "No fetch implementation found. Pass a custom `fetch` in options or run on a platform with global fetch (Node 18+, modern browsers).",
-    });
-  }
-
-  let res: Awaited<ReturnType<FetchLike>>;
-  try {
-    res = await fetchImpl(
-      url,
-      opts.signal ? { signal: opts.signal } : undefined,
-    );
-  } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Unknown network error";
-    throw new FetchModelsError({ code: "NETWORK", message });
-  }
-
+export async function fetchModelsDev(
+  options?: CommonOptions,
+): Promise<SourceProviders> {
+  const fetchImpl = options?.fetch ?? globalThis.fetch;
+  const res = await fetchImpl("https://models.dev/api.json");
   if (!res.ok) {
-    let body = "";
-    try {
-      body = await res.text();
-    } catch {}
-    const snippet = body
-      ? ` Body: ${body.slice(0, 256)}${body.length > 256 ? "…" : ""}`
-      : "";
-    throw new FetchModelsError({
-      code: "HTTP",
+    throw new TokenlensError.FetchFailed({
+      target: "models.dev",
       status: res.status,
-      message: `Failed to fetch models.dev API (${res.status} ${res.statusText}).${snippet}`,
+      statusText: res.statusText,
     });
   }
+  type ModelsDevProviderJson = {
+    id?: string;
+    name?: string;
+    api?: string;
+    doc?: string;
+    docs?: string;
+    env?: readonly string[];
+    models?: Record<string, SourceModel>;
+  };
+  const raw = (await res.json()) as Record<string, ModelsDevProviderJson>;
+  // Normalize to ProviderInfo minimally
+  const catalog: SourceProviders = {};
+  const entries: Array<[string, ModelsDevProviderJson]> = Object.entries(
+    (raw ?? {}) as Record<string, ModelsDevProviderJson>,
+  );
+  for (const [provKey, prov] of entries) {
+    const models = (prov.models ?? {}) as Record<string, SourceModel>;
+    catalog[provKey] = {
+      id: prov.id ?? provKey,
+      ...(prov.name !== undefined ? { name: prov.name } : { name: provKey }),
+      ...(prov.api !== undefined ? { api: prov.api } : {}),
+      ...((prov.doc ?? prov.docs) ? { doc: prov.doc ?? prov.docs } : {}),
+      ...(prov.env !== undefined ? { env: prov.env } : {}),
+      source: "models.dev",
+      schemaVersion: 1,
+      models,
+    };
+  }
+  return filterCatalog(catalog, options?.provider, options?.model);
+}
 
-  let data: unknown;
-  try {
-    data = await res.json();
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Invalid JSON";
-    throw new FetchModelsError({ code: "PARSE", message });
+function toNumber(value: unknown): number | undefined {
+  if (value === undefined || value === null) return undefined;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function mapOpenrouterModel(m: Record<string, unknown>): SourceModel {
+  const id = String(m["id"] ?? "");
+  const pricingRaw =
+    (m["pricing"] as Record<string, unknown> | undefined) ??
+    (m["cost"] as Record<string, unknown> | undefined);
+  // OpenRouter pricing is per-token; convert to per-1M tokens to match DTO
+  const promptPerToken =
+    toNumber(pricingRaw?.["prompt"]) ?? toNumber(pricingRaw?.["input"]);
+  const completionPerToken =
+    toNumber(pricingRaw?.["completion"]) ?? toNumber(pricingRaw?.["output"]);
+  const reasoningPerToken = toNumber(pricingRaw?.["reasoning"]);
+  const cacheReadPerToken =
+    toNumber(pricingRaw?.["cache_read"]) ??
+    toNumber(pricingRaw?.["input_cache_read"]);
+  const cacheWritePerToken =
+    toNumber(pricingRaw?.["cache_write"]) ??
+    toNumber(pricingRaw?.["input_cache_write"]);
+  const cost =
+    promptPerToken !== undefined ||
+    completionPerToken !== undefined ||
+    reasoningPerToken !== undefined ||
+    cacheReadPerToken !== undefined ||
+    cacheWritePerToken !== undefined
+      ? {
+          ...(promptPerToken !== undefined
+            ? { input: promptPerToken * 1_000_000 }
+            : {}),
+          ...(completionPerToken !== undefined
+            ? { output: completionPerToken * 1_000_000 }
+            : {}),
+          ...(reasoningPerToken !== undefined
+            ? { reasoning: reasoningPerToken * 1_000_000 }
+            : {}),
+          ...(cacheReadPerToken !== undefined
+            ? { cache_read: cacheReadPerToken * 1_000_000 }
+            : {}),
+          ...(cacheWritePerToken !== undefined
+            ? { cache_write: cacheWritePerToken * 1_000_000 }
+            : {}),
+        }
+      : undefined;
+  const limit =
+    (m["limit"] as
+      | { context?: number; input?: number; output?: number }
+      | undefined) ?? undefined;
+  const context_length = (m as { context_length?: number }).context_length;
+  const topProvider = m["top_provider"] as
+    | {
+        max_completion_tokens?: number;
+        context_length?: number;
+        is_moderated?: boolean;
+      }
+    | undefined;
+  const outputCap = topProvider?.max_completion_tokens;
+  return {
+    id,
+    canonical_id: id,
+    name: (m["name"] as string | undefined) ?? id,
+    ...((m as { created?: number }).created !== undefined
+      ? { created: (m as { created?: number }).created }
+      : {}),
+    ...(m["release_date"] !== undefined
+      ? { release_date: m["release_date"] as string }
+      : {}),
+    ...(m["last_updated"] !== undefined
+      ? { last_updated: m["last_updated"] as string }
+      : {}),
+    ...(cost !== undefined ? { cost } : {}),
+    ...(limit || context_length || outputCap
+      ? {
+          limit: limit ?? {
+            ...(context_length !== undefined
+              ? { context: context_length }
+              : {}),
+            ...(outputCap !== undefined ? { output: outputCap } : {}),
+          },
+        }
+      : {}),
+  };
+}
+
+type VercelModelJson = {
+  [key: string]: unknown;
+  id?: string;
+  name?: string;
+  owned_by?: string;
+  created?: number;
+  context_window?: number | string | null;
+  max_tokens?: number | string | null;
+  pricing?: Record<string, unknown>;
+};
+
+type VercelEndpointJson = {
+  provider_name?: string;
+  tag?: string;
+  context_length?: number | string | null;
+  max_completion_tokens?: number | string | null;
+  max_prompt_tokens?: number | string | null;
+  pricing?: Record<string, unknown>;
+};
+
+type VercelModelEndpointsJson = {
+  [key: string]: unknown;
+  endpoints?: VercelEndpointJson[];
+};
+
+function selectVercelEndpoint(
+  model: VercelModelJson,
+  endpoints?: VercelEndpointJson[],
+): VercelEndpointJson | undefined {
+  if (!endpoints?.length) return undefined;
+  if (typeof model.owned_by !== "string" || model.owned_by.length === 0) {
+    return endpoints[0];
+  }
+  return (
+    endpoints.find(
+      (endpoint) =>
+        endpoint.provider_name === model.owned_by ||
+        endpoint.tag === model.owned_by,
+    ) ?? endpoints[0]
+  );
+}
+
+function mapVercelModel(
+  model: VercelModelJson,
+  endpointDetails?: VercelModelEndpointsJson,
+): SourceModel {
+  const endpoint = selectVercelEndpoint(model, endpointDetails?.endpoints);
+  const contextWindow =
+    toNumber(endpoint?.context_length) ?? toNumber(model.context_window);
+  const maxTokens =
+    toNumber(endpoint?.max_completion_tokens) ?? toNumber(model.max_tokens);
+  const maxPromptTokens = toNumber(endpoint?.max_prompt_tokens);
+  const limit =
+    contextWindow !== undefined ||
+    maxPromptTokens !== undefined ||
+    maxTokens !== undefined
+      ? {
+          ...(contextWindow !== undefined ? { context: contextWindow } : {}),
+          ...(maxPromptTokens !== undefined ? { input: maxPromptTokens } : {}),
+          ...(maxTokens !== undefined ? { output: maxTokens } : {}),
+        }
+      : undefined;
+  const normalized: Record<string, unknown> = {
+    ...(model as Record<string, unknown>),
+    ...(endpoint?.pricing !== undefined ? { pricing: endpoint.pricing } : {}),
+    ...(contextWindow !== undefined ? { context_length: contextWindow } : {}),
+    ...(limit !== undefined ? { limit } : {}),
+  };
+  return mapOpenrouterModel(normalized);
+}
+
+export async function fetchVercelModelEndpoints(
+  modelId: string,
+): Promise<VercelModelEndpointsJson> {
+  const encodedModelId = modelId
+    .split("/")
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+  const res = await fetch(
+    `https://ai-gateway.vercel.sh/v1/models/${encodedModelId}/endpoints`,
+  );
+  if (!res.ok) {
+    throw new TokenlensError.FetchFailed({
+      target: `Vercel AI Gateway endpoints for ${modelId}`,
+      status: res.status,
+      statusText: res.statusText,
+    });
+  }
+  const parsed = (await res.json()) as {
+    data?: VercelModelEndpointsJson;
+  };
+  return parsed.data ?? {};
+}
+
+export async function fetchVercel(
+  options?: VercelOptions,
+): Promise<SourceProviders> {
+  const fetchImpl = options?.fetch ?? globalThis.fetch;
+  const res = await fetchImpl("https://ai-gateway.vercel.sh/v1/models");
+  if (!res.ok) {
+    throw new TokenlensError.FetchFailed({
+      target: "Vercel AI Gateway",
+      status: res.status,
+      statusText: res.statusText,
+    });
+  }
+  const parsed = (await res.json()) as {
+    data?: VercelModelJson[];
+  };
+  const list = Array.isArray(parsed?.data) ? parsed.data : [];
+  const filteredList = list.filter((model) => {
+    if (!model) return false;
+    const id = String(model.id ?? "");
+    if (!id) return false;
+    const providerPart = id.includes("/") ? id.split("/")[0] : undefined;
+    const providerId =
+      typeof model.owned_by === "string" && model.owned_by.length > 0
+        ? model.owned_by
+        : (providerPart ?? "vercel");
+    if (options?.provider && providerId !== options.provider) return false;
+    return options?.model ? id.includes(options.model) : true;
+  });
+  const endpointDetailsByModel = new Map<string, VercelModelEndpointsJson>();
+
+  if (options?.includeEndpointDetails) {
+    await Promise.all(
+      filteredList.map(async (model) => {
+        const id = String(model.id ?? "");
+        endpointDetailsByModel.set(id, await fetchVercelModelEndpoints(id));
+      }),
+    );
   }
 
-  const catalog = data as ModelCatalog;
-  const { provider, model } = opts;
-  if (!provider && !model) return catalog;
-  if (provider && !model) return catalog[provider];
-  if (provider && model) return catalog[provider]?.models?.[model];
-
-  // model only: search across providers
-  const matches: Array<{ provider: string; model: ProviderModel }> = [];
-  if (!model) return matches;
-  for (const [provKey, prov] of Object.entries(catalog)) {
-    const m = prov?.models?.[model];
-    if (m) matches.push({ provider: provKey, model: m });
+  const catalog: SourceProviders = {};
+  for (const model of filteredList) {
+    if (!model) continue;
+    const id = String(model.id ?? "");
+    if (!id) continue;
+    const providerPart = id.includes("/") ? id.split("/")[0] : undefined;
+    const providerId =
+      typeof model.owned_by === "string" && model.owned_by.length > 0
+        ? model.owned_by
+        : (providerPart ?? "vercel");
+    if (!catalog[providerId]) {
+      catalog[providerId] = {
+        id: providerId,
+        name: providerId,
+        api: "https://ai-gateway.vercel.sh/v1",
+        doc: "https://vercel.com/docs/ai/ai-gateway",
+        env: ["VERCEL_AI_API_KEY"],
+        source: "vercel",
+        schemaVersion: 1,
+        models: {},
+      };
+    }
+    const provider = catalog[providerId];
+    if (!provider) continue;
+    provider.models[id] = mapVercelModel(model, endpointDetailsByModel.get(id));
   }
-  return matches;
+
+  return catalog;
+}
+
+export async function fetchOpenrouter(
+  options?: CommonOptions,
+): Promise<SourceProviders> {
+  const fetchImpl = options?.fetch ?? globalThis.fetch;
+  const res = await fetchImpl("https://openrouter.ai/api/v1/models");
+  if (!res.ok) {
+    throw new TokenlensError.FetchFailed({
+      target: "OpenRouter",
+      status: res.status,
+      statusText: res.statusText,
+    });
+  }
+  const parsed = (await res.json()) as {
+    data?: Array<Record<string, unknown>>;
+  };
+  const list = Array.isArray(parsed.data) ? parsed.data : [];
+
+  const catalog: SourceProviders = {};
+  for (const m of list) {
+    const id = String(m["id"] ?? "").trim();
+    if (!id) continue;
+    const providerPart = id.includes("/") ? id.split("/")[0] : undefined;
+    const provider = providerPart ?? "openrouter";
+    if (!catalog[provider]) {
+      catalog[provider] = {
+        id: provider,
+        name: provider,
+        api: "https://openrouter.ai/api/v1",
+        doc: "https://openrouter.ai/models",
+        env: ["OPENROUTER_API_KEY"],
+        source: "openrouter",
+        schemaVersion: 1,
+        models: {},
+      };
+    }
+    const existingProvider = catalog[provider];
+    if (existingProvider) {
+      existingProvider.models[id] = mapOpenrouterModel(m);
+    }
+  }
+
+  return filterCatalog(catalog, options?.provider, options?.model);
 }

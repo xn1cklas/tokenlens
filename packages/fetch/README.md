@@ -9,39 +9,81 @@
 
 ![TokenLens overview](https://raw.githubusercontent.com/xn1cklas/tokenlens/HEAD/assets/tokenlens.png)
 
-Tiny typed client for https://models.dev/api.json with friendly error codes.
+Typed, dependency-free fetchers for the public `models.dev` catalog, Vercel AI Gateway, and the OpenRouter API. All return the shared TokenLens DTO shape so the rest of the toolchain can consume a consistent model registry.
 
+Features
+- `fetchModelsDev` normalizes https://models.dev/api.json into TokenLens DTOs
+- `fetchOpenrouter` maps OpenRouter models, pricing, limits, and metadata
+- `fetchVercel` maps Vercel AI Gateway models, pricing, and context limits, with optional endpoint-level enrichment for filtered models
+- Pass a custom `fetch` implementation for server/runtime flexibility
+- DTO types (`SourceProvider`, `SourceModel`, …) re-exported for convenience
 
 Install
 - npm: `npm i @tokenlens/fetch`
 - pnpm: `pnpm add @tokenlens/fetch`
 - yarn: `yarn add @tokenlens/fetch`
 
+Quick start
+```ts
+import {
+  fetchModelsDev,
+  fetchOpenrouter,
+  fetchVercel,
+  type SourceProviders,
+} from "@tokenlens/fetch";
+
+// models.dev catalog (optionally filter by provider/model substring)
+const modelsDevCatalog = await fetchModelsDev({ provider: "openai" });
+
+// OpenRouter catalog (grouped by provider namespace)
+const openrouterCatalog = await fetchOpenrouter({ model: "gpt" });
+
+// Vercel AI Gateway catalog (grouped by upstream provider)
+const vercelCatalog = await fetchVercel({ provider: "openai" });
+
+// Vercel AI Gateway endpoint details for a specific model
+const claudeCatalog = await fetchVercel({
+  provider: "anthropic",
+  model: "claude-sonnet-4",
+  includeEndpointDetails: true,
+});
+
+const combine = (catalogs: SourceProviders[]): SourceProviders =>
+  Object.assign({}, ...catalogs);
+
+const providers = combine([
+  modelsDevCatalog,
+  openrouterCatalog,
+  vercelCatalog,
+]);
+```
+
 API
-- `fetchModels({ provider?, model?, fetch?, signal?, baseUrl? })`
-- `getModelMeta(providers, ...)` 
+- `fetchModelsDev(options?: { provider?: string; model?: string; fetch?: typeof globalThis.fetch })`
+  - Fetches the public models.dev JSON, normalizes provider metadata and models, and optionally filters.
+- `fetchOpenrouter(options?: { provider?: string; model?: string; fetch?: typeof globalThis.fetch })`
+  - Calls `https://openrouter.ai/api/v1/models`, groups models by namespace, and keeps pricing/limit details.
+- `fetchVercel(options?: { provider?: string; model?: string; includeEndpointDetails?: boolean; fetch?: FetchLike })`
+  - Loads `https://ai-gateway.vercel.sh/v1/models`, groups models by upstream provider, and converts pricing.
+  - When `includeEndpointDetails` is true, also loads `https://ai-gateway.vercel.sh/v1/models/{provider}/{model}/endpoints` for each matched model and prefers endpoint-level pricing/context data.
+- `fetchVercelModelEndpoints(modelId: string)`
+  - Loads endpoint details for one Vercel AI Gateway model id, for example `anthropic/claude-sonnet-4`.
+- `FetchLike`
+  - Minimal fetch contract accepted by both functions. Useful when wiring Node, Deno, Cloudflare Workers, etc.
 
-Usage
+DTO exports
+```ts
+import type {
+  SourceId,
+  SourceModel,
+  SourceProvider,
+  SourceProviders,
+} from "@tokenlens/fetch";
 ```
-import { fetchModels, getModelMeta, FetchModelsError } from '@tokenlens/fetch';
+The types mirror the definitions in `@tokenlens/core/dto` and are re-exported here for convenience.
 
-const catalog = await fetchModels();
-const openai = await fetchModels({ provider: 'openai' });
-const gpt4o = await fetchModels({ provider: 'openai', model: 'gpt-4o' });
-
-// Pick raw metadata directly from the fetched catalog
-const prov = getModelMeta({ providers: catalog, provider: 'openai' });
-const model = getModelMeta({ providers: catalog, id: 'openai:gpt-4o' });
-
-try {
-  await fetchModels();
-} catch (err) {
-  if (err instanceof FetchModelsError) {
-    // 'UNAVAILABLE' | 'NETWORK' | 'HTTP' | 'PARSE'
-    console.error(err.code, err.status, err.message);
-  }
-}
-```
+Testing
+- `pnpm test --filter @tokenlens/fetch` runs both unit tests (mocked DTO transforms) and live integration tests hitting models.dev, Vercel AI Gateway, and OpenRouter. Ensure you have network access when running the suite.
 
 License
 MIT

@@ -1,0 +1,59 @@
+---
+title: "Custom Catalog"
+description: "How to use a custom catalog with Tokenlens"
+---
+
+# Custom Catalog
+
+Use a custom catalog when you want Tokenlens to resolve models from data you own. Use overrides when you want to keep a hosted catalog as the base and patch only the parts that differ.
+
+## Fully custom catalog
+
+```ts
+import { createTokenlens } from "tokenlens";
+import type { SourceProviders } from "tokenlens";
+
+const catalog: SourceProviders = {
+  internal: {
+    id: "internal",
+    source: "package",
+    models: {
+      "internal/chat": {
+        id: "internal/chat",
+        canonical_id: "internal/chat",
+        name: "Internal Chat",
+        cost: { input: 1, output: 2 },
+        limit: { context: 128_000 },
+      },
+    },
+  },
+};
+
+const tokenlens = createTokenlens({ catalog });
+```
+
+Passing an object as `catalog` disables hosted fetching. Tokenlens uses that object directly.
+
+## Override hosted metadata
+
+```ts
+const tokenlens = createTokenlens({
+  catalog: "openrouter",
+  overrides: {
+    openai: {
+      id: "openai",
+      source: "package",
+      models: {
+        "openai/gpt-4o-mini": {
+          id: "openai/gpt-4o-mini",
+          canonical_id: "openai/gpt-4o-mini",
+          name: "GPT-4o Mini",
+          cost: { input: 1, output: 2 },
+        },
+      },
+    },
+  },
+});
+```
+
+Override fields win over the base catalog. Nested `cost` and `limit` objects are merged, so omitted fields keep their hosted values.
