@@ -18,7 +18,7 @@ Pass one of the supported identifiers to `createTokenlens({ catalog })` or the c
 
 Instance helpers cache the loaded catalog, so repeated method calls stay fast as long as the data remains fresh.
 
-### Per-call overrides
+### Per-call gateway selection
 
 The module-level helpers (`getModelData`, `computeCostUSD`, etc.) accept an optional `gateway` property. This lets you reuse the shared helper instance while forcing a specific catalog on a single call:
 
@@ -46,6 +46,7 @@ const fixtureCatalog: SourceProviders = {
     models: {
       "demo/chat": {
         id: "demo/chat",
+        canonical_id: "demo/chat",
         name: "Chat Demo",
         cost: { input: 1, output: 1 },
         limit: { context: 128_000 },
@@ -62,9 +63,40 @@ const tokenlens = createTokenlens({
 
 Passing a `SourceProviders` object bypasses remote fetching entirely—Tokenlens uses the structure you provide as-is.
 
+## Catalog overrides
+
+Use `overrides` when you want a hosted catalog as the base but need local corrections, such as custom pricing, private model limits, or provider metadata that has not landed upstream yet. Override fields win over the base catalog; nested `cost` and `limit` objects are merged so you only need to provide the fields you want to change.
+
+```ts
+import { createTokenlens } from "tokenlens";
+import type { SourceProviders } from "tokenlens";
+
+const priceOverrides: SourceProviders = {
+  openai: {
+    id: "openai",
+    source: "package",
+    models: {
+      "openai/gpt-4o-mini": {
+        id: "openai/gpt-4o-mini",
+        canonical_id: "openai/gpt-4o-mini",
+        name: "GPT-4o Mini",
+        cost: { input: 1, output: 2 },
+      },
+    },
+  },
+};
+
+const tokenlens = createTokenlens({
+  catalog: "openrouter",
+  overrides: priceOverrides,
+});
+```
+
+`source: "package"` is useful provenance for local or package-provided data. It is not a value for the `catalog` option.
+
 ## Caching
 
-Tokenlens caches the merged provider catalog to avoid repeated network calls. The default adapter is an in-memory `MemoryCache` with a 24h TTL.
+Tokenlens caches the raw provider catalog to avoid repeated network calls. Returned values include any per-instance `overrides`, which are applied after reading from the cache. The default adapter is an in-memory `MemoryCache` with a 24h TTL.
 
 ### Key options
 
@@ -129,6 +161,7 @@ These hooks are useful when you know provider metadata has changed and you want 
 ## Summary
 
 - Pick a built-in `catalog` (`"auto"`, `"openrouter"`, `"models.dev"`, `"vercel"`) or supply your own `SourceProviders`.
+- Use `overrides` for local price/limit corrections on top of a hosted catalog.
 - Override `gateway` per call when using the shared helpers.
 - Configure caching behaviour with `ttlMs`, `cache`, and `cacheKey`.
 - Use `refresh()` / `invalidate()` for manual control when needed.

@@ -41,7 +41,7 @@ console.log(m?.id); // 'openai:gpt-4o'
 ```
 
 See also
-- `@tokenlens/models` for a prebuilt models catalog.
+- `@tokenlens/fetch` for hosted catalog fetchers.
 - `@tokenlens/helpers` for context/cost utilities layered on top.
 
 License

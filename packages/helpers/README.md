@@ -213,9 +213,9 @@ Use these helpers directly when you:
 - Are building custom tooling on top of TokenLens
 
 ```ts
-import { 
-  computeTokenCostsForModel, 
-  getContextHealth 
+import {
+  computeTokenCostsForModel,
+  getContextHealth
 } from "@tokenlens/helpers";
 import type { SourceModel } from "@tokenlens/core";
 

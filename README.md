@@ -38,8 +38,8 @@ import { Tokenlens } from "tokenlens";
 const tokenlens = new Tokenlens();
 
 // Get model metadata
-const model = await tokenlens.getModelData({ 
-  modelId: "openai/gpt-4o-mini" 
+const model = await tokenlens.getModelData({
+  modelId: "openai/gpt-4o-mini"
 });
 
 // Compute costs from usage
@@ -57,8 +57,8 @@ const costs = await tokenlens.computeCostUSD({
 console.log(`Total cost: $${costs.totalTokenCostUSD.toFixed(6)}`);
 
 // Get context limits
-const limits = await tokenlens.getContextLimits({ 
-  modelId: "openai/gpt-4o-mini" 
+const limits = await tokenlens.getContextLimits({
+  modelId: "openai/gpt-4o-mini"
 });
 
 console.log(`Context: ${limits?.context} tokens`);
@@ -74,6 +74,7 @@ const tokenlens = new Tokenlens(options?: TokenlensOptions);
 
 **Options:**
 - `catalog`: `"auto" | "openrouter" | "models.dev" | "vercel"` or custom `SourceProviders` object (default: `"openrouter"`; `"auto"` is an alias for the same OpenRouter gateway)
+- `overrides`: Custom `SourceProviders` object merged over the base catalog. Use this for local price or limit corrections while preserving hosted metadata.
 - `ttlMs`: Cache TTL in milliseconds (default: 24 hours)
 - `cache`: Custom cache adapter with `{ get(key), set(key, entry), delete?(key) }` methods where `entry` is `{ value: SourceProviders; expiresAt: number }` (default: in-memory cache)
 - `cacheKey`: Custom cache key for the catalog (default: `tokenlens:v2:{catalog}`)
@@ -225,9 +226,9 @@ TokenLens supports multiple model ID formats:
 await tokenlens.getModelData({ modelId: "openai/gpt-4o-mini" });
 
 // Separate provider parameter
-await tokenlens.getModelData({ 
-  modelId: "gpt-4o-mini", 
-  provider: "openai" 
+await tokenlens.getModelData({
+  modelId: "gpt-4o-mini",
+  provider: "openai"
 });
 
 // Model only (searches across providers, may be ambiguous)
@@ -242,8 +243,8 @@ await tokenlens.getModelData({ modelId: "gpt-4o-mini" });
 import { Tokenlens } from "tokenlens";
 
 // Use models.dev instead of OpenRouter
-const tokenlens = new Tokenlens({ 
-  catalog: "models.dev" 
+const tokenlens = new Tokenlens({
+  catalog: "models.dev"
 });
 
 // Or provide your own catalog
@@ -253,6 +254,7 @@ const customCatalog = {
     models: {
       "gpt-custom": {
         id: "gpt-custom",
+        canonical_id: "gpt-custom",
         name: "Custom GPT",
         // ... model metadata
       }
@@ -260,8 +262,27 @@ const customCatalog = {
   }
 };
 
-const customTokenlens = new Tokenlens({ 
-  catalog: customCatalog 
+const customTokenlens = new Tokenlens({
+  catalog: customCatalog
+});
+
+// Or patch prices/limits on top of a hosted catalog
+const pricedTokenlens = new Tokenlens({
+  catalog: "openrouter",
+  overrides: {
+    openai: {
+      id: "openai",
+      source: "package",
+      models: {
+        "openai/gpt-4o-mini": {
+          id: "openai/gpt-4o-mini",
+          canonical_id: "openai/gpt-4o-mini",
+          name: "GPT-4o Mini",
+          cost: { input: 1, output: 2 },
+        },
+      },
+    },
+  },
 });
 ```
 
@@ -331,8 +352,8 @@ const testCatalog = {
   }
 };
 
-const tokenlens = new Tokenlens({ 
-  catalog: testCatalog 
+const tokenlens = new Tokenlens({
+  catalog: testCatalog
 });
 ```
 

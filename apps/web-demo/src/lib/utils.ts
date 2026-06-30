@@ -18,5 +18,5 @@ export function onCompactThreshold(listener: (e: CompactEvent) => void) {
   compactListeners.push(listener);
 }
 export const COMPACT_THRESHOLD = Number(
-  process.env.COMPACT_THRESHOLD ?? "0.85",
+  process.env["COMPACT_THRESHOLD"] ?? "0.85",
 );

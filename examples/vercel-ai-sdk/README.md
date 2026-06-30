@@ -28,4 +28,3 @@ pnpm --filter vercel-ai-sdk start
 ```
 
 On success the script prints the model response, raw usage from the AI SDK, the USD cost estimate from `tokenlens`, and remaining context tokens relative to the model limit.
-

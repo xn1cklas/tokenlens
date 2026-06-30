@@ -1,6 +1,6 @@
 {
   "name": "tokenlens",
-  "version": "2.0.0-alpha.3",
+  "version": "2.0.0",
   "description": "A lightweight registry of LLM model information, like name and context sizes, for building AI-powered apps.",
   "files": [
     "dist"
@@ -13,14 +13,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./providers/*": {
-      "types": "./dist/exports/providers/*.d.ts",
-      "default": "./dist/exports/providers/*.js"
-    },
-    "./models": {
-      "types": "./dist/exports/models.d.ts",
-      "default": "./dist/exports/models.js"
     },
     "./helpers": {
       "types": "./dist/exports/helpers.d.ts",
@@ -84,6 +76,7 @@
   },
   "homepage": "https://github.com/xn1cklas/tokenlens/tree/HEAD/packages/tokenlens#readme",
   "devDependencies": {
+    "@types/node": "^24.5.2",
     "typescript": "^5.9.3"
   },
   "dependencies": {

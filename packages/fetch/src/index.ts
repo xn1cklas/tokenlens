@@ -14,6 +14,7 @@ export type {
 type CommonOptions = {
   provider?: string;
   model?: string;
+  fetch?: typeof globalThis.fetch;
 };
 
 type VercelOptions = CommonOptions & {
@@ -44,7 +45,8 @@ function filterCatalog(
 export async function fetchModelsDev(
   options?: CommonOptions,
 ): Promise<SourceProviders> {
-  const res = await fetch("https://models.dev/api.json");
+  const fetchImpl = options?.fetch ?? globalThis.fetch;
+  const res = await fetchImpl("https://models.dev/api.json");
   if (!res.ok) {
     throw new TokenlensError.FetchFailed({
       target: "models.dev",
@@ -267,7 +269,8 @@ export async function fetchVercelModelEndpoints(
 export async function fetchVercel(
   options?: VercelOptions,
 ): Promise<SourceProviders> {
-  const res = await fetch("https://ai-gateway.vercel.sh/v1/models");
+  const fetchImpl = options?.fetch ?? globalThis.fetch;
+  const res = await fetchImpl("https://ai-gateway.vercel.sh/v1/models");
   if (!res.ok) {
     throw new TokenlensError.FetchFailed({
       target: "Vercel AI Gateway",
@@ -335,7 +338,8 @@ export async function fetchVercel(
 export async function fetchOpenrouter(
   options?: CommonOptions,
 ): Promise<SourceProviders> {
-  const res = await fetch("https://openrouter.ai/api/v1/models");
+  const fetchImpl = options?.fetch ?? globalThis.fetch;
+  const res = await fetchImpl("https://openrouter.ai/api/v1/models");
   if (!res.ok) {
     throw new TokenlensError.FetchFailed({
       target: "OpenRouter",

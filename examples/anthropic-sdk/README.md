@@ -28,4 +28,3 @@ pnpm --filter anthopic-sdk start
 ```
 
 The script prints the Claude reply, raw Anthropic usage details, the cost estimate from `tokenlens`, and remaining context tokens relative to the model window.
-

@@ -4,7 +4,6 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -32,8 +31,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Biome lint (packages only)
-        run: pnpm exec biome lint --reporter=summary packages
+      - name: Biome lint
+        run: pnpm exec biome lint --reporter=summary packages apps examples
 
   build:
     name: Build
@@ -65,7 +64,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build packages only (turbo)
-        run: pnpm turbo run build --filter=./packages/*
+        run: pnpm turbo run build --filter='./packages/*'
+
+      - name: Typecheck examples
+        run: pnpm turbo run typecheck --filter='./examples/*'
+
+      - name: Typecheck apps
+        run: pnpm turbo run typecheck --filter='./apps/*'
 
   test:
     name: Test
@@ -99,4 +104,4 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run package tests only (pnpm)
-        run: pnpm -r --filter=./packages/* --if-present test:run
+        run: pnpm -r --filter='./packages/*' --if-present test:run
