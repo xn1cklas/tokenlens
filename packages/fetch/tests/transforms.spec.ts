@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { fetchModelsDev, fetchOpenrouter } from "../src/index.ts";
+import { fetchModelsDev, fetchOpenrouter, fetchVercel } from "../src/index.ts";
 
 type JsonShape = Record<string, unknown> | Array<unknown> | null;
 
@@ -222,5 +222,152 @@ describe("fetchOpenrouter DTO mapping", () => {
     expect(Object.keys(modelFiltered)).toEqual(["foo"]);
     const fooProvider = modelFiltered.foo;
     expect(Object.keys(fooProvider?.models ?? {})).toEqual(["foo/b"]);
+  });
+});
+
+describe("fetchVercel DTO mapping", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  it("maps Gateway models into provider catalogs", async () => {
+    const raw = {
+      data: [
+        {
+          id: "anthropic/claude-sonnet-4",
+          name: "Claude Sonnet 4",
+          owned_by: "anthropic",
+          created: 1755815280,
+          context_window: 200000,
+          max_tokens: 64000,
+          pricing: {
+            input: "0.000003",
+            output: "0.000015",
+            input_cache_read: "0.0000003",
+            input_cache_write: "0.00000375",
+          },
+        },
+      ],
+    } satisfies JsonShape;
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => raw,
+    } as Response);
+
+    const catalog = await fetchVercel({});
+
+    expect(Object.keys(catalog)).toEqual(["anthropic"]);
+    const provider = catalog.anthropic;
+    expect(provider?.source).toBe("vercel");
+    expect(provider?.api).toBe("https://ai-gateway.vercel.sh/v1");
+    expect(provider?.env).toEqual(["VERCEL_AI_API_KEY"]);
+
+    const model = provider?.models["anthropic/claude-sonnet-4"];
+    expect(model).toMatchObject({
+      id: "anthropic/claude-sonnet-4",
+      canonical_id: "anthropic/claude-sonnet-4",
+      name: "Claude Sonnet 4",
+      created: 1755815280,
+      limit: {
+        context: 200000,
+        output: 64000,
+      },
+      cost: {
+        input: 3,
+        output: 15,
+        cache_read: 0.3,
+        cache_write: 3.75,
+      },
+    });
+  });
+
+  it("can enrich filtered Gateway models from endpoint details", async () => {
+    const raw = {
+      data: [
+        {
+          id: "anthropic/claude-sonnet-4",
+          name: "Claude Sonnet 4",
+          owned_by: "anthropic",
+          context_window: 200000,
+          max_tokens: 8192,
+          pricing: {
+            input: "0.000004",
+            output: "0.00002",
+          },
+        },
+        {
+          id: "openai/gpt-4o-mini",
+          name: "GPT-4o Mini",
+          owned_by: "openai",
+          context_window: 128000,
+          max_tokens: 16384,
+          pricing: {
+            input: "0.00000015",
+            output: "0.0000006",
+          },
+        },
+      ],
+    } satisfies JsonShape;
+    const endpointRaw = {
+      data: {
+        endpoints: [
+          {
+            provider_name: "bedrock",
+            context_length: 1000000,
+            max_completion_tokens: 8192,
+            pricing: {
+              prompt: "0.000003",
+              completion: "0.000015",
+            },
+          },
+          {
+            provider_name: "anthropic",
+            context_length: 1000000,
+            max_completion_tokens: 64000,
+            pricing: {
+              prompt: "0.000003",
+              completion: "0.000015",
+              input_cache_read: "0.0000003",
+              input_cache_write: "0.00000375",
+            },
+          },
+        ],
+      },
+    } satisfies JsonShape;
+
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => raw,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => endpointRaw,
+      } as Response);
+
+    const catalog = await fetchVercel({
+      provider: "anthropic",
+      model: "claude-sonnet-4",
+      includeEndpointDetails: true,
+    });
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch).toHaveBeenLastCalledWith(
+      "https://ai-gateway.vercel.sh/v1/models/anthropic/claude-sonnet-4/endpoints",
+    );
+
+    expect(Object.keys(catalog)).toEqual(["anthropic"]);
+    const model = catalog.anthropic?.models["anthropic/claude-sonnet-4"];
+    expect(model?.limit).toEqual({
+      context: 1000000,
+      output: 64000,
+    });
+    expect(model?.cost).toEqual({
+      input: 3,
+      output: 15,
+      cache_read: 0.3,
+      cache_write: 3.75,
+    });
   });
 });
