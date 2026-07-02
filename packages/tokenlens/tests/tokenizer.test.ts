@@ -82,3 +82,54 @@ describe("countTokensWithOptionalTokenizer", () => {
     ).rejects.toBe("broken");
   });
 });
+
+describe("Tokenlens tokenizer injection", () => {
+  it("can disable implicit tokenizer loading", async () => {
+    const { Tokenlens } = await import("../src/client.js");
+    const tokenlens = new Tokenlens({
+      catalog: {},
+      tokenizer: false,
+    });
+
+    await expect(
+      tokenlens.countTokens({ modelId: "openai/gpt-4o", data: "hello" }),
+    ).rejects.toMatchObject({
+      code: TokenlensError.MissingDependency.code,
+      meta: { packageName: "@tokenlens/tokenizer" },
+    });
+  });
+
+  it("uses an injected tokenizer for count and estimate helpers", async () => {
+    const { Tokenlens } = await import("../src/client.js");
+    const tokenlens = new Tokenlens({
+      catalog: {
+        openai: {
+          id: "openai",
+          models: {
+            "openai/gpt-4o": {
+              id: "openai/gpt-4o",
+              canonical_id: "openai/gpt-4o",
+              name: "GPT-4o",
+              cost: { input: 10 },
+            },
+          },
+        },
+      },
+      tokenizer: ({ data }) => data.split(/\s+/).length,
+    });
+
+    await expect(
+      tokenlens.countTokens({ modelId: "openai/gpt-4o", data: "one two" }),
+    ).resolves.toBe(2);
+    await expect(
+      tokenlens.estimateCostUSD({
+        modelId: "openai/gpt-4o",
+        data: "one two three",
+      }),
+    ).resolves.toMatchObject({
+      inputTokens: 3,
+      inputTokenCostUSD: 0.00003,
+      totalTokenCostUSD: 0.00003,
+    });
+  });
+});

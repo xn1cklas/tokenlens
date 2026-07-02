@@ -3,7 +3,8 @@
   "version": "2.0.0",
   "description": "A lightweight registry of LLM model information, like name and context sizes, for building AI-powered apps.",
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "type": "module",
   "main": "dist/index.js",
@@ -29,10 +30,14 @@
     "./tokenizer": {
       "types": "./dist/exports/tokenizer.d.ts",
       "default": "./dist/exports/tokenizer.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "scripts": {
     "clean": "rm -rf dist",

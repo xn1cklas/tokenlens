@@ -3,7 +3,7 @@ title: "Catalogs & Caching"
 description: "How Tokenlens loads catalogs and how caching can be configured."
 ---
 
-Tokenlens loads provider catalogs through the `catalog` option. This document explains how to pick the right catalog for your use case, how to inject your own data, and how caching works.
+Tokenlens loads provider catalogs through the `catalog` option. This document explains how to pick the right hosted catalog, how to bring your own registry data, and how caching works. v2 does not bundle a generated static catalog; use caching for hosted sources and `SourceProviders`/`CatalogSource` when the data is user-authored or private.
 
 ## Built-in catalogs
 
@@ -34,7 +34,7 @@ const costs = await computeCostUSD({
 
 ## Custom catalogs
 
-When you need deterministic data (tests, offline tooling, demos), provide your own `SourceProviders` object:
+When you need deterministic data (tests, offline tooling, demos), provide your own `SourceProviders` object. Passing a `SourceProviders` object bypasses remote fetching entirely; Tokenlens uses the structure you provide as-is.
 
 ```ts
 import { createTokenlens } from "tokenlens";
@@ -55,13 +55,33 @@ const fixtureCatalog: SourceProviders = {
   },
 };
 
+const tokenlens = createTokenlens({ catalog: fixtureCatalog });
+```
+
+## Async catalog sources
+
+Use `CatalogSource` for registries you generate, host privately, or assemble from infrastructure at runtime. Tokenlens caches the loaded source the same way it caches hosted gateways.
+
+```ts
+import { createTokenlens, type CatalogSource } from "tokenlens";
+
+const privateRegistry: CatalogSource = {
+  id: "private-registry",
+  cacheKey: "tokenlens:private-registry",
+  async load({ fetch = globalThis.fetch, signal } = {}) {
+    const response = await fetch("https://example.com/models.json", { signal });
+    return response.json();
+  },
+};
+
 const tokenlens = createTokenlens({
-  catalog: fixtureCatalog,
-  ttlMs: 0, // disable caching for predictable reloads
+  catalog: privateRegistry,
+  ttlMs: 10 * 60 * 1000,
+  timeoutMs: 3_000,
 });
 ```
 
-Passing a `SourceProviders` object bypasses remote fetching entirely—Tokenlens uses the structure you provide as-is.
+`id` identifies the source in diagnostics and default cache keys. Use `cacheKey` when multiple instances should share the same cache entry across process boundaries.
 
 ## Catalog overrides
 
@@ -103,6 +123,26 @@ Tokenlens caches the raw provider catalog to avoid repeated network calls. Retur
 - `ttlMs`: cache duration in milliseconds (default `24 * 60 * 60 * 1000`).
 - `cacheKey`: unique identifier for the cached entry. When running multiple instances with different catalogs, specify unique keys to avoid collisions.
 - `cache`: custom adapter implementing `{ get(key), set(key, entry), delete?(key) }` where `entry` is `{ value: SourceProviders; expiresAt: number }`.
+- `staleIfError`: return the last cached catalog when refresh fails (default `true`). Set to `false` when callers should observe refresh errors.
+
+### Fetch controls
+
+Hosted gateways and async `CatalogSource` loaders receive the same fetch controls:
+
+- `fetch`: custom fetch implementation for tests, edge runtimes, or instrumentation.
+- `signal`: abort signal passed through to the fetcher.
+- `timeoutMs`: timeout for catalog fetches.
+
+```ts
+const controller = new AbortController();
+
+const tokenlens = createTokenlens({
+  catalog: "vercel",
+  fetch: instrumentedFetch,
+  signal: controller.signal,
+  timeoutMs: 5_000,
+});
+```
 
 ### Example: Redis-backed cache adapter
 
@@ -147,7 +187,7 @@ Set `ttlMs: 0` to force Tokenlens to reload the catalog on every call—useful f
 
 ### Error handling
 
-If fetching the catalog fails and a cached value is available, Tokenlens returns the cached value instead of propagating the error. To force a fresh load, call `Tokenlens#refresh(true)`.
+If fetching the catalog fails and a cached value is available, Tokenlens returns the cached value instead of propagating the error. Set `staleIfError: false` to surface the error instead. To force a fresh load, call `Tokenlens#refresh(true)`.
 
 ## Refreshing & invalidation
 
@@ -160,10 +200,11 @@ These hooks are useful when you know provider metadata has changed and you want 
 
 ## Summary
 
-- Pick a built-in `catalog` (`"auto"`, `"openrouter"`, `"models.dev"`, `"vercel"`) or supply your own `SourceProviders`.
+- Pick a built-in `catalog` (`"auto"`, `"openrouter"`, `"models.dev"`, `"vercel"`), supply your own `SourceProviders`, or provide an async `CatalogSource`.
 - Use `overrides` for local price/limit corrections on top of a hosted catalog.
 - Override `gateway` per call when using the shared helpers.
-- Configure caching behaviour with `ttlMs`, `cache`, and `cacheKey`.
+- Configure caching behaviour with `ttlMs`, `cache`, `cacheKey`, and `staleIfError`.
+- Configure network behaviour with `fetch`, `signal`, and `timeoutMs`.
 - Use `refresh()` / `invalidate()` for manual control when needed.
 
 Next: [Integration with Vercel AI SDK](./integrations/vercel-ai-sdk.md)

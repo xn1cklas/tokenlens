@@ -7,6 +7,7 @@ import type { CommonOptions, VercelOptions } from "./types.js";
 import {
   costFromPerTokenPricing,
   ensureJsonObject,
+  fetchWithControls,
   filterCatalog,
   mapWithConcurrency,
   requireArrayField,
@@ -103,15 +104,15 @@ function mapVercelModel(
 
 export async function fetchVercelModelEndpoints(
   modelId: string,
-  options?: Pick<CommonOptions, "fetch">,
+  options?: Pick<CommonOptions, "fetch" | "signal" | "timeoutMs">,
 ): Promise<VercelModelEndpointsJson> {
-  const fetchImpl = options?.fetch ?? globalThis.fetch;
   const encodedModelId = modelId
     .split("/")
     .map((part) => encodeURIComponent(part))
     .join("/");
-  const res = await fetchImpl(
+  const res = await fetchWithControls(
     `https://ai-gateway.vercel.sh/v1/models/${encodedModelId}/endpoints`,
+    options,
   );
   if (!res.ok) {
     throw new TokenlensError.FetchFailed({
@@ -134,7 +135,6 @@ async function fetchEndpointDetails(
   models: readonly VercelModelWithId[],
   options: VercelOptions,
 ): Promise<Map<string, VercelModelEndpointsJson>> {
-  const fetchImpl = options.fetch ?? globalThis.fetch;
   const endpointDetailsByModel = new Map<string, VercelModelEndpointsJson>();
 
   await mapWithConcurrency(
@@ -144,7 +144,7 @@ async function fetchEndpointDetails(
       try {
         endpointDetailsByModel.set(
           model.id,
-          await fetchVercelModelEndpoints(model.id, { fetch: fetchImpl }),
+          await fetchVercelModelEndpoints(model.id, options),
         );
       } catch {
         // Per-model endpoint details are enrichment. Keep the base catalog usable
@@ -159,8 +159,10 @@ async function fetchEndpointDetails(
 export async function fetchVercel(
   options?: VercelOptions,
 ): Promise<SourceProviders> {
-  const fetchImpl = options?.fetch ?? globalThis.fetch;
-  const res = await fetchImpl("https://ai-gateway.vercel.sh/v1/models");
+  const res = await fetchWithControls(
+    "https://ai-gateway.vercel.sh/v1/models",
+    options,
+  );
   if (!res.ok) {
     throw new TokenlensError.FetchFailed({
       target: "Vercel AI Gateway",

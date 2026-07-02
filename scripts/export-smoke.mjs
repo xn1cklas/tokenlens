@@ -7,11 +7,20 @@ import {
   symlink,
   writeFile,
 } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(fileURLToPath(new URL("..", import.meta.url)));
+const defaultRequire = createRequire(import.meta.url);
+const externalPackageResolvers = new Map([
+  [
+    "@types/node",
+    createRequire(join(repoRoot, "packages/tokenlens/package.json")),
+  ],
+  ["ai", createRequire(join(repoRoot, "packages/vercel/package.json"))],
+]);
 const workspacePackages = [
   ["@tokenlens/core", "core", "packages/core"],
   ["@tokenlens/helpers", "helpers", "packages/helpers"],
@@ -19,6 +28,7 @@ const workspacePackages = [
   ["@tokenlens/tokenizer", "tokenizer", "packages/tokenizer"],
   ["tokenlens", "tokenlens", "packages/tokenlens"],
   ["@tokenlens/vercel", "vercel", "packages/vercel"],
+  ["@tokenlens/codemod", "codemod", "packages/codemod"],
 ];
 
 function run(command, args, options = {}) {
@@ -105,7 +115,8 @@ async function extractPackedPackage(nodeModules, packageName, tarball) {
 }
 
 async function linkExternalPackage(nodeModules, packageName) {
-  const source = packagePath(join(repoRoot, "node_modules"), packageName);
+  const resolver = externalPackageResolvers.get(packageName) ?? defaultRequire;
+  const source = dirname(resolver.resolve(`${packageName}/package.json`));
   const destination = packagePath(nodeModules, packageName);
   await mkdir(resolve(destination, ".."), { recursive: true });
   await symlink(source, destination, "junction");
@@ -152,6 +163,7 @@ async function main() {
     const tokenlens = tarballs.get("tokenlens");
     const tokenizer = tarballs.get("tokenizer");
     const vercel = tarballs.get("vercel");
+    const codemod = tarballs.get("codemod");
 
     const noTokenizerDir = join(tempRoot, "without-tokenizer");
     await mkdir(noTokenizerDir);
@@ -250,6 +262,30 @@ async function main() {
       "@tokenlens/tokenizer",
       "@tokenlens/vercel",
     ]);
+
+    const codemodDir = join(tempRoot, "codemod-cli");
+    await mkdir(codemodDir);
+    await prepareNodeModules(codemodDir, [["@tokenlens/codemod", codemod]]);
+    await writeFile(
+      join(codemodDir, "index.ts"),
+      'import { fetchModels, type ModelId } from "tokenlens";\nvoid fetchModels;\nconst id: ModelId = "openai/gpt-4o";\nvoid id;\n',
+    );
+    run(
+      "node",
+      [
+        join(
+          codemodDir,
+          "node_modules",
+          "@tokenlens",
+          "codemod",
+          "dist",
+          "index.js",
+        ),
+        "v2",
+        "index.ts",
+      ],
+      { cwd: codemodDir },
+    );
 
     console.log(
       `Export smoke tests passed using packed tarballs in ${basename(tempRoot)}`,

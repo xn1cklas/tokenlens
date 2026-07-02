@@ -7,6 +7,7 @@ import type { CommonOptions } from "./types.js";
 import {
   costFromSourcePricing,
   ensureJsonObject,
+  fetchWithControls,
   filterCatalog,
   hasTieredPricing,
   upsertCatalogProvider,
@@ -60,8 +61,7 @@ function normalizeModelsDevModels(
 export async function fetchModelsDev(
   options?: CommonOptions,
 ): Promise<SourceProviders> {
-  const fetchImpl = options?.fetch ?? globalThis.fetch;
-  const res = await fetchImpl("https://models.dev/api.json");
+  const res = await fetchWithControls("https://models.dev/api.json", options);
   if (!res.ok) {
     throw new TokenlensError.FetchFailed({
       target: "models.dev",

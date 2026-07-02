@@ -3,11 +3,12 @@ title: "Migration: v1 → v2"
 description: "Map v1 helpers and patterns to Tokenlens v2 with step-by-step replacements."
 ---
 
-Tokenlens v2 replaces the all-in-one helper bundle with a focused client that loads real-time provider data, handles caching, and exposes a minimal helper surface. This guide maps each common v1 pattern to its v2 counterpart, explains the rationale, and lists the precise migration steps.
+Tokenlens v2 replaces the all-in-one helper bundle with a focused client that loads provider data on demand, handles caching, and exposes a minimal helper surface. There are no v1 compatibility shims in v2; use the codemod for safe mechanical edits, then complete the app-specific TODOs it leaves behind.
 
 ## Quick Checklist
+- Run `npx @tokenlens/codemod v2 src --write`.
 - Replace legacy helpers with `getModelData`, `computeCostUSD`, and `getContextLimits` (either via dedicated `Tokenlens` instances or top-level helpers that reuse the shared instance internally).
-- Swap static catalog imports for your own `Tokenlens` instance when you need a specific catalog or fixture data (the default `auto` catalog now resolves to OpenRouter).
+- Swap static catalog imports for a cached hosted catalog, a `SourceProviders` fixture, or a custom async `CatalogSource` (the default `auto` catalog now resolves to OpenRouter).
 - Remove conversation/compaction helpers (`shouldCompact`, `contextHealth`, etc.) from production code; re-implement app-specific logic on top of `getModelData`+`computeCostUSD`.
 - Delete usages of registry globals (`MODEL_IDS`, `resolveModel`, etc.); rely on `tokenlens.refresh()` (or your fixture catalog) if you truly need the raw provider map.
 - Update docs/README snippets to use the new API names and note that omitting `catalog` (or using `catalog: "auto"`) selects the OpenRouter gateway.
@@ -15,8 +16,8 @@ Tokenlens v2 replaces the all-in-one helper bundle with a focused client that lo
 ## The Tokenlens class at a glance
 - **Single responsibility**: load provider data from a selected `catalog` (defaults to the OpenRouter gateway, including when `catalog: "auto"` is provided) and expose consistent helpers (`getModelData`, `computeCostUSD`, `getContextLimits`, `getContextHealth`, etc.).
 - **Lazy shared instance**: module-level helpers create a default instance on first use; without options they use the OpenRouter catalog (the same data returned by `{ catalog: "auto" }`), so override with another id when needed.
-- **Custom instances**: `createTokenlens(options)` lets you choose a catalog (gateway id or `SourceProviders`), tweak TTL, or plug in your own cache adapter.
-- **Caching**: by default, provider catalogs are cached in-memory for 24 hours with jitter. Control this via `ttlMs` or a custom `cache`. Errors fall back to the last cached value when possible.
+- **Custom instances**: `createTokenlens(options)` lets you choose a catalog (gateway id, `SourceProviders`, or `CatalogSource`), tweak TTL, plug in your own cache adapter, control fetches with `signal`/`timeoutMs`, or inject a tokenizer.
+- **Caching**: by default, provider catalogs are cached in-memory for 24 hours with jitter. Control this via `ttlMs` or a custom `cache`. Errors fall back to the last cached value when possible; set `staleIfError: false` when refresh failures should surface.
 - **Flexible catalogs**: switch gateways on a per-instance basis with `catalog`, or override on individual helper calls via the `gateway` option.
 
 See the README for end-to-end examples of both standalone helpers and configured instances.
@@ -26,10 +27,10 @@ See the README for end-to-end examples of both standalone helpers and configured
 | Area                 | v1 pattern                                                                                                                       | v2 replacement                                                                                                                                                                                      | Why it changed / Benefit                                                                    |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | API surface          | Root module re-exported most scoped packages plus legacy sync helpers.                                                           | Root module exports `Tokenlens`, `createTokenlens`, `getModelData`, `computeCostUSD`, `getContextLimits`, and type-only exports (`Usage`, `ModelDetails`, `TokenCosts`, `TokenlensOptions`, etc.). | Smaller surface, clear entry point, no accidental coupling to internals.                    |
-| Source data          | Bundled static catalog (`defaultCatalog`, registry wrappers).                                                                    | Catalogs are selected via the `catalog` option (`auto`, `openrouter`, `models.dev`, `vercel`, or a custom `SourceProviders`).                                                                      | Avoids stale data, shrinks bundle size, lets apps decide which datasets to load.            |
+| Source data          | Bundled static catalog (`defaultCatalog`, registry wrappers).                                                                    | Catalogs are selected via the `catalog` option (`auto`, `openrouter`, `models.dev`, `vercel`, a custom `SourceProviders`, or a custom async `CatalogSource`).                                      | Avoids stale data, shrinks bundle size, lets apps decide which datasets to load.            |
 | Cost/context helpers | Sync helpers that implicitly read the bundled catalog (`getContext`, `estimateCost`, `remainingContext`, `shouldCompact`, etc.). | Use `getModelData`, `getContextLimits`, `computeCostUSD`; implement conversation heuristics yourself.                                                                                              | Ensures helpers operate on the same resolved metadata and encourages app-specific policies. |
 | Registry helpers     | Global listings (`MODEL_IDS`, `resolveModel`, `listModels`).                                                                     | Pull a fresh catalog via `tokenlens.refresh()` or source it directly from `@tokenlens/fetch` if you need raw provider maps.                                                                          | Keeps v2 runtime lean and makes registry logic explicit.                                    |
-| Fetch utilities      | Dedicated `fetchModels` helper.                                                                                                  | Call `tokenlens.refresh()` (loads the current catalog) or instantiate `createTokenlens({ catalog: ... })`.                                                                                          | One code path handles loading, caching, retries.                                            |
+| Fetch utilities      | Dedicated `fetchModels` helper.                                                                                                  | Call `tokenlens.refresh()` for cached client loading, or import `fetchModelsDev` from `tokenlens/fetch` when you need the raw models.dev fetcher.                                                   | One code path handles loading and caching; direct fetchers remain explicit.                 |
 
 ## Side-by-Side Imports
 
@@ -60,13 +61,29 @@ const context = await tokenlens.getContextLimits({ modelId: "openai/gpt-4o" });
 
 ## Migration Steps
 
-### 1. Instantiate or reuse the client
+### 1. Run the codemod
+
+Dry-run first:
+
+```bash
+npx @tokenlens/codemod v2 src
+```
+
+Apply safe edits:
+
+```bash
+npx @tokenlens/codemod v2 src --write
+```
+
+The codemod rewrites safe imports such as `fetchModels` to `fetchModelsDev` and `ModelId` to `string`. Removed sync helpers are annotated with `TODO(tokenlens-codemod)` because the right replacement depends on your product policy and cache strategy.
+
+### 2. Instantiate or reuse the client
 
 **Old**
 ```ts
 // Helpers implicitly used the bundled catalog
 import { getContext, estimateCost } from "tokenlens";
-const context = getContext("openai/gpt-4o");
+const context = getContext({ modelId: "openai/gpt-4o" });
 const cost = estimateCost({ modelId: "openai/gpt-4o", usage });
 ```
 
@@ -82,7 +99,7 @@ const cost = await tokenlens.computeCostUSD({ modelId: "openai/gpt-4o", usage })
 
 **Why**: The client keeps provider catalogs in sync, enforces loader availability, and caches responses so all helper calls share the same data. If you don't need custom options and are comfortable with defaults, the module-level helpers will reuse a shared instance automatically.
 
-### 2. Replace catalog-dependent helpers
+### 3. Replace catalog-dependent helpers
 
 Focus on re-implementing only the app-specific bits you truly need. `getModelData` exposes model metadata, while `computeCostUSD` gives request-level costs.
 
@@ -110,7 +127,7 @@ const totalUsd = costs.totalTokenCostUSD;
 
 **Why**: v2 intentionally drops opinionated compaction/budgeting helpers. Consumers own the heuristics; Tokenlens supplies accurate metadata and costs.
 
-### 3. Drop registry globals
+### 4. Drop registry globals
 
 **Old**
 ```ts
@@ -129,7 +146,7 @@ const allIds = Object.values(providers)
 
 **Why**: Removing the bundled registry keeps installs small and guarantees you work with the same catalog that powered your helper calls.
 
-### 4. Swap asynchronous fetch helpers
+### 5. Swap asynchronous fetch helpers
 
 **Old**
 ```ts
@@ -141,10 +158,35 @@ const catalog = await fetchModels();
 ```ts
 const providers = await tokenlens.refresh(); // defaults to the OpenRouter catalog
 // or configure: createTokenlens({ catalog: "openrouter" }) / createTokenlens({ catalog: "models.dev" })
-// or import direct loaders from @tokenlens/fetch when you need provider maps without a Tokenlens client
+// or import { fetchModelsDev } from "tokenlens/fetch" when you need models.dev without a Tokenlens client
 ```
 
-### 5. Recreate conversation/cost rollups as needed
+### 6. Move generated or private registries behind a source
+
+If your v1 app relied on generated artifacts such as OpenRouter snapshots, keep that data outside the main bundle and load it through a `CatalogSource`:
+
+```ts
+import { createTokenlens, type CatalogSource } from "tokenlens";
+
+const privateRegistry: CatalogSource = {
+  id: "private-registry",
+  cacheKey: "tokenlens:private-registry",
+  async load({ fetch = globalThis.fetch, signal } = {}) {
+    const response = await fetch("https://example.com/models.json", { signal });
+    return response.json();
+  },
+};
+
+const tokenlens = createTokenlens({
+  catalog: privateRegistry,
+  timeoutMs: 3_000,
+  staleIfError: true,
+});
+```
+
+Use a plain `SourceProviders` object for tests and offline fixtures. Use `CatalogSource` when the registry is user-authored, generated by your infrastructure, or loaded from a private endpoint.
+
+### 7. Recreate conversation/cost rollups as needed
 
 Helpers such as `estimateConversationCost`, `nextTurnBudget`, `contextHealth`, `tokensRemaining`, and `shouldCompact` were frequently tailored downstream. With v2:
 

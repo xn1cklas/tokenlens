@@ -6,9 +6,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../../LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 
-Tokenlens middleware helpers for the [Vercel AI SDK](https://sdk.vercel.ai). Attach live token cost estimation to AI SDK v5 `LanguageModelV2` models by wrapping them with Tokenlens.
 
 ![TokenLens overview](https://raw.githubusercontent.com/xn1cklas/tokenlens/HEAD/assets/tokenlens.png)
+
+Tokenlens middleware helpers for the [Vercel AI SDK](https://sdk.vercel.ai). Attach live token cost estimation to AI SDK v5 `LanguageModelV2` models by wrapping them with Tokenlens.
+
 
 
 Install

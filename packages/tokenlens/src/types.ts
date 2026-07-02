@@ -1,8 +1,17 @@
 import type { SourceProviders } from "@tokenlens/core";
-import type { CatalogGatewayId } from "@tokenlens/fetch";
+import type {
+  CatalogGatewayId,
+  CatalogSource,
+  FetchLike,
+} from "@tokenlens/fetch";
 
 export const DEFAULT_GATEWAY_ID = "openrouter" satisfies CatalogGatewayId;
 export type GatewayId = CatalogGatewayId;
+export type Catalog = GatewayId | CatalogSource | SourceProviders;
+export type TokenCounter = (args: {
+  modelId: string;
+  data: string;
+}) => Promise<number | undefined> | number | undefined;
 
 export type CacheEntry = { value: SourceProviders; expiresAt: number };
 
@@ -13,10 +22,14 @@ export interface CacheAdapter {
 }
 
 export type TokenlensOptions = {
-  catalog?: GatewayId | SourceProviders;
+  catalog?: Catalog;
   overrides?: SourceProviders;
   ttlMs?: number;
-  fetch?: typeof globalThis.fetch;
+  fetch?: FetchLike;
+  signal?: AbortSignal;
+  timeoutMs?: number;
   cache?: CacheAdapter;
   cacheKey?: string;
+  staleIfError?: boolean;
+  tokenizer?: TokenCounter | false;
 };

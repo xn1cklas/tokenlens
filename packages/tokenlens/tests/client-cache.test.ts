@@ -10,19 +10,42 @@ vi.mock("@tokenlens/fetch", () => {
   const fetchModelsDev = vi.fn();
   const fetchVercel = vi.fn();
   return {
+    catalogInputCacheKey: (
+      source:
+        | string
+        | {
+            id: string;
+            cacheKey?: string;
+          },
+    ) => (typeof source === "string" ? source : (source.cacheKey ?? source.id)),
     fetchOpenrouter,
     fetchModelsDev,
     fetchVercel,
     fetchCatalogSource: vi.fn(
       (
-        source: "models.dev" | "openrouter" | "vercel",
+        source:
+          | "models.dev"
+          | "openrouter"
+          | "vercel"
+          | {
+              id: string;
+              load(options?: {
+                fetch?: typeof globalThis.fetch;
+              }): Promise<SourceProviders>;
+            },
         options?: { fetch?: typeof globalThis.fetch },
       ) => {
+        if (typeof source === "object") return source.load(options);
         if (source === "models.dev") return fetchModelsDev(options);
         if (source === "vercel") return fetchVercel(options);
         return fetchOpenrouter(options);
       },
     ),
+    isCatalogSource: (value: unknown) =>
+      !!value &&
+      typeof value === "object" &&
+      "load" in value &&
+      typeof (value as { load?: unknown }).load === "function",
   };
 });
 
@@ -250,6 +273,45 @@ describe("Tokenlens - Client Caching", () => {
       catalog: "openrouter",
       cache,
       cacheKey: "test-no-cache-error",
+    });
+
+    await expect(client.refresh()).rejects.toThrow("network failed");
+    expect(cache.set).not.toHaveBeenCalled();
+  });
+
+  it("loads and caches custom async catalog sources", async () => {
+    const mockCatalog = createOpenrouterProvidersFixture();
+    const load = vi.fn(async () => mockCatalog);
+    const client = new Tokenlens({
+      catalog: {
+        id: "acme-registry",
+        cacheKey: "acme-cache",
+        load,
+      },
+    });
+
+    await client.getModelData({ modelId: "openai/gpt-4o" });
+    await client.getModelData({ modelId: "openai/gpt-4o" });
+
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it("can disable stale cache fallback on source errors", async () => {
+    const staleCatalog = createOpenrouterProvidersFixture();
+    const cache: CacheAdapter = {
+      get: vi.fn(() => ({
+        value: staleCatalog,
+        expiresAt: Date.now() - 1,
+      })),
+      set: vi.fn(),
+    };
+    fetchOpenrouterSpy.mockRejectedValue(new Error("network failed"));
+
+    const client = new Tokenlens({
+      catalog: "openrouter",
+      cache,
+      cacheKey: "test-stale-disabled",
+      staleIfError: false,
     });
 
     await expect(client.refresh()).rejects.toThrow("network failed");

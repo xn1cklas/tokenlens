@@ -7,6 +7,7 @@ import type { CommonOptions } from "./types.js";
 import {
   costFromPerTokenPricing,
   ensureJsonObject,
+  fetchWithControls,
   filterCatalog,
   requireArrayField,
   upsertCatalogProvider,
@@ -64,8 +65,10 @@ function mapOpenrouterModel(m: OpenrouterModelJson, id: string): SourceModel {
 export async function fetchOpenrouter(
   options?: CommonOptions,
 ): Promise<SourceProviders> {
-  const fetchImpl = options?.fetch ?? globalThis.fetch;
-  const res = await fetchImpl("https://openrouter.ai/api/v1/models");
+  const res = await fetchWithControls(
+    "https://openrouter.ai/api/v1/models",
+    options,
+  );
   if (!res.ok) {
     throw new TokenlensError.FetchFailed({
       target: "OpenRouter",

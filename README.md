@@ -16,7 +16,7 @@ Works seamlessly with Vercel AI SDK, OpenAI SDK, Anthropic SDK, and remains SDK-
 
 - **Multi-source catalog**: Auto-fetches from OpenRouter, models.dev, or Vercel AI Gateway with built-in caching
 - **Simple API**: `computeCostUSD`, `getModelData`, `getContextLimits`, `getContextHealth`, `countTokens`, `estimateCostUSD`
-- **Strong TypeScript**: Full type safety for model IDs, usage objects, and return types
+- **Strong TypeScript**: Typed DTOs, usage objects, helper return values, and dynamic model IDs as strings
 - **Automatic caching**: Configurable TTL with jitter to avoid cache stampedes
 - **Provider/model resolution**: Supports `provider/model`, `model` only, or separate provider parameter
 
@@ -37,6 +37,8 @@ npm install tokenlens @tokenlens/tokenizer
 # or
 pnpm add tokenlens @tokenlens/tokenizer
 ```
+
+TokenLens requires Node.js 20+ or a Fetch-compatible runtime for hosted catalogs.
 
 ## Quick Start
 
@@ -81,11 +83,16 @@ const tokenlens = new Tokenlens(options?: TokenlensOptions);
 ```
 
 **Options:**
-- `catalog`: `"auto" | "openrouter" | "models.dev" | "vercel"` or custom `SourceProviders` object (default: `"openrouter"`; `"auto"` is an alias for the same OpenRouter gateway)
+- `catalog`: `"auto" | "openrouter" | "models.dev" | "vercel"`, a custom `SourceProviders` object, or a custom async `CatalogSource` (default: `"openrouter"`; `"auto"` is an alias for the same OpenRouter gateway)
 - `overrides`: Custom `SourceProviders` object merged over the base catalog. Use this for local price or limit corrections while preserving hosted metadata.
 - `ttlMs`: Cache TTL in milliseconds (default: 24 hours)
 - `cache`: Custom cache adapter with `{ get(key), set(key, entry), delete?(key) }` methods where `entry` is `{ value: SourceProviders; expiresAt: number }` (default: in-memory cache)
 - `cacheKey`: Custom cache key for the catalog (default: `tokenlens:v2:{catalog}`)
+- `fetch`: Custom fetch implementation
+- `signal`: Abort signal passed to hosted or async catalog fetches
+- `timeoutMs`: Timeout for hosted or async catalog fetches
+- `staleIfError`: Return the last cached catalog when refresh fails (default: `true`)
+- `tokenizer`: Optional token counting function; pass `false` to disable implicit `@tokenlens/tokenizer` loading
 
 ### Methods
 
@@ -153,7 +160,7 @@ console.log(`Input tokens: ${estimate.inputTokens}`);
 
 Count tokens in text for a given model.
 
-Requires `@tokenlens/tokenizer` to be installed. You can also import tokenizers directly from `tokenlens/tokenizer`.
+By default this loads `@tokenlens/tokenizer` when it is installed. You can also inject your own tokenizer function or import tokenizers directly from `tokenlens/tokenizer`.
 
 ```ts
 const tokens = await tokenlens.countTokens({
@@ -249,7 +256,7 @@ await tokenlens.getModelData({ modelId: "gpt-4o-mini" });
 
 ## Custom Configuration
 
-### Using a custom catalog source
+### Using catalog sources
 
 ```ts
 import { Tokenlens } from "tokenlens";
@@ -259,7 +266,7 @@ const tokenlens = new Tokenlens({
   catalog: "models.dev"
 });
 
-// Or provide your own catalog
+// Or provide your own static catalog
 const customCatalog = {
   openai: {
     id: "openai",
@@ -276,6 +283,22 @@ const customCatalog = {
 
 const customTokenlens = new Tokenlens({
   catalog: customCatalog
+});
+
+// Or provide an async catalog source that you own
+const privateSource = {
+  id: "private-registry",
+  cacheKey: "tokenlens:private-registry",
+  async load({ fetch = globalThis.fetch, signal } = {}) {
+    const response = await fetch("https://example.com/models.json", { signal });
+    return response.json();
+  },
+};
+
+const privateTokenlens = new Tokenlens({
+  catalog: privateSource,
+  timeoutMs: 3_000,
+  staleIfError: true,
 });
 
 // Or patch prices/limits on top of a hosted catalog
@@ -330,6 +353,23 @@ const tokenlens = new Tokenlens({
 });
 ```
 
+### Tokenizer injection
+
+```ts
+import { Tokenlens } from "tokenlens";
+
+const tokenlens = new Tokenlens({
+  tokenizer: ({ data }) => data.trim().split(/\s+/).filter(Boolean).length,
+});
+
+const estimate = await tokenlens.estimateCostUSD({
+  modelId: "openai/gpt-4o-mini",
+  data: "Estimate this prompt before sending it",
+});
+```
+
+Inject a tokenizer when your app already owns token counting. Install `@tokenlens/tokenizer` when you want TokenLens to load the optional tokenizer package for you.
+
 ## Type Exports
 
 ```ts
@@ -367,6 +407,15 @@ const testCatalog = {
 const tokenlens = new Tokenlens({
   catalog: testCatalog
 });
+```
+
+## Migrating from v1
+
+TokenLens v2 intentionally removed the bundled static catalog and legacy sync helpers. Start with the codemod, then finish any TODOs it leaves for app-specific budgeting or registry logic:
+
+```bash
+npx @tokenlens/codemod v2 src
+npx @tokenlens/codemod v2 src --write
 ```
 
 ## Further Reading

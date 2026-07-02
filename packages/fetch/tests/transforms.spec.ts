@@ -1,14 +1,18 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { TokenlensError } from "@tokenlens/core";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  catalogInputCacheKey,
   fetchCatalogSource,
   fetchModelsDev,
   fetchOpenrouter,
   fetchVercel,
   fetchVercelModelEndpoints,
+  isCatalogSource,
   isCatalogSourceId,
   normalizeCatalogGateway,
 } from "../src/index.ts";
+import { fetchWithControls } from "../src/utils.ts";
 
 type JsonShape = Record<string, unknown> | Array<unknown> | null;
 
@@ -28,6 +32,37 @@ describe("catalog source registry", () => {
     expect(isCatalogSourceId("models.dev")).toBe(true);
     expect(isCatalogSourceId("vercel")).toBe(true);
     expect(isCatalogSourceId("package")).toBe(false);
+  });
+
+  it("loads custom async catalog sources", async () => {
+    const source = {
+      id: "acme",
+      cacheKey: "acme-cache",
+      load: vi.fn(async () => ({
+        acme: {
+          id: "acme",
+          models: {
+            "acme/chat": {
+              id: "acme/chat",
+              canonical_id: "acme/chat",
+              name: "Acme Chat",
+            },
+          },
+        },
+      })),
+    };
+
+    await expect(fetchCatalogSource(source)).resolves.toHaveProperty("acme");
+    expect(source.load).toHaveBeenCalledWith(undefined);
+    expect(isCatalogSource(source)).toBe(true);
+    expect(catalogInputCacheKey(source)).toBe("acme-cache");
+    expect(
+      catalogInputCacheKey({
+        id: "uncached-source",
+        load: vi.fn(async () => ({})),
+      }),
+    ).toBe("uncached-source");
+    expect(catalogInputCacheKey("openrouter")).toBe("openrouter");
   });
 
   it("dispatches catalog source fetches through the selected adapter", async () => {
@@ -60,6 +95,114 @@ describe("catalog source registry", () => {
       "openai",
     );
   });
+
+  it("passes abort signals to fetch implementations", async () => {
+    const controller = new AbortController();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [] }),
+    } as Response);
+
+    await fetchOpenrouter({ signal: controller.signal });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://openrouter.ai/api/v1/models",
+      { signal: expect.any(AbortSignal) },
+    );
+  });
+
+  it("does not pass init when fetch controls are not configured", async () => {
+    const fetchImpl = vi.fn<typeof globalThis.fetch>().mockResolvedValue(
+      new Response("{}", {
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    await fetchWithControls("https://example.com/models.json", {
+      fetch: fetchImpl,
+    });
+
+    expect(fetchImpl).toHaveBeenCalledWith("https://example.com/models.json");
+  });
+
+  it("passes already-aborted parent signals to fetch implementations", async () => {
+    const controller = new AbortController();
+    controller.abort("stop");
+    const fetchImpl = vi
+      .fn<typeof globalThis.fetch>()
+      .mockImplementation(async (_input, init) => {
+        expect(init?.signal).toBeInstanceOf(AbortSignal);
+        expect(init?.signal?.aborted).toBe(true);
+        return new Response("{}");
+      });
+
+    await fetchWithControls("https://example.com/models.json", {
+      fetch: fetchImpl,
+      signal: controller.signal,
+    });
+  });
+
+  it("wraps aborted fetches in Tokenlens fetch errors", async () => {
+    const abortError = new DOMException(
+      "The operation was aborted",
+      "AbortError",
+    );
+    const fetchImpl = vi
+      .fn<typeof globalThis.fetch>()
+      .mockRejectedValue(abortError);
+
+    await expect(
+      fetchWithControls("https://example.com/models.json", {
+        fetch: fetchImpl,
+        signal: new AbortController().signal,
+      }),
+    ).rejects.toMatchObject({
+      code: TokenlensError.FetchFailed.code,
+      cause: abortError,
+      meta: expect.objectContaining({ reason: "ABORTED" }),
+    });
+  });
+
+  it("rethrows non-abort fetch failures", async () => {
+    const failure = new Error("network down");
+    const fetchImpl = vi
+      .fn<typeof globalThis.fetch>()
+      .mockRejectedValue(failure);
+
+    await expect(
+      fetchWithControls("https://example.com/models.json", {
+        fetch: fetchImpl,
+      }),
+    ).rejects.toBe(failure);
+  });
+
+  it("aborts fetches that exceed timeoutMs", async () => {
+    vi.useFakeTimers();
+    const fetchImpl = vi.fn<typeof globalThis.fetch>().mockImplementation(
+      async (_input, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            reject(new DOMException("The operation was aborted", "AbortError"));
+          });
+        }),
+    );
+
+    const request = fetchWithControls("https://example.com/models.json", {
+      fetch: fetchImpl,
+      timeoutMs: 10,
+    });
+    const assertion = expect(request).rejects.toMatchObject({
+      code: TokenlensError.FetchFailed.code,
+      meta: expect.objectContaining({ reason: "ABORTED" }),
+    });
+    await vi.advanceTimersByTimeAsync(10);
+
+    await assertion;
+  });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("fetchModelsDev DTO normalization", () => {

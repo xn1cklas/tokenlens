@@ -5,31 +5,31 @@ description: "Compare current monorepo setup to mature patterns and outline impr
 
 ### Package setup comparison and hardening plan
 
-This document compares our current monorepo/package setup to patterns used by mature libraries (e.g., Zod) and outlines a prioritized plan to improve resilience, DX, and publish hygiene.
+This document compares our current monorepo/package setup to patterns used by mature libraries (e.g., Zod) and tracks remaining hardening work.
 
 Reference: Zod repository (`https://github.com/colinhacks/zod`).
 
 ## Snapshot of our current setup
 
 - **Monorepo**: pnpm workspaces, Turborepo, packages under `packages/*`, apps under `apps/*`.
-- **CI**: Lint (Biome), Build (turbo), Test (vitest), and example typechecks on Node 20.
+- **CI**: Lint (Biome), package/app/example build and typecheck, coverage-gated Vitest, and packed export smoke tests on Node 20 and 22.
 - **Formatting/Lint**: Biome configured; lefthook pre-commit runs formatting.
 - **Publishing**: `tokenlens` published; scoped packages such as `@tokenlens/core`, `@tokenlens/fetch`, `@tokenlens/helpers`, and `@tokenlens/tokenizer` exist but need consistent publish metadata.
 - **Module format**: ESM with minimal `exports` fields.
-- **Testing**: Vitest in `tokenlens`; no coverage thresholds; no type-level API tests.
+- **Testing**: Vitest across packages with 98% global coverage thresholds; type-level API tests are still a future improvement.
 
 ## Where we differ from a mature library setup
 
 - **Node versions and constraints**
-  - Ours: No `engines` fields or `.nvmrc`; CI runs on Node 20 only.
-  - Mature: Pin LTS in `.nvmrc`, set `engines` in each package, test matrix across multiple Node LTS versions.
+  - Ours: Node 20+ is declared in `.nvmrc`, root/package `engines`, and CI runs Node 20/22.
+  - Mature: Same pattern, usually with a documented policy for when old LTS versions are dropped.
 
 - **Versioning and releases**
-  - Ours: Changesets dependency present in root, but no config or automated release workflow.
+  - Ours: Changesets config is present and release automation publishes from `main`.
   - Mature: Changesets-managed versions, changelog generation, provenance-enabled npm publish via GitHub Actions.
 
 - **CI quality gates**
-  - Ours: Lint/build/test; no typecheck step, no coverage thresholds, no bundle/size checks, no consumer smoke tests.
+  - Ours: Lint, build, typecheck, 98% coverage gate, and packed consumer export smoke tests. Bundle/size checks are not yet enforced.
   - Mature: Typecheck, coverage gates, size-limit, consumer import tests (ESM and CJS if supported) across Node matrix.
 
 - **Package metadata & publish hygiene**
@@ -45,7 +45,7 @@ Reference: Zod repository (`https://github.com/colinhacks/zod`).
   - Mature: `tsd`/`expect-type` coverage for the public API.
 
 - **Dependency hygiene & OSS docs**
-  - Ours: No Dependabot/Renovate; missing `SECURITY.md`, `CONTRIBUTING.md`, templates, `CODEOWNERS`.
+  - Ours: Dependabot and core OSS hygiene files are present.
   - Mature: Automated updates and OSS hygiene files standard.
 
 - **Docs in published tarballs**
@@ -55,12 +55,11 @@ Reference: Zod repository (`https://github.com/colinhacks/zod`).
 ## Prioritized TODOs
 
 - **Release and versioning**
-  - Set up Changesets and npm release workflow with provenance and changelog
+  - Confirm first Changesets publish flow on `main` with npm provenance
   - Add `prepack`/`prepublishOnly` to clean and build before publish
 
 - **Runtime and tooling constraints**
-  - Add Node engine constraints and `.nvmrc` (LTS), enforce via CI
-  - Document and pin `packageManager` at root and enforce via CI
+  - Document the Node support policy and future LTS drop process
 
 - **Package publishing hygiene**
   - Add `publishConfig.access: public` for scoped packages.
@@ -73,10 +72,8 @@ Reference: Zod repository (`https://github.com/colinhacks/zod`).
   - Export `./package.json` in `exports` for tooling introspection
 
 - **CI quality gates**
-  - Expand CI matrix to Node 18/20/22; add turbo typecheck/lint/test steps
-  - Enable coverage in Vitest with minimum thresholds and CI reporting
+  - Keep Node 20/22 matrix green for lint, build/typecheck, coverage, and export smoke tests
   - Add size-limit (or similar) check for `tokenlens`, gate in CI
-  - Add smoke tests: consumer ESM (and CJS if supported) import across Node versions
 
 - **Testing depth**
   - Type-level API tests with `tsd` (or `expect-type`) covering public surface
@@ -97,7 +94,6 @@ Reference: Zod repository (`https://github.com/colinhacks/zod`).
 ## References
 
 - Zod repository: [`https://github.com/colinhacks/zod`](https://github.com/colinhacks/zod)
-
 
 
 

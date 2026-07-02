@@ -5,6 +5,7 @@ import {
   type SourceProviders,
   TokenlensError,
 } from "@tokenlens/core";
+import type { CommonOptions } from "./types.js";
 
 type PerTokenPricing = Record<string, unknown> & {
   prompt?: unknown;
@@ -249,6 +250,69 @@ export function upsertCatalogProvider(
   };
   catalog[options.providerKey] = provider;
   return provider;
+}
+
+function fetchSignal(options?: Pick<CommonOptions, "signal" | "timeoutMs">): {
+  signal?: AbortSignal;
+  cleanup: () => void;
+} {
+  const timeoutMs = options?.timeoutMs;
+  if (!options?.signal && (timeoutMs === undefined || timeoutMs <= 0)) {
+    return { cleanup: () => {} };
+  }
+
+  const controller = new AbortController();
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+
+  const abortFromParent = () => {
+    controller.abort(options?.signal?.reason);
+  };
+
+  if (options?.signal) {
+    if (options.signal.aborted) {
+      abortFromParent();
+    } else {
+      options.signal.addEventListener("abort", abortFromParent, { once: true });
+    }
+  }
+
+  if (timeoutMs !== undefined && timeoutMs > 0) {
+    timeout = setTimeout(() => {
+      controller.abort(
+        new Error(`Tokenlens fetch timed out after ${timeoutMs}ms`),
+      );
+    }, timeoutMs);
+  }
+
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      if (timeout) clearTimeout(timeout);
+      options?.signal?.removeEventListener("abort", abortFromParent);
+    },
+  };
+}
+
+export async function fetchWithControls(
+  input: Parameters<NonNullable<CommonOptions["fetch"]>>[0],
+  options?: CommonOptions,
+): Promise<Response> {
+  const fetchImpl = options?.fetch ?? globalThis.fetch;
+  const { signal, cleanup } = fetchSignal(options);
+  try {
+    return signal ? await fetchImpl(input, { signal }) : await fetchImpl(input);
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new TokenlensError.FetchFailed({
+        target: String(input),
+        cause: error,
+        meta: { reason: "ABORTED" },
+      });
+    }
+    throw error;
+  } finally {
+    cleanup();
+  }
 }
 
 export async function mapWithConcurrency<T>(

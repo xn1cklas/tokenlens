@@ -27,13 +27,18 @@
     "./error": {
       "types": "./dist/error.d.ts",
       "default": "./dist/error.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "scripts": {
     "prebuild": "rm -rf dist",

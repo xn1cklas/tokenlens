@@ -22,23 +22,55 @@ import {
 
 // Mock the fetch functions
 vi.mock("@tokenlens/fetch", () => {
+  type MockCatalogOptions = {
+    fetch?: typeof globalThis.fetch;
+    signal?: AbortSignal;
+    timeoutMs?: number;
+  };
+  type MockCatalogSource = {
+    id: string;
+    cacheKey?: string;
+    load(options?: MockCatalogOptions): Promise<SourceProviders>;
+  };
   const fetchOpenrouter = vi.fn();
   const fetchModelsDev = vi.fn();
   const fetchVercel = vi.fn();
+  const isCatalogSource = (source: unknown): source is MockCatalogSource =>
+    !!source &&
+    typeof source === "object" &&
+    "id" in source &&
+    typeof (source as { id?: unknown }).id === "string" &&
+    "load" in source &&
+    typeof (source as { load?: unknown }).load === "function";
   return {
     fetchOpenrouter,
     fetchModelsDev,
     fetchVercel,
+    catalogInputCacheKey: (
+      source:
+        | "auto"
+        | "models.dev"
+        | "openrouter"
+        | "vercel"
+        | MockCatalogSource,
+    ) => (typeof source === "string" ? source : (source.cacheKey ?? source.id)),
     fetchCatalogSource: vi.fn(
       (
-        source: "models.dev" | "openrouter" | "vercel",
-        options?: { fetch?: typeof globalThis.fetch },
+        source:
+          | "auto"
+          | "models.dev"
+          | "openrouter"
+          | "vercel"
+          | MockCatalogSource,
+        options?: MockCatalogOptions,
       ) => {
+        if (isCatalogSource(source)) return source.load(options);
         if (source === "models.dev") return fetchModelsDev(options);
         if (source === "vercel") return fetchVercel(options);
         return fetchOpenrouter(options);
       },
     ),
+    isCatalogSource,
   };
 });
 
@@ -104,20 +136,27 @@ describe("Tokenlens - Catalog Loading", () => {
     expect(fetchOpenrouterSpy).toHaveBeenCalled();
   });
 
-  it("passes custom fetch to the catalog fetcher", async () => {
+  it("passes fetch controls to the catalog fetcher", async () => {
     const mockCatalog = createOpenrouterProvidersFixture();
     const fetchImpl = vi.fn<typeof globalThis.fetch>();
+    const controller = new AbortController();
     fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
 
     const client = new Tokenlens({
       catalog: "openrouter",
       cacheKey: "test-custom-fetch",
       fetch: fetchImpl,
+      signal: controller.signal,
+      timeoutMs: 123,
     });
 
     await client.getModelData({ modelId: "openai/gpt-4o" });
 
-    expect(fetchOpenrouterSpy).toHaveBeenCalledWith({ fetch: fetchImpl });
+    expect(fetchOpenrouterSpy).toHaveBeenCalledWith({
+      fetch: fetchImpl,
+      signal: controller.signal,
+      timeoutMs: 123,
+    });
   });
 
   it("uses models.dev catalog", async () => {

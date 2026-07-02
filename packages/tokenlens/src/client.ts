@@ -4,7 +4,12 @@ import {
   TokenlensError,
   type Usage,
 } from "@tokenlens/core";
-import { fetchCatalogSource } from "@tokenlens/fetch";
+import type { CatalogInput } from "@tokenlens/fetch";
+import {
+  catalogInputCacheKey,
+  fetchCatalogSource,
+  isCatalogSource,
+} from "@tokenlens/fetch";
 import type { TokenCosts } from "@tokenlens/helpers";
 import {
   computeTokenCostsForModel,
@@ -22,8 +27,9 @@ import {
 } from "./tokenizer.js";
 import {
   type CacheAdapter,
+  type Catalog,
   DEFAULT_GATEWAY_ID,
-  type GatewayId,
+  type TokenCounter,
   type TokenlensOptions,
 } from "./types.js";
 
@@ -33,12 +39,16 @@ type ResolvedModel = Omit<ResolveModelResult, "model"> & {
 };
 
 export class Tokenlens {
-  private readonly catalog: GatewayId | SourceProviders;
+  private readonly catalog: Catalog;
   private readonly overrides: SourceProviders | undefined;
   private readonly ttlMs: number;
   private readonly cache: CacheAdapter;
   private readonly cacheKey: string;
   private readonly fetchImpl: typeof globalThis.fetch;
+  private readonly signal: AbortSignal | undefined;
+  private readonly timeoutMs: number | undefined;
+  private readonly staleIfError: boolean;
+  private readonly tokenizer: TokenCounter | false | undefined;
   private inFlightCatalog: Promise<SourceProviders> | undefined;
   private catalogRequestVersion = 0;
   private mergedCatalogCache:
@@ -60,17 +70,27 @@ export class Tokenlens {
     this.ttlMs = options?.ttlMs ?? 24 * 60 * 60 * 1000;
     this.cache = options?.cache ?? new MemoryCache();
     this.fetchImpl = options?.fetch ?? globalThis.fetch;
+    this.signal = options?.signal;
+    this.timeoutMs = options?.timeoutMs;
+    this.staleIfError = options?.staleIfError ?? true;
+    this.tokenizer = options?.tokenizer;
 
-    // only cache when we load the catalog from a gateway
-    if (typeof this.catalog === "string") {
-      this.cacheKey = options?.cacheKey ?? `tokenlens:v2:${this.catalog}`;
+    // only cache when we load the catalog from a gateway/source
+    if (typeof this.catalog === "string" || isCatalogSource(this.catalog)) {
+      this.cacheKey =
+        options?.cacheKey ??
+        `tokenlens:v2:${catalogInputCacheKey(this.catalog)}`;
     } else {
       this.cacheKey = options?.cacheKey ?? "";
     }
   }
 
-  private async fetchCatalog(source: GatewayId): Promise<SourceProviders> {
-    return fetchCatalogSource(source, { fetch: this.fetchImpl });
+  private async fetchCatalog(source: CatalogInput): Promise<SourceProviders> {
+    return fetchCatalogSource(source, {
+      fetch: this.fetchImpl,
+      ...(this.signal ? { signal: this.signal } : {}),
+      ...(this.timeoutMs !== undefined ? { timeoutMs: this.timeoutMs } : {}),
+    });
   }
 
   private applyOverrides(catalog: SourceProviders): SourceProviders {
@@ -97,7 +117,7 @@ export class Tokenlens {
   private async loadCatalog(options?: {
     force?: boolean;
   }): Promise<SourceProviders> {
-    if (typeof this.catalog === "object") {
+    if (typeof this.catalog === "object" && !isCatalogSource(this.catalog)) {
       return Promise.resolve(this.applyOverrides(this.catalog));
     }
 
@@ -111,7 +131,7 @@ export class Tokenlens {
     try {
       if (options?.force || !this.inFlightCatalog) {
         const requestVersion = ++this.catalogRequestVersion;
-        const catalogSource = this.catalog;
+        const catalogSource = this.catalog as CatalogInput;
         this.inFlightCatalog = (async () => {
           const catalog = await this.fetchCatalog(catalogSource);
           if (this.catalogRequestVersion === requestVersion) {
@@ -129,7 +149,7 @@ export class Tokenlens {
       const catalog = await inFlight;
       return this.applyOverrides(catalog);
     } catch (error) {
-      if (!options?.force && cached) {
+      if (this.staleIfError && !options?.force && cached) {
         return this.applyOverrides(cached.value);
       }
       throw error;
@@ -215,6 +235,12 @@ export class Tokenlens {
     data: string;
   }): Promise<number | undefined> {
     const { modelId, data } = args;
+    if (this.tokenizer === false) {
+      throw new TokenlensError.MissingDependency("@tokenlens/tokenizer");
+    }
+    if (this.tokenizer) {
+      return await this.tokenizer({ modelId, data });
+    }
     return await countTokensWithOptionalTokenizer(modelId, data);
   }
 
@@ -272,8 +298,7 @@ export class Tokenlens {
     const { modelId, provider, data } = args;
 
     // Count tokens in input text
-    const inputTokens =
-      (await countTokensWithOptionalTokenizer(modelId, data)) ?? 0;
+    const inputTokens = (await this.countTokens({ modelId, data })) ?? 0;
 
     // Compute costs using the existing method
     const costs = await this.computeCostUSD({

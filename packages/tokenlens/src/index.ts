@@ -179,6 +179,7 @@ export type {
   Usage,
 } from "@tokenlens/core";
 export type { ModelDetails, TokenlensOptions };
+export type { CatalogSource } from "@tokenlens/fetch";
 export type { ContextHealth, TokenCosts } from "@tokenlens/helpers";
 // Re-export helper utilities
 export {
@@ -186,3 +187,4 @@ export {
   estimateTokenSavings,
 } from "@tokenlens/helpers";
 export { Tokenlens } from "./client.js";
+export type { Catalog, TokenCounter } from "./types.js";

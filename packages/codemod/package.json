@@ -1,0 +1,58 @@
+{
+  "name": "@tokenlens/codemod",
+  "version": "2.0.0",
+  "private": false,
+  "description": "Codemods for migrating Tokenlens applications.",
+  "type": "module",
+  "sideEffects": false,
+  "bin": {
+    "tokenlens-codemod": "./dist/index.js"
+  },
+  "exports": {
+    "./transform": {
+      "types": "./dist/transform.d.ts",
+      "default": "./dist/transform.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "prebuild": "rm -rf dist",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config ../../vitest.config.ts --project codemod",
+    "test:run": "vitest run --config ../../vitest.config.ts --project codemod",
+    "prepublishOnly": "pnpm run build"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xn1cklas/tokenlens.git",
+    "directory": "packages/codemod"
+  },
+  "keywords": [
+    "tokenlens",
+    "codemod",
+    "migration"
+  ],
+  "author": "Nicklas Scharpff <hi@n1cklas.com> (https://n1cklas.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xn1cklas/tokenlens/issues"
+  },
+  "homepage": "https://github.com/xn1cklas/tokenlens/tree/HEAD/packages/codemod#readme"
+}

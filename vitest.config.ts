@@ -52,6 +52,7 @@ export default defineConfig({
         "**/.next/**",
         "**/*.test.ts",
         "**/*.spec.ts",
+        "packages/codemod/src/index.ts",
         "packages/*/src/types.ts",
         "packages/core/src/dto.ts",
         "packages/core/src/usage.ts",
@@ -68,6 +69,7 @@ export default defineConfig({
       project("core", "packages/core", ["tests/**/*.test.ts"]),
       project("helpers", "packages/helpers", ["tests/**/*.spec.ts"]),
       project("fetch", "packages/fetch", ["tests/**/*.spec.ts"]),
+      project("codemod", "packages/codemod", ["tests/**/*.spec.ts"]),
       project("tokenizer", "packages/tokenizer", ["tests/**/*.spec.ts"], {
         globals: true,
       }),
