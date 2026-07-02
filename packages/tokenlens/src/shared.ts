@@ -1,30 +1,31 @@
+import { normalizeCatalogId } from "@tokenlens/fetch";
 import { Tokenlens } from "./client.js";
 import type { TokenlensOptions } from "./types.js";
 
 const instances = new Map<string, Tokenlens>();
 
 function primitiveSharedKey(options?: TokenlensOptions): string | undefined {
-  if (!options) return "default";
-  const catalog = options.catalog ?? "openrouter";
+  const catalog = options?.catalog ?? "openrouter";
   if (typeof catalog !== "string") return undefined;
+  const normalizedCatalog = normalizeCatalogId(catalog);
   if (
-    options.overrides ||
-    (options.cache !== undefined && options.cache !== false) ||
-    options.fetch ||
-    options.signal ||
-    options.tokenizer
+    options?.overrides ||
+    (options?.cache !== undefined && options.cache !== false) ||
+    options?.fetch ||
+    options?.signal ||
+    options?.tokenizer
   ) {
     return undefined;
   }
 
   return JSON.stringify({
-    cacheKey: options.cacheKey,
-    catalog,
-    cache: options.cache,
-    staleIfError: options.staleIfError,
-    sourceOptions: options.sourceOptions,
-    timeoutMs: options.timeoutMs,
-    ttlMs: options.ttlMs,
+    cacheKey: options?.cacheKey,
+    catalog: normalizedCatalog,
+    cache: options?.cache,
+    staleIfError: options?.staleIfError,
+    sourceOptions: options?.sourceOptions,
+    timeoutMs: options?.timeoutMs,
+    ttlMs: options?.ttlMs,
   });
 }
 
@@ -53,6 +54,6 @@ export function getTokenlens(options?: TokenlensOptions): Tokenlens {
 export function setSharedTokenlens(tokenlens?: Tokenlens) {
   instances.clear();
   if (tokenlens) {
-    instances.set("default", tokenlens);
+    instances.set(primitiveSharedKey()!, tokenlens);
   }
 }

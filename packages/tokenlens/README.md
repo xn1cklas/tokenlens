@@ -386,14 +386,7 @@ const pricedTokenlens = new Tokenlens({
 
 ```ts
 import { Tokenlens } from "tokenlens";
-import type { SourceProviders } from "tokenlens";
-
-type CacheEntry = { value: SourceProviders; expiresAt: number };
-type CacheAdapter = {
-  get(key: string): Promise<CacheEntry | undefined> | CacheEntry | undefined;
-  set(key: string, entry: CacheEntry): Promise<void> | void;
-  delete?(key: string): Promise<void> | void;
-};
+import type { CacheAdapter, CacheEntry } from "tokenlens";
 
 const redisCache: CacheAdapter = {
   async get(key: string) {
@@ -444,6 +437,8 @@ import type {
   TokenCosts,
   TokenlensOptions,
   CatalogOverrides,
+  CacheAdapter,
+  CacheEntry,
 } from "tokenlens";
 ```
 

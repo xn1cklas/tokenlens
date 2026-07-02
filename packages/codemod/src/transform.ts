@@ -68,6 +68,8 @@ const manualMigrations: Record<string, string> = {
   tokensToCompact:
     "Use getContextHealth and keep compaction thresholds in application code.",
 };
+const defaultExportMigration =
+  'Default export was removed; use createTokenlens(), new Tokenlens(), or named helpers from "tokenlens".';
 
 function unique(values: readonly string[]): string[] {
   return [...new Set(values)];
@@ -150,14 +152,18 @@ function transformTokenlensImport(args: {
   modelIdLocals: Set<string>;
 }): Edit | undefined {
   const named = namedImports(args.node);
-  if (!named) return undefined;
-
   const importTypeOnly = args.node.importClause?.isTypeOnly ?? false;
   const retained: string[] = [];
   const tokenlensFetch: string[] = [];
+  const defaultName = args.node.importClause?.name?.text;
   let changed = false;
 
-  for (const specifier of named.elements) {
+  if (defaultName) {
+    changed = true;
+    args.warnings.push(`${defaultName}: ${defaultExportMigration}`);
+  }
+
+  for (const specifier of named?.elements ?? []) {
     const entry = importedName(specifier, importTypeOnly);
 
     if (entry.imported === "fetchModels") {
@@ -188,10 +194,8 @@ function transformTokenlensImport(args: {
 
   if (!changed) return undefined;
 
-  const defaultName = args.node.importClause?.name?.text;
   const replacement = [
     importStatement({
-      ...(defaultName ? { defaultName } : {}),
       importTypeOnly,
       specifiers: retained,
       source: "tokenlens",

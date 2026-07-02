@@ -17,7 +17,12 @@ vi.mock("@tokenlens/fetch", () => {
             id: string;
             cacheKey?: string;
           },
-    ) => (typeof source === "string" ? source : (source.cacheKey ?? source.id)),
+    ) =>
+      typeof source === "string"
+        ? source === "auto"
+          ? "openrouter"
+          : source
+        : (source.cacheKey ?? source.id),
     normalizeCatalogId: (
       source: "auto" | "models.dev" | "openrouter" | "vercel",
     ) => (source === "auto" ? "openrouter" : source),

@@ -256,15 +256,12 @@ function resolveFromProvider(
   return undefined;
 }
 
-function resolveAcrossProviders(
+function resolveExactAcrossProviders(
   providers: readonly ProviderLookupEntry[],
-  args: Omit<Parameters<typeof requestModelKeys>[0], "providerKeys">,
+  modelKeys: readonly string[],
 ): ResolveModelResult | undefined {
   for (const provider of providers) {
-    const resolved = resolveFromProvider(
-      provider,
-      requestModelKeys({ ...args, providerKeys: provider.providerKeys }),
-    );
+    const resolved = resolveFromProvider(provider, modelKeys);
     if (resolved) return resolved;
   }
   return undefined;
@@ -323,6 +320,12 @@ function resolveWithProviderLookup(
     bareModelId,
     originalBareModelId,
   };
+  const exactScopedModelKeys = uniqueStrings([
+    modelId,
+    canonicalModelId,
+    toModelId(modelId),
+    toModelId(canonicalModelId),
+  ]);
 
   if (rawProvider) {
     const candidates = providerCandidates(providers, rawProvider);
@@ -335,7 +338,10 @@ function resolveWithProviderLookup(
     }
 
     if (!providerId && (candidates.length > 0 || !rawProvider.includes("."))) {
-      const resolved = resolveAcrossProviders(providers, request);
+      const resolved = resolveExactAcrossProviders(
+        providers,
+        exactScopedModelKeys,
+      );
       if (resolved) return resolved;
     }
 

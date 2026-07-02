@@ -62,6 +62,7 @@ describe("catalog source registry", () => {
         load: vi.fn(async () => ({})),
       }),
     ).toBe("uncached-source");
+    expect(catalogInputCacheKey("auto")).toBe("openrouter");
     expect(catalogInputCacheKey("openrouter")).toBe("openrouter");
   });
 

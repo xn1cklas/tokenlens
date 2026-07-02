@@ -52,7 +52,7 @@ const object = { ModelId };
     expect(result.code).toContain("const object = { ModelId };");
   });
 
-  it("rewrites default and mixed type imports without touching supported imports", () => {
+  it("flags default imports and rewrites mixed type imports", () => {
     const result = transformV1ToV2(`
 import tokenlens, { fetchModels, type TokenlensOptions, type ModelId } from "tokenlens";
 
@@ -62,13 +62,18 @@ void tokenlens;
 `);
 
     expect(result.code).toContain(
-      'import tokenlens, { type TokenlensOptions } from "tokenlens";',
+      'import { type TokenlensOptions } from "tokenlens";',
     );
+    expect(result.code).not.toContain("import tokenlens");
     expect(result.code).toContain(
       'import { fetchModelsDev as fetchModels } from "tokenlens/fetch";',
     );
     expect(result.code).toContain(
       "type Options = TokenlensOptions & { model: string }",
+    );
+    expect(result.code).toContain("TODO(tokenlens-codemod)");
+    expect(result.warnings).toContain(
+      'tokenlens: Default export was removed; use createTokenlens(), new Tokenlens(), or named helpers from "tokenlens".',
     );
   });
 
@@ -90,10 +95,8 @@ type Options = TokenlensOptions & { model: ModelId };
 
   it("leaves supported tokenlens imports unchanged", () => {
     const input = `
-import tokenlens from "tokenlens";
 import { Tokenlens, type TokenlensOptions } from "tokenlens";
 
-void tokenlens;
 void Tokenlens;
 `;
 
@@ -102,6 +105,20 @@ void Tokenlens;
       changed: false,
       warnings: [],
     });
+  });
+
+  it("flags default-only imports", () => {
+    const result = transformV1ToV2(`
+import tokenlens from "tokenlens";
+
+void tokenlens;
+`);
+
+    expect(result.code).toContain("TODO(tokenlens-codemod)");
+    expect(result.code).not.toContain('import tokenlens from "tokenlens"');
+    expect(result.warnings).toEqual([
+      'tokenlens: Default export was removed; use createTokenlens(), new Tokenlens(), or named helpers from "tokenlens".',
+    ]);
   });
 
   it("rewrites aliased imports and retains supported imports", () => {

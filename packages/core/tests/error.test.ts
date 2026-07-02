@@ -14,7 +14,7 @@ describe("TokenlensError", () => {
     expect(error).toBeInstanceOf(TokenlensError.InvalidCatalog);
     expect(error.name).toBe("InvalidCatalogError");
     expect(error.code).toBe(TokenlensError.InvalidCatalog.code);
-    expect(error.message).toBe("Unknown catalog ID: custom");
+    expect(error.message).toBe("Invalid catalog: custom");
     expect(error.cause).toBe(cause);
     expect(error.meta).toEqual({ source: "test", catalogId: "custom" });
     expect(() => {

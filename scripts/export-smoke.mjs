@@ -49,6 +49,19 @@ function run(command, args, options = {}) {
   return result.stdout?.trim() ?? "";
 }
 
+function tarEntries(tarball) {
+  return run("tar", ["-tzf", tarball], { capture: true })
+    .split(/\r?\n/)
+    .filter(Boolean);
+}
+
+function assertTarballContains(tarball, expectedPath) {
+  const entries = tarEntries(tarball);
+  if (!entries.includes(`package/${expectedPath}`)) {
+    throw new Error(`${basename(tarball)} is missing ${expectedPath}`);
+  }
+}
+
 async function packPackages(packDir) {
   const tarballs = new Map();
 
@@ -187,6 +200,13 @@ async function main() {
     const vercel = tarballs.get("vercel");
     const codemod = tarballs.get("codemod");
 
+    for (const tarball of tarballs.values()) {
+      assertTarballContains(tarball, "LICENSE");
+    }
+    if (tarEntries(tokenlens).some((entry) => entry.includes("test-utils"))) {
+      throw new Error("tokenlens tarball must not include test-utils");
+    }
+
     const noTokenizerDir = join(tempRoot, "without-tokenizer");
     await mkdir(noTokenizerDir);
     await prepareNodeModules(noTokenizerDir, [
@@ -210,7 +230,7 @@ async function main() {
         import { fetchModelsDev } from "tokenlens/fetch";
         import type { SourceProvider, SourceProviders } from "tokenlens/core";
         import type { Usage } from "@tokenlens/core/usage";
-        import type { CatalogOverrides, TokenlensSourceOptions } from "tokenlens";
+        import type { CacheAdapter, CacheEntry, CatalogOverrides, TokenlensSourceOptions } from "tokenlens";
 
         const catalog: SourceProviders = {
           openai: {
@@ -235,6 +255,14 @@ async function main() {
         const sourceOptions: TokenlensSourceOptions = {
           vercel: { includeEndpointDetails: true, endpointConcurrency: 1 },
         };
+        const cacheEntry: CacheEntry = {
+          value: catalog,
+          expiresAt: Date.now() + 1_000,
+        };
+        const cache: CacheAdapter = {
+          get: () => cacheEntry,
+          set: () => {},
+        };
         const usage: Usage = { inputTokens: 10, outputTokens: 2 };
         const client = new Tokenlens({ catalog, overrides, sourceOptions, cache: false });
         const providers: SourceProvider[] = await listProviders({ catalog });
@@ -245,6 +273,7 @@ async function main() {
         void client;
         void providers;
         void fetchModelsDev;
+        void cache;
       `,
     );
     await checkProject(noTokenizerDir, [

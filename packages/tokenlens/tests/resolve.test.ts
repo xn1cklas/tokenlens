@@ -199,6 +199,58 @@ describe("resolveModel", () => {
     expect(resolved.model?.name).toBe("Grok 5 via Requesty");
   });
 
+  it("does not bare-match unrelated providers for scoped provider model IDs", () => {
+    const resolved = resolveModel({
+      catalog: {
+        openai: {
+          id: "openai",
+          models: {},
+        },
+        anthropic: {
+          id: "anthropic",
+          models: {
+            "anthropic/gpt-4o": {
+              id: "anthropic/gpt-4o",
+              canonical_id: "anthropic/gpt-4o",
+              name: "Anthropic GPT-4o fixture",
+            },
+          },
+        },
+      },
+      modelId: "openai/gpt-4o",
+    });
+
+    expect(resolved).toEqual({
+      providerId: "openai",
+      modelId: "openai/gpt-4o",
+      model: undefined,
+    });
+  });
+
+  it("does not bare-match unrelated providers for unknown scoped providers", () => {
+    const resolved = resolveModel({
+      catalog: {
+        anthropic: {
+          id: "anthropic",
+          models: {
+            "anthropic/gpt-4o": {
+              id: "anthropic/gpt-4o",
+              canonical_id: "anthropic/gpt-4o",
+              name: "Anthropic GPT-4o fixture",
+            },
+          },
+        },
+      },
+      modelId: "unknown/gpt-4o",
+    });
+
+    expect(resolved).toEqual({
+      providerId: "unknown",
+      modelId: "unknown/gpt-4o",
+      model: undefined,
+    });
+  });
+
   it("scopes bare model lookups with provider ids when provider keys differ", () => {
     const resolved = resolveModel({
       catalog,

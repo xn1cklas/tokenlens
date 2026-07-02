@@ -41,7 +41,9 @@ export function isCatalogSource(value: unknown): value is CatalogSource {
 }
 
 export function catalogInputCacheKey(source: CatalogInput): string {
-  return typeof source === "string" ? source : (source.cacheKey ?? source.id);
+  return typeof source === "string"
+    ? normalizeCatalogId(source)
+    : (source.cacheKey ?? source.id);
 }
 
 export function fetchCatalogSource(

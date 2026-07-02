@@ -15,7 +15,7 @@ import {
   tryGetModelData as apiTryGetModelData,
   createTokenlens,
 } from "../src/index.js";
-import { setSharedTokenlens } from "../src/test-utils.js";
+import { setSharedTokenlens } from "../src/shared.js";
 import type { CacheAdapter, CacheEntry } from "../src/types.js";
 import {
   createModelsDevProvidersFixture,
@@ -58,7 +58,12 @@ vi.mock("@tokenlens/fetch", () => {
         | "openrouter"
         | "vercel"
         | MockCatalogSource,
-    ) => (typeof source === "string" ? source : (source.cacheKey ?? source.id)),
+    ) =>
+      typeof source === "string"
+        ? source === "auto"
+          ? "openrouter"
+          : source
+        : (source.cacheKey ?? source.id),
     normalizeCatalogId: (
       source: "auto" | "models.dev" | "openrouter" | "vercel",
     ) => (source === "auto" ? "openrouter" : source),
@@ -556,6 +561,28 @@ describe("Tokenlens - Catalog Loading", () => {
             },
           },
         },
+        acme: {
+          id: "acme.internal",
+          aliases: ["acme"],
+          name: "Acme",
+          env: ["ACME_API_KEY"],
+          source: "package",
+          schemaVersion: 1,
+          extras: { owner: "acme" },
+          models: {
+            "acme/chat": {
+              id: "acme/chat-v2",
+              canonical_id: "acme/chat-v2",
+              name: "Acme Chat",
+              created: 1,
+              release_date: "2025-01-01",
+              last_updated: "2025-01-02",
+              cost: { input: 5, output: 6 },
+              limit: { context: 64_000 },
+              extras: { private: true },
+            },
+          },
+        },
       },
     });
 
@@ -571,6 +598,13 @@ describe("Tokenlens - Catalog Loading", () => {
       canonical_id: "openai/custom",
       name: "openai/custom",
       cost: { input: 1, output: 2 },
+    });
+    await expect(
+      client.getModelData({ modelId: "acme/chat-v2" }),
+    ).resolves.toMatchObject({
+      id: "acme/chat-v2",
+      name: "Acme Chat",
+      extras: { private: true },
     });
   });
 
@@ -616,6 +650,34 @@ describe("Tokenlens - Catalog Loading", () => {
       { field: "id", providerId: "openai", reason: "INVALID_FIELD" },
     ],
     [
+      "provider aliases field",
+      { openai: { aliases: [42], models: {} } },
+      {
+        field: "aliases[0]",
+        providerId: "openai",
+        reason: "INVALID_FIELD",
+      },
+    ],
+    [
+      "provider env field",
+      { openai: { env: "OPENAI_API_KEY", models: {} } },
+      { field: "env", providerId: "openai", reason: "INVALID_FIELD" },
+    ],
+    [
+      "provider source field",
+      { openai: { source: "unknown", models: {} } },
+      { field: "source", providerId: "openai", reason: "INVALID_FIELD" },
+    ],
+    [
+      "provider schema version field",
+      { openai: { schemaVersion: 0, models: {} } },
+      {
+        field: "schemaVersion",
+        providerId: "openai",
+        reason: "INVALID_FIELD",
+      },
+    ],
+    [
       "models field",
       { openai: { models: [] } },
       { field: "models", providerId: "openai", reason: "INVALID_FIELD" },
@@ -634,6 +696,42 @@ describe("Tokenlens - Catalog Loading", () => {
       { openai: { models: { "openai/gpt-4o": { id: 42 } } } },
       {
         field: "id",
+        modelId: "openai/gpt-4o",
+        providerId: "openai",
+        reason: "INVALID_FIELD",
+      },
+    ],
+    [
+      "model release date field",
+      { openai: { models: { "openai/gpt-4o": { release_date: 42 } } } },
+      {
+        field: "release_date",
+        modelId: "openai/gpt-4o",
+        providerId: "openai",
+        reason: "INVALID_FIELD",
+      },
+    ],
+    [
+      "model created field",
+      {
+        openai: {
+          models: {
+            "openai/gpt-4o": { created: Number.POSITIVE_INFINITY },
+          },
+        },
+      },
+      {
+        field: "created",
+        modelId: "openai/gpt-4o",
+        providerId: "openai",
+        reason: "INVALID_FIELD",
+      },
+    ],
+    [
+      "model extras field",
+      { openai: { models: { "openai/gpt-4o": { extras: [] } } } },
+      {
+        field: "extras",
         modelId: "openai/gpt-4o",
         providerId: "openai",
         reason: "INVALID_FIELD",
@@ -833,6 +931,9 @@ describe("Tokenlens.getModelData()", () => {
       const providerModels = await client.listModels({
         provider: "openai.responses",
       });
+      const otherProviderModels = await client.listModels({
+        provider: "anthropic",
+      });
       const searchModels = await client.listModels({
         search: "gpt-4o",
       });
@@ -848,6 +949,7 @@ describe("Tokenlens.getModelData()", () => {
       expect(providerModels.map((model) => model.id)).toContain(
         "openai/gpt-4o",
       );
+      expect(otherProviderModels).toEqual([]);
       expect(searchModels.map((model) => model.id)).toContain("openai/gpt-4o");
       expect(missingModels).toEqual([]);
     });
@@ -995,6 +1097,22 @@ describe("Tokenlens.getModelData()", () => {
       });
 
       expect(result?.id).toBe("openai/gpt-4o");
+      expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("normalizes default, auto, and openrouter shared helper keys", async () => {
+      fetchOpenrouterSpy.mockResolvedValue(createOpenrouterProvidersFixture());
+
+      await apiGetModelData({ modelId: "openai/gpt-4o" });
+      await apiGetModelData({
+        catalog: "auto",
+        modelId: "openai/gpt-4o",
+      });
+      await apiGetModelData({
+        catalog: "openrouter",
+        modelId: "openai/gpt-4o",
+      });
+
       expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
     });
 

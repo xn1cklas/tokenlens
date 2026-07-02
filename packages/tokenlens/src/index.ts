@@ -259,6 +259,8 @@ export {
 } from "@tokenlens/helpers";
 export { Tokenlens } from "./client.js";
 export type {
+  CacheAdapter,
+  CacheEntry,
   Catalog,
   CatalogId,
   CatalogModelOverride,

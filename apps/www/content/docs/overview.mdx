@@ -46,7 +46,7 @@ Tokenlens ships with catalog identifiers that point at hosted catalogs:
 Pass one of these identifiers via `catalog` to switch sources, supply your own `SourceProviders` object to run entirely on local fixture data, or provide an async `CatalogSource` for private registries. Use `overrides` when you want hosted metadata plus local price or limit corrections.
 
 ### Caching
-Tokenlens caches provider metadata via an in-memory adapter (`MemoryCache`) by default. Features:
+Tokenlens caches provider metadata in memory by default. Features:
 - TTL defaults to 24h (`ttlMs`), with ±5% jitter to avoid synchronized reloads.
 - `cache` option accepts custom adapters (`{ get, set, delete }`) to back the cache with Redis or other stores.
 - `cache: false` disables Tokenlens' cache entirely when a framework or external cache owns freshness.

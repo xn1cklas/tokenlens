@@ -107,7 +107,7 @@ export class TokenlensError extends Error {
       constructor(catalogId: string, options?: TokenlensErrorOptions) {
         super(
           InvalidCatalogError.code,
-          `Unknown catalog ID: ${catalogId}`,
+          `Invalid catalog: ${catalogId}`,
           mergeOptions({ catalogId }, options),
         );
       }

@@ -83,8 +83,8 @@ This file defines canonical terminology used across the TokenLens v2 codebase an
 ## createTokenlens
 - Convenience factory that instantiates `Tokenlens` with sensible defaults (OpenRouter catalog when none provided; `{ catalog: "auto" }` is equivalent to the same OpenRouter catalog).
 
-## MemoryCache
-- Default cache adapter for Tokenlens.
+## Default in-memory cache
+- Default cache behavior for Tokenlens instances.
 - Stores provider catalogs in-memory with TTL jitter to prevent thundering herds.
 
 ---

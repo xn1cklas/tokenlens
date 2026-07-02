@@ -127,7 +127,7 @@ Overrides are patch-style: provider ids, model ids, and names default from the m
 
 ## Caching
 
-Tokenlens caches the raw provider catalog to avoid repeated network calls. Returned values include any per-instance `overrides`, which are applied after reading from the cache. The default adapter is an in-memory `MemoryCache` with a 24h TTL.
+Tokenlens caches the raw provider catalog to avoid repeated network calls. Returned values include any per-instance `overrides`, which are applied after reading from the cache. The default cache is in-memory with a 24h TTL.
 
 ### Key options
 
@@ -160,17 +160,10 @@ const tokenlens = createTokenlens({
 ```ts
 import { createClient as createRedisClient } from "redis";
 import { createTokenlens } from "tokenlens";
-import type { SourceProviders } from "tokenlens";
+import type { CacheAdapter, CacheEntry } from "tokenlens";
 
 const redis = createRedisClient();
 await redis.connect();
-
-type CacheEntry = { value: SourceProviders; expiresAt: number };
-type CacheAdapter = {
-  get(key: string): Promise<CacheEntry | undefined> | CacheEntry | undefined;
-  set(key: string, entry: CacheEntry): Promise<void> | void;
-  delete?(key: string): Promise<void> | void;
-};
 
 const redisCache: CacheAdapter = {
   async get(key) {
