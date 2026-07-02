@@ -83,7 +83,7 @@ const tokenlens = new Tokenlens(options?: TokenlensOptions);
 ```
 
 **Options:**
-- `catalog`: `"auto" | "openrouter" | "models.dev" | "vercel"`, a custom `SourceProviders` object, or a custom async `CatalogSource` (default: `"openrouter"`; `"auto"` is an alias for the same OpenRouter gateway)
+- `catalog`: `"auto" | "openrouter" | "models.dev" | "vercel"`, a custom `SourceProviders` object, or a custom async `CatalogSource` (default: `"openrouter"`; `"auto"` is an alias for the same OpenRouter catalog)
 - `overrides`: Custom `SourceProviders` object merged over the base catalog. Use this for local price or limit corrections while preserving hosted metadata.
 - `ttlMs`: Cache TTL in milliseconds (default: 24 hours)
 - `cache`: Custom cache adapter with `{ get(key), set(key, entry), delete?(key) }` methods where `entry` is `{ value: SourceProviders; expiresAt: number }` (default: in-memory cache)
@@ -93,6 +93,33 @@ const tokenlens = new Tokenlens(options?: TokenlensOptions);
 - `timeoutMs`: Timeout for hosted or async catalog fetches
 - `staleIfError`: Return the last cached catalog when refresh fails (default: `true`)
 - `tokenizer`: Optional token counting function; pass `false` to disable implicit `@tokenlens/tokenizer` loading
+
+### Standalone Helpers
+
+The root helpers accept the same model arguments plus `TokenlensOptions`:
+
+```ts
+import { computeCostUSD, createTokenlens } from "tokenlens";
+
+await computeCostUSD({
+  catalog: "models.dev",
+  modelId: "openai/gpt-4o-mini",
+  usage: { input_tokens: 1_000, output_tokens: 200 },
+});
+
+const tokenlens = createTokenlens({
+  catalog: "vercel",
+  ttlMs: 10 * 60 * 1000,
+});
+
+await computeCostUSD({
+  tokenlens,
+  modelId: "openai/gpt-4o-mini",
+  usage: { input_tokens: 1_000, output_tokens: 200 },
+});
+```
+
+Primitive options reuse a keyed shared client. For custom catalogs, caches, fetchers, tokenizers, or overrides, create a `Tokenlens` instance and pass it as `tokenlens` so reuse is explicit.
 
 ### Methods
 
@@ -107,7 +134,7 @@ const model = await tokenlens.getModelData({
 });
 ```
 
-**Returns:** `Promise<SourceModel>`; throws `TokenlensError.ModelNotFound` when the model cannot be resolved.
+**Returns:** `Promise<SourceModel>`; throws `TokenlensError.ModelNotFound` when the model cannot be resolved, or `TokenlensError.AmbiguousModelId` when a bare model id matches multiple providers.
 
 #### `computeCostUSD(args)`
 
@@ -266,7 +293,7 @@ const tokenlens = new Tokenlens({
   catalog: "models.dev"
 });
 
-// Or provide your own static catalog
+// Or provide your own user-authored catalog
 const customCatalog = {
   openai: {
     id: "openai",

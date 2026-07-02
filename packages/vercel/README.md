@@ -48,12 +48,14 @@ How it works
 - Wrap any AI SDK v5 language model with `withTokenlens(model, tokenlens)`.
 - The middleware calls `tokenlens.computeCostUSD()` after non-streaming generations and when a stream emits its final usage.
 - Token cost fields (`inputTokenCostUSD`, `outputTokenCostUSD`, `totalTokenCostUSD`) are attached at `providerMetadata.tokenlens.costs`.
+- Cost lookup failures attach `providerMetadata.tokenlens.error` by default, so observability cannot break an otherwise successful model response.
 - Providers and pricing come from your configured Tokenlens catalog.
 
 
 API
-- `withTokenlens(model, tokenlens)` → wraps an AI SDK v5 language model.
-- `withTokenlensV5(model, tokenlens)` / `tokenlensMiddlewareV5(tokenlens)` → explicit v5 helper names.
+- `withTokenlens(model, tokenlens, options?)` → wraps an AI SDK v5 language model.
+- `withTokenlensV5(model, tokenlens, options?)` / `tokenlensMiddlewareV5(tokenlens, options?)` → explicit v5 helper names.
+- `options.strict: true` → fail closed when Tokenlens cannot compute costs.
 
 
 Testing

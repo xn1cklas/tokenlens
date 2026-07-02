@@ -162,6 +162,129 @@ test("middleware leaves generate results without usage untouched", async () => {
   expect(computeCostUSDMock).not.toHaveBeenCalled();
 });
 
+test("middleware records cost errors as metadata by default", async () => {
+  computeCostUSDMock.mockClear();
+  const pricingError = Object.assign(new Error("pricing unavailable"), {
+    code: "MODEL_NOT_FOUND",
+    meta: { modelId: "mock-model-id" },
+  });
+  computeCostUSDMock.mockRejectedValue(pricingError);
+  const middleware = tokenlensMiddlewareV5(tokenlens);
+
+  const result = await middleware.wrapGenerate?.({
+    model: mockModel,
+    doGenerate: async () => ({
+      finishReason: "stop",
+      usage: {
+        inputTokens,
+        outputTokens,
+        totalTokens,
+      },
+      content: [{ type: "text" as const, text: "Still succeeds" }],
+      warnings: [],
+    }),
+  } as never);
+
+  expect(result).toMatchObject({
+    providerMetadata: {
+      tokenlens: {
+        error: {
+          message: "pricing unavailable",
+          code: "MODEL_NOT_FOUND",
+          meta: { modelId: "mock-model-id" },
+        },
+      },
+    },
+  });
+});
+
+test("middleware can fail closed in strict mode", async () => {
+  computeCostUSDMock.mockClear();
+  const pricingError = new Error("pricing unavailable");
+  computeCostUSDMock.mockRejectedValue(pricingError);
+  const middleware = tokenlensMiddlewareV5(tokenlens, { strict: true });
+
+  await expect(
+    middleware.wrapGenerate?.({
+      model: mockModel,
+      doGenerate: async () => ({
+        finishReason: "stop",
+        usage: {
+          inputTokens,
+          outputTokens,
+          totalTokens,
+        },
+        content: [{ type: "text" as const, text: "Strict" }],
+        warnings: [],
+      }),
+    } as never),
+  ).rejects.toThrow("pricing unavailable");
+});
+
+test("middleware records plain cost errors as metadata", async () => {
+  computeCostUSDMock.mockClear();
+  computeCostUSDMock.mockRejectedValue("pricing unavailable");
+  const middleware = tokenlensMiddlewareV5(tokenlens);
+
+  const result = await middleware.wrapGenerate?.({
+    model: mockModel,
+    doGenerate: async () => ({
+      finishReason: "stop",
+      usage: {
+        inputTokens,
+        outputTokens,
+        totalTokens,
+      },
+      content: [{ type: "text" as const, text: "Still succeeds" }],
+      warnings: [],
+    }),
+  } as never);
+
+  expect(result).toMatchObject({
+    providerMetadata: {
+      tokenlens: {
+        error: {
+          message: "pricing unavailable",
+        },
+      },
+    },
+  });
+});
+
+test("middleware records Error cost failures without optional fields", async () => {
+  computeCostUSDMock.mockClear();
+  computeCostUSDMock.mockRejectedValue(new Error("pricing unavailable"));
+  const middleware = tokenlensMiddlewareV5(tokenlens);
+
+  const result = await middleware.wrapGenerate?.({
+    model: mockModel,
+    doGenerate: async () => ({
+      finishReason: "stop",
+      usage: {
+        inputTokens,
+        outputTokens,
+        totalTokens,
+      },
+      content: [{ type: "text" as const, text: "Still succeeds" }],
+      warnings: [],
+    }),
+  } as never);
+
+  expect(result).toMatchObject({
+    providerMetadata: {
+      tokenlens: {
+        error: {
+          message: "pricing unavailable",
+        },
+      },
+    },
+  });
+  expect(
+    (result as { providerMetadata?: { tokenlens?: { error?: object } } })
+      .providerMetadata?.tokenlens?.error,
+  ).not.toHaveProperty("code");
+});
+
 test("middleware handles empty nested AI SDK usage objects", async () => {
   computeCostUSDMock.mockClear();
   computeCostUSDMock.mockImplementation(async ({ usage }) => {
@@ -335,6 +458,79 @@ test("middleware converts nested AI SDK usage and enriches streamed finish parts
     ).providerMetadata?.tokenlens?.costs?.debug,
   ).not.toHaveProperty("skipped");
   expect(computeCostUSDMock).toHaveBeenCalledTimes(1);
+});
+
+test("middleware records streamed cost errors as metadata by default", async () => {
+  computeCostUSDMock.mockClear();
+  computeCostUSDMock.mockRejectedValue(new Error("stream pricing unavailable"));
+  const middleware = tokenlensMiddlewareV5(tokenlens);
+  const finishPart = {
+    type: "finish",
+    usage: {
+      inputTokens,
+      outputTokens,
+      totalTokens,
+    },
+    finishReason: "stop",
+  };
+
+  const result = await middleware.wrapStream?.({
+    model: mockModel,
+    doStream: async () => ({
+      stream: new ReadableStream({
+        start(controller) {
+          controller.enqueue(finishPart);
+          controller.close();
+        },
+      }),
+    }),
+  } as never);
+
+  const parts = await readStreamParts(
+    result?.stream as ReadableStream<unknown>,
+  );
+
+  expect(parts).toHaveLength(1);
+  expect(parts[0]).toMatchObject({
+    type: "finish",
+    providerMetadata: {
+      tokenlens: {
+        error: {
+          message: "stream pricing unavailable",
+        },
+      },
+    },
+  });
+});
+
+test("middleware can fail closed for streamed cost errors", async () => {
+  computeCostUSDMock.mockClear();
+  computeCostUSDMock.mockRejectedValue(new Error("stream pricing unavailable"));
+  const middleware = tokenlensMiddlewareV5(tokenlens, { strict: true });
+
+  const result = await middleware.wrapStream?.({
+    model: mockModel,
+    doStream: async () => ({
+      stream: new ReadableStream({
+        start(controller) {
+          controller.enqueue({
+            type: "finish",
+            usage: {
+              inputTokens,
+              outputTokens,
+              totalTokens,
+            },
+            finishReason: "stop",
+          });
+          controller.close();
+        },
+      }),
+    }),
+  } as never);
+
+  await expect(
+    readStreamParts(result?.stream as ReadableStream<unknown>),
+  ).rejects.toThrow("stream pricing unavailable");
 });
 
 test("withTokenlens resolves gateway-prefixed model ids without forcing gateway provider", async () => {

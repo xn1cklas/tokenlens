@@ -1,20 +1,22 @@
+import * as ts from "typescript";
+
 export type TransformResult = {
   code: string;
   changed: boolean;
   warnings: string[];
 };
 
+type Edit = {
+  start: number;
+  end: number;
+  text: string;
+};
+
 type ImportedName = {
   imported: string;
   local: string;
   isType: boolean;
-  raw: string;
 };
-
-const TOKENLENS_IMPORT_RE =
-  /import\s*{([\s\S]*?)}\s*from\s*["']tokenlens["'];?/g;
-const REMOVED_SUBPATH_RE =
-  /import\s+([\s\S]*?)\s+from\s*["']tokenlens\/(models|providers\/[^"']+)["'];?/g;
 
 const manualMigrations: Record<string, string> = {
   MODEL_IDS:
@@ -67,45 +69,57 @@ const manualMigrations: Record<string, string> = {
     "Use getContextHealth and keep compaction thresholds in application code.",
 };
 
-function parseImport(raw: string): ImportedName | undefined {
-  const specifier = raw.trim();
-  if (!specifier) return undefined;
-  const typePrefix = "type ";
-  const isType = specifier.startsWith(typePrefix);
-  const withoutType = isType
-    ? specifier.slice(typePrefix.length).trim()
-    : specifier;
-  const [importedRaw, localRaw] = withoutType.split(/\s+as\s+/);
-  const imported = importedRaw?.trim();
-  const local = localRaw?.trim() ?? imported;
-  if (!imported || !local) return undefined;
-  return { imported, local, isType, raw: specifier };
+function unique(values: readonly string[]): string[] {
+  return [...new Set(values)];
 }
 
-function parseImports(rawImports: string): ImportedName[] {
-  return rawImports
-    .split(",")
-    .map(parseImport)
-    .filter((entry): entry is ImportedName => entry !== undefined);
+function applyEdits(source: string, edits: readonly Edit[]): string {
+  let output = source;
+  for (const edit of [...edits].sort((a, b) => b.start - a.start)) {
+    output = `${output.slice(0, edit.start)}${edit.text}${output.slice(edit.end)}`;
+  }
+  return output;
 }
 
-function replaceIdentifier(
-  source: string,
-  identifier: string,
-  replacement: string,
-): string {
-  return source.replace(
-    new RegExp(
-      `\\b${identifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
-      "g",
-    ),
-    replacement,
-  );
+function importStatement(args: {
+  defaultName?: string;
+  importTypeOnly: boolean;
+  specifiers: readonly string[];
+  source: string;
+}): string {
+  const parts: string[] = [];
+  if (args.defaultName) parts.push(args.defaultName);
+  if (args.specifiers.length) {
+    parts.push(`{ ${args.specifiers.join(", ")} }`);
+  }
+  if (parts.length === 0) return "";
+  return `import ${args.importTypeOnly ? "type " : ""}${parts.join(", ")} from "${args.source}";`;
 }
 
-function importStatement(specifiers: string[], source: string): string {
-  if (specifiers.length === 0) return "";
-  return `import { ${specifiers.join(", ")} } from "${source}";`;
+function importedName(
+  specifier: ts.ImportSpecifier,
+  importTypeOnly: boolean,
+): ImportedName {
+  return {
+    imported: specifier.propertyName?.text ?? specifier.name.text,
+    local: specifier.name.text,
+    isType: importTypeOnly || specifier.isTypeOnly,
+  };
+}
+
+function specifierText(entry: ImportedName, importTypeOnly: boolean): string {
+  const name =
+    entry.imported === entry.local
+      ? entry.imported
+      : `${entry.imported} as ${entry.local}`;
+  return entry.isType && !importTypeOnly ? `type ${name}` : name;
+}
+
+function replacementBounds(node: ts.Node) {
+  return {
+    start: node.getFullStart(),
+    end: node.getEnd(),
+  };
 }
 
 function todoComment(warnings: string[]): string {
@@ -119,74 +133,174 @@ function todoComment(warnings: string[]): string {
   return lines.join("\n");
 }
 
-export function transformV1ToV2(input: string): TransformResult {
-  let code = input;
-  const warnings: string[] = [];
-  const identifierReplacements: Array<{ from: string; to: string }> = [];
+function moduleSpecifier(node: ts.ImportDeclaration): string | undefined {
+  return ts.isStringLiteral(node.moduleSpecifier)
+    ? node.moduleSpecifier.text
+    : undefined;
+}
+
+function namedImports(node: ts.ImportDeclaration): ts.NamedImports | undefined {
+  const bindings = node.importClause?.namedBindings;
+  return bindings && ts.isNamedImports(bindings) ? bindings : undefined;
+}
+
+function transformTokenlensImport(args: {
+  node: ts.ImportDeclaration;
+  warnings: string[];
+  modelIdLocals: Set<string>;
+}): Edit | undefined {
+  const named = namedImports(args.node);
+  if (!named) return undefined;
+
+  const importTypeOnly = args.node.importClause?.isTypeOnly ?? false;
+  const retained: string[] = [];
+  const tokenlensFetch: string[] = [];
   let changed = false;
 
-  code = code.replace(TOKENLENS_IMPORT_RE, (_match, rawImports: string) => {
-    const imports = parseImports(rawImports);
-    const retained: string[] = [];
-    const tokenlensFetch: string[] = [];
+  for (const specifier of named.elements) {
+    const entry = importedName(specifier, importTypeOnly);
 
-    for (const entry of imports) {
-      if (entry.imported === "fetchModels") {
-        tokenlensFetch.push(
-          entry.local === "fetchModels"
-            ? "fetchModelsDev as fetchModels"
-            : `fetchModelsDev as ${entry.local}`,
-        );
-        changed = true;
-        continue;
-      }
-
-      if (entry.imported === "ModelId") {
-        identifierReplacements.push({ from: entry.local, to: "string" });
-        changed = true;
-        continue;
-      }
-
-      const manualMigration = manualMigrations[entry.imported];
-      if (manualMigration) {
-        warnings.push(`${entry.local}: ${manualMigration}`);
-        changed = true;
-        continue;
-      }
-
-      retained.push(entry.raw);
+    if (entry.imported === "fetchModels") {
+      changed = true;
+      tokenlensFetch.push(
+        entry.local === "fetchModels"
+          ? "fetchModelsDev as fetchModels"
+          : `fetchModelsDev as ${entry.local}`,
+      );
+      continue;
     }
 
-    return [
-      importStatement(retained, "tokenlens"),
-      importStatement(tokenlensFetch, "tokenlens/fetch"),
-    ]
-      .filter(Boolean)
-      .join("\n");
-  });
+    if (entry.imported === "ModelId") {
+      changed = true;
+      args.modelIdLocals.add(entry.local);
+      continue;
+    }
 
-  for (const replacement of identifierReplacements) {
-    code = replaceIdentifier(code, replacement.from, replacement.to);
+    const manualMigration = manualMigrations[entry.imported];
+    if (manualMigration) {
+      changed = true;
+      args.warnings.push(`${entry.local}: ${manualMigration}`);
+      continue;
+    }
+
+    retained.push(specifierText(entry, importTypeOnly));
   }
 
-  code = code.replace(
-    REMOVED_SUBPATH_RE,
-    (_match, bindings: string, subpath: string) => {
-      warnings.push(
-        `${bindings.trim()} from tokenlens/${subpath}: Static catalog subpaths were removed; use a cached live catalog or provide SourceProviders.`,
-      );
-      changed = true;
-      return "";
-    },
-  );
+  if (!changed) return undefined;
 
-  if (warnings.length > 0 && !code.includes("TODO(tokenlens-codemod)")) {
-    code = `${todoComment([...new Set(warnings)])}${code.trimStart()}`;
+  const defaultName = args.node.importClause?.name?.text;
+  const replacement = [
+    importStatement({
+      ...(defaultName ? { defaultName } : {}),
+      importTypeOnly,
+      specifiers: retained,
+      source: "tokenlens",
+    }),
+    importStatement({
+      importTypeOnly: false,
+      specifiers: tokenlensFetch,
+      source: "tokenlens/fetch",
+    }),
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const bounds = replacementBounds(args.node);
+  return { ...bounds, text: replacement };
+}
+
+function transformRemovedSubpathImport(args: {
+  node: ts.ImportDeclaration;
+  sourceFile: ts.SourceFile;
+  subpath: string;
+  warnings: string[];
+}): Edit {
+  const bindings = args.node.importClause?.getText(args.sourceFile) ?? "import";
+  args.warnings.push(
+    `${bindings} from tokenlens/${args.subpath}: Static catalog subpaths were removed; use a cached live catalog or provide SourceProviders.`,
+  );
+  const bounds = replacementBounds(args.node);
+  return { ...bounds, text: "" };
+}
+
+function modelIdTypeEdits(
+  sourceFile: ts.SourceFile,
+  modelIdLocals: ReadonlySet<string>,
+): Edit[] {
+  if (modelIdLocals.size === 0) return [];
+  const edits: Edit[] = [];
+
+  const visit = (node: ts.Node) => {
+    if (
+      ts.isTypeReferenceNode(node) &&
+      ts.isIdentifier(node.typeName) &&
+      modelIdLocals.has(node.typeName.text)
+    ) {
+      edits.push({
+        start: node.typeName.getStart(sourceFile),
+        end: node.typeName.getEnd(),
+        text: "string",
+      });
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  visit(sourceFile);
+  return edits;
+}
+
+export function transformV1ToV2(input: string): TransformResult {
+  const sourceFile = ts.createSourceFile(
+    "tokenlens-codemod.tsx",
+    input,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  );
+  const warnings: string[] = [];
+  const edits: Edit[] = [];
+  const modelIdLocals = new Set<string>();
+
+  for (const node of sourceFile.statements) {
+    if (!ts.isImportDeclaration(node)) continue;
+    const source = moduleSpecifier(node);
+    if (!source) continue;
+
+    if (source === "tokenlens") {
+      const edit = transformTokenlensImport({
+        node,
+        warnings,
+        modelIdLocals,
+      });
+      if (edit) edits.push(edit);
+      continue;
+    }
+
+    if (
+      source === "tokenlens/models" ||
+      source.startsWith("tokenlens/providers/")
+    ) {
+      edits.push(
+        transformRemovedSubpathImport({
+          node,
+          sourceFile,
+          subpath: source.slice("tokenlens/".length),
+          warnings,
+        }),
+      );
+    }
+  }
+
+  edits.push(...modelIdTypeEdits(sourceFile, modelIdLocals));
+
+  let code = applyEdits(input, edits);
+  const uniqueWarnings = unique(warnings);
+  if (uniqueWarnings.length > 0 && !code.includes("TODO(tokenlens-codemod)")) {
+    code = `${todoComment(uniqueWarnings)}${code.trimStart()}`;
   }
 
   return {
     code,
-    changed: changed || code !== input,
-    warnings: [...new Set(warnings)],
+    changed: edits.length > 0 || code !== input,
+    warnings: uniqueWarnings,
   };
 }

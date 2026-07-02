@@ -206,6 +206,34 @@ describe("Tokenlens - Catalog Loading", () => {
     expect(fetchOpenrouterSpy).not.toHaveBeenCalled();
   });
 
+  it("rejects malformed custom catalog objects before lookup", async () => {
+    const client = new Tokenlens({
+      catalog: {
+        openai: {
+          id: "openai",
+          models: {
+            "openai/gpt-4o": {
+              id: "openai/gpt-4o",
+              canonical_id: "openai/gpt-4o",
+            },
+          },
+        },
+      } as unknown as SourceProviders,
+    });
+
+    await expect(
+      client.getModelData({ modelId: "openai/gpt-4o" }),
+    ).rejects.toMatchObject({
+      code: TokenlensError.InvalidCatalog.code,
+      meta: {
+        reason: "INVALID_FIELD",
+        field: "name",
+        providerId: "openai",
+        modelId: "openai/gpt-4o",
+      },
+    });
+  });
+
   it("applies custom overrides on top of a built-in catalog", async () => {
     const mockCatalog = createOpenrouterProvidersFixture();
     const overrides: SourceProviders = {
@@ -527,13 +555,13 @@ describe("Tokenlens.getContextHealth()", () => {
     });
   });
 
-  it("uses the standalone context-health helper with gateway selection", async () => {
+  it("uses the standalone context-health helper with catalog selection", async () => {
     fetchOpenrouterSpy.mockResolvedValue(createOpenrouterProvidersFixture());
 
     const health = await apiGetContextHealth({
       modelId: "openai/gpt-4o",
       usage: { input_tokens: 10_000, output_tokens: 5_000 },
-      gateway: "openrouter",
+      catalog: "openrouter",
     });
 
     expect(health).toMatchObject({
@@ -633,6 +661,32 @@ describe("Tokenlens.getModelData()", () => {
         },
       });
     });
+
+    it("throws a structured ambiguity error for unscoped duplicate models", async () => {
+      const catalog = createOpenrouterProvidersFixture();
+      catalog.azure = {
+        id: "azure",
+        models: {
+          "azure/gpt-4o": {
+            id: "azure/gpt-4o",
+            canonical_id: "azure/gpt-4o",
+            name: "Azure GPT-4o",
+          },
+        },
+      };
+      const client = new Tokenlens({ catalog });
+
+      const result = client.getModelData({ modelId: "gpt-4o" });
+
+      await expect(result).rejects.toThrow(TokenlensError.AmbiguousModelId);
+      await expect(result).rejects.toMatchObject({
+        code: TokenlensError.AmbiguousModelId.code,
+        meta: {
+          modelId: "gpt-4o",
+          candidates: ["openai/gpt-4o", "azure/gpt-4o"],
+        },
+      });
+    });
   });
 
   describe("standalone function", () => {
@@ -655,17 +709,101 @@ describe("Tokenlens.getModelData()", () => {
       expect(metadata?.limit?.context).toBe(128_000);
     });
 
-    it("creates instance per gateway", async () => {
+    it("creates instance per catalog", async () => {
       const openrouterCatalog = createOpenrouterProvidersFixture();
       fetchOpenrouterSpy.mockResolvedValue(openrouterCatalog);
 
       const result = await apiGetModelData({
         modelId: "openai/gpt-4o",
-        gateway: "openrouter",
+        catalog: "openrouter",
       });
 
       expect(result?.id).toBe("openai/gpt-4o");
       expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("accepts custom catalogs directly on standalone helpers", async () => {
+      const catalog = createOpenrouterProvidersFixture();
+
+      const metadata = await apiGetModelData({
+        catalog,
+        modelId: "openai/gpt-4o",
+      });
+
+      expect(metadata.id).toBe("openai/gpt-4o");
+      expect(fetchOpenrouterSpy).not.toHaveBeenCalled();
+    });
+
+    it("accepts a configured client on standalone helpers", async () => {
+      const catalog = createOpenrouterProvidersFixture();
+      const tokenlens = createTokenlens({ catalog });
+
+      const metadata = await apiGetModelData({
+        modelId: "openai/gpt-4o",
+        tokenlens,
+      });
+
+      expect(metadata.id).toBe("openai/gpt-4o");
+      expect(fetchOpenrouterSpy).not.toHaveBeenCalled();
+    });
+
+    it("forwards standalone helper options into ad hoc clients", async () => {
+      const catalog = createOpenrouterProvidersFixture();
+      const cache: CacheAdapter = {
+        get: vi.fn(),
+        set: vi.fn(),
+        delete: vi.fn(),
+      };
+      const fetchImpl = vi.fn() as unknown as typeof globalThis.fetch;
+      const signal = new AbortController().signal;
+
+      const metadata = await apiGetModelData({
+        cache,
+        cacheKey: "test-helper-options",
+        catalog,
+        fetch: fetchImpl,
+        modelId: "openai/gpt-4o",
+        overrides: {
+          openai: {
+            id: "openai",
+            models: {
+              "openai/gpt-4o": {
+                id: "openai/gpt-4o",
+                canonical_id: "openai/gpt-4o",
+                name: "Overridden GPT-4o",
+              },
+            },
+          },
+        },
+        signal,
+        staleIfError: false,
+        timeoutMs: 500,
+        tokenizer: () => 0,
+        ttlMs: 0,
+      });
+
+      expect(metadata.name).toBe("Overridden GPT-4o");
+      expect(fetchOpenrouterSpy).not.toHaveBeenCalled();
+    });
+
+    it("does not globally cache standalone helpers with DI options", async () => {
+      const catalog = createOpenrouterProvidersFixture();
+      fetchOpenrouterSpy.mockResolvedValue(catalog);
+      const fetchImpl = vi.fn() as unknown as typeof globalThis.fetch;
+
+      await apiGetModelData({
+        catalog: "openrouter",
+        fetch: fetchImpl,
+        modelId: "openai/gpt-4o",
+      });
+      await apiGetModelData({
+        catalog: "openrouter",
+        fetch: fetchImpl,
+        modelId: "openai/gpt-4o",
+      });
+
+      expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(2);
+      expect(fetchOpenrouterSpy).toHaveBeenCalledWith({ fetch: fetchImpl });
     });
   });
 });
@@ -765,18 +903,103 @@ describe("Tokenlens.computeCostUSD()", () => {
       expect(costs.totalTokenCostUSD).toBeCloseTo(0.0948, 6);
     });
 
-    it("works with different gateways", async () => {
+    it("works with different catalogs", async () => {
       const mockCatalog = createOpenrouterProvidersFixture();
       fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
 
       const costs = await apiComputeCostUSD({
         modelId: "openai/gpt-4o",
         usage: makeUsage(),
-        gateway: "openrouter",
+        catalog: "openrouter",
       });
 
       expect(costs.totalTokenCostUSD).toBeCloseTo(0.0948, 6);
       expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("forwards provider arguments to configured standalone clients", async () => {
+      const tokenlens = {
+        computeCostUSD: vi.fn(async () => ({
+          inputTokenCostUSD: 0,
+          outputTokenCostUSD: 0,
+          totalTokenCostUSD: 0,
+          ratesUsed: {},
+        })),
+        estimateCostUSD: vi.fn(async () => ({
+          inputTokenCostUSD: 0,
+          outputTokenCostUSD: 0,
+          totalTokenCostUSD: 0,
+          inputTokens: 1,
+          ratesUsed: {},
+        })),
+        getContextHealth: vi.fn(async () => ({
+          remainingPercentage: 99,
+          remainingTokens: 99,
+          status: "healthy",
+          totalTokens: 1,
+          usedPercentage: 1,
+          usedTokens: 1,
+        })),
+        getContextLimits: vi.fn(async () => ({ context: 128_000 })),
+        getModelData: vi.fn(async () => ({
+          id: "openai/gpt-4o",
+          canonical_id: "openai/gpt-4o",
+          name: "GPT-4o",
+        })),
+      } as unknown as Tokenlens;
+
+      await apiComputeCostUSD({
+        modelId: "gpt-4o",
+        provider: "openai",
+        tokenlens,
+        usage: makeUsage(),
+      });
+      await apiEstimateCostUSD({
+        data: "hello",
+        modelId: "gpt-4o",
+        provider: "openai",
+        tokenlens,
+      });
+      await apiGetContextHealth({
+        modelId: "gpt-4o",
+        provider: "openai",
+        tokenlens,
+        usage: makeUsage(),
+      });
+      await apiGetContextLimits({
+        modelId: "gpt-4o",
+        provider: "openai",
+        tokenlens,
+      });
+      await apiGetModelData({
+        modelId: "gpt-4o",
+        provider: "openai",
+        tokenlens,
+      });
+
+      expect(tokenlens.computeCostUSD).toHaveBeenCalledWith({
+        modelId: "gpt-4o",
+        provider: "openai",
+        usage: makeUsage(),
+      });
+      expect(tokenlens.estimateCostUSD).toHaveBeenCalledWith({
+        data: "hello",
+        modelId: "gpt-4o",
+        provider: "openai",
+      });
+      expect(tokenlens.getContextHealth).toHaveBeenCalledWith({
+        modelId: "gpt-4o",
+        provider: "openai",
+        usage: makeUsage(),
+      });
+      expect(tokenlens.getContextLimits).toHaveBeenCalledWith({
+        modelId: "gpt-4o",
+        provider: "openai",
+      });
+      expect(tokenlens.getModelData).toHaveBeenCalledWith({
+        modelId: "gpt-4o",
+        provider: "openai",
+      });
     });
   });
 });
@@ -974,7 +1197,7 @@ describe("Tokenlens.estimateCostUSD()", () => {
   });
 
   describe("standalone function", () => {
-    it("works with default gateway", async () => {
+    it("works with default catalog", async () => {
       const mockCatalog = createOpenrouterProvidersFixture();
       fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
 
@@ -1065,7 +1288,7 @@ describe("Tokenlens.countTokens()", () => {
   });
 });
 
-describe("Tokenlens - Gateway Management", () => {
+describe("Tokenlens - Catalog Management", () => {
   let fetchOpenrouterSpy: Mock;
   let fetchModelsDevSpy: Mock;
 
@@ -1080,25 +1303,25 @@ describe("Tokenlens - Gateway Management", () => {
     setSharedTokenlens(undefined);
   });
 
-  it("creates separate instances for different gateways", async () => {
+  it("creates separate instances for different catalogs", async () => {
     const openrouterCatalog = createOpenrouterProvidersFixture();
     const modelsDevCatalog = createModelsDevProvidersFixture();
 
     fetchOpenrouterSpy.mockResolvedValue(openrouterCatalog);
     fetchModelsDevSpy.mockResolvedValue(modelsDevCatalog);
 
-    // Call with openrouter gateway
+    // Call with openrouter catalog
     await apiComputeCostUSD({
       modelId: "openai/gpt-4o",
       usage: makeUsage(),
-      gateway: "openrouter",
+      catalog: "openrouter",
     });
 
-    // Call with models.dev gateway
+    // Call with models.dev catalog
     await apiComputeCostUSD({
       modelId: "anthropic/claude-3.5",
       usage: makeUsage(),
-      gateway: "models.dev",
+      catalog: "models.dev",
     });
 
     // Both fetchers should have been called once each
@@ -1106,7 +1329,7 @@ describe("Tokenlens - Gateway Management", () => {
     expect(fetchModelsDevSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("reuses instance for same gateway", async () => {
+  it("reuses instance for same catalog", async () => {
     const openrouterCatalog = createOpenrouterProvidersFixture();
     fetchOpenrouterSpy.mockResolvedValue(openrouterCatalog);
 
@@ -1114,42 +1337,42 @@ describe("Tokenlens - Gateway Management", () => {
     await apiComputeCostUSD({
       modelId: "openai/gpt-4o",
       usage: makeUsage(),
-      gateway: "openrouter",
+      catalog: "openrouter",
     });
 
-    // Second call with same gateway
+    // Second call with same catalog
     await apiGetContextLimits({
       modelId: "openai/gpt-4o",
-      gateway: "openrouter",
+      catalog: "openrouter",
     });
 
     // Fetcher should only be called once (instance reused)
     expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("defaults to 'auto' gateway when not specified", async () => {
+  it("defaults to the default catalog when not specified", async () => {
     const mockCatalog = createOpenrouterProvidersFixture();
     fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
 
-    // Call without specifying gateway
+    // Call without specifying catalog
     await apiComputeCostUSD({
       modelId: "openai/gpt-4o",
       usage: makeUsage(),
     });
 
-    // Should use 'auto' which now defaults to OpenRouter
+    // Should use 'auto' which defaults to OpenRouter
     expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("setSharedTokenlens clears all gateway instances", async () => {
+  it("setSharedTokenlens clears all catalog instances", async () => {
     const openrouterCatalog = createOpenrouterProvidersFixture();
     fetchOpenrouterSpy.mockResolvedValue(openrouterCatalog);
 
-    // Create instances for different gateways
+    // Create instances for different catalogs
     await apiComputeCostUSD({
       modelId: "openai/gpt-4o",
       usage: makeUsage(),
-      gateway: "openrouter",
+      catalog: "openrouter",
     });
 
     expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
@@ -1161,7 +1384,7 @@ describe("Tokenlens - Gateway Management", () => {
     await apiComputeCostUSD({
       modelId: "openai/gpt-4o",
       usage: makeUsage(),
-      gateway: "openrouter",
+      catalog: "openrouter",
     });
 
     expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(2);

@@ -1,13 +1,13 @@
 import type { SourceProviders } from "@tokenlens/core";
 import type {
-  CatalogGatewayId,
   CatalogSource,
+  CatalogId as FetchCatalogId,
   FetchLike,
 } from "@tokenlens/fetch";
 
-export const DEFAULT_GATEWAY_ID = "openrouter" satisfies CatalogGatewayId;
-export type GatewayId = CatalogGatewayId;
-export type Catalog = GatewayId | CatalogSource | SourceProviders;
+export const DEFAULT_CATALOG_ID = "openrouter" satisfies FetchCatalogId;
+export type CatalogId = FetchCatalogId;
+export type Catalog = CatalogId | CatalogSource | SourceProviders;
 export type TokenCounter = (args: {
   modelId: string;
   data: string;

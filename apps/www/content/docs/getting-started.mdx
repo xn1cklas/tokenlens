@@ -23,7 +23,7 @@ npm install tokenlens @tokenlens/tokenizer
 
 ## 2. Quick usage (standalone helpers)
 
-If you just need metadata, cost, or context helpers, import the top-level functions. They reuse a lazily-created Tokenlens instance configured with the default `catalog: "auto"` setting (an alias for the OpenRouter gateway). To use a different dataset (for example, models.dev), pass `{ gateway: "models.dev" }` to the helper or instantiate your own client with `createTokenlens({ catalog: "models.dev" })`.
+If you just need metadata, cost, or context helpers, import the top-level functions. They reuse a lazily-created Tokenlens instance configured with the default `catalog: "auto"` setting (an alias for the OpenRouter catalog). To use a different dataset, pass `{ catalog: "models.dev" }` to the helper or instantiate your own client with `createTokenlens({ catalog: "models.dev" })`. For custom catalogs, cache adapters, fetchers, overrides, or tokenizers, create a configured instance and pass it as `{ tokenlens }` to keep reuse explicit.
 
 ```ts
 import {
@@ -56,7 +56,7 @@ import {
 } from "tokenlens";
 
 const options: TokenlensOptions = {
-  catalog: "openrouter",             // choose a built-in gateway
+  catalog: "openrouter",             // choose a built-in catalog
   ttlMs: 10 * 60 * 1000,             // refresh provider data every 10 minutes
   cacheKey: "tokenlens:openrouter",  // optional custom cache key
   timeoutMs: 3_000,                  // fail slow catalog requests
@@ -65,7 +65,7 @@ const options: TokenlensOptions = {
 const tokenlens = createTokenlens(options);
 
 const cost = await tokenlens.computeCostUSD({
-  modelId: "demo/chat",
+  modelId: "openai/gpt-4o-mini",
   usage: { input_tokens: 400, output_tokens: 200 },
 });
 
@@ -135,7 +135,7 @@ const tokenlensWithOverrides = createTokenlens({
 | Use case                                          | Recommended approach                                                                |
 | ------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | Default catalog and minimal setup                 | Call the top-level helpers (`computeCostUSD`, `getModelData`, `getContextLimits`).  |
-| Specific gateway or custom TTL/cache              | Create your own instance via `createTokenlens` and reuse it within your app.        |
+| Specific catalog or custom TTL/cache              | Create your own instance via `createTokenlens` and reuse it within your app.        |
 | Fixture or offline catalogs                       | Pass a `SourceProviders` object via `catalog` when creating the instance.           |
 | Generated or private registries                   | Pass a `CatalogSource` object via `catalog` and configure cache/fetch controls.     |
 | Existing app-owned token counting                 | Pass a `tokenizer` function when creating the instance.                             |

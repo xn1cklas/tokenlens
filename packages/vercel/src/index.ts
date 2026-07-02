@@ -1,3 +1,4 @@
+export type { TokenlensMiddlewareOptions } from "./middleware.js";
 export {
   tokenlensMiddleware,
   tokenlensMiddlewareV5,

@@ -11,14 +11,14 @@ Tokenlens v2 replaces the all-in-one helper bundle with a focused client that lo
 - Swap static catalog imports for a cached hosted catalog, a `SourceProviders` fixture, or a custom async `CatalogSource` (the default `auto` catalog now resolves to OpenRouter).
 - Remove conversation/compaction helpers (`shouldCompact`, `contextHealth`, etc.) from production code; re-implement app-specific logic on top of `getModelData`+`computeCostUSD`.
 - Delete usages of registry globals (`MODEL_IDS`, `resolveModel`, etc.); rely on `tokenlens.refresh()` (or your fixture catalog) if you truly need the raw provider map.
-- Update docs/README snippets to use the new API names and note that omitting `catalog` (or using `catalog: "auto"`) selects the OpenRouter gateway.
+- Update docs/README snippets to use the new API names and note that omitting `catalog` (or using `catalog: "auto"`) selects the OpenRouter catalog.
 
 ## The Tokenlens class at a glance
-- **Single responsibility**: load provider data from a selected `catalog` (defaults to the OpenRouter gateway, including when `catalog: "auto"` is provided) and expose consistent helpers (`getModelData`, `computeCostUSD`, `getContextLimits`, `getContextHealth`, etc.).
+- **Single responsibility**: load provider data from a selected `catalog` (defaults to the OpenRouter catalog, including when `catalog: "auto"` is provided) and expose consistent helpers (`getModelData`, `computeCostUSD`, `getContextLimits`, `getContextHealth`, etc.).
 - **Lazy shared instance**: module-level helpers create a default instance on first use; without options they use the OpenRouter catalog (the same data returned by `{ catalog: "auto" }`), so override with another id when needed.
-- **Custom instances**: `createTokenlens(options)` lets you choose a catalog (gateway id, `SourceProviders`, or `CatalogSource`), tweak TTL, plug in your own cache adapter, control fetches with `signal`/`timeoutMs`, or inject a tokenizer.
+- **Custom instances**: `createTokenlens(options)` lets you choose a catalog id, `SourceProviders` object, or `CatalogSource`, tweak TTL, plug in your own cache adapter, control fetches with `signal`/`timeoutMs`, or inject a tokenizer.
 - **Caching**: by default, provider catalogs are cached in-memory for 24 hours with jitter. Control this via `ttlMs` or a custom `cache`. Errors fall back to the last cached value when possible; set `staleIfError: false` when refresh failures should surface.
-- **Flexible catalogs**: switch gateways on a per-instance basis with `catalog`, or override on individual helper calls via the `gateway` option.
+- **Flexible catalogs**: switch sources on a per-instance basis with `catalog`, or override on individual helper calls via the `catalog` option.
 
 See the README for end-to-end examples of both standalone helpers and configured instances.
 

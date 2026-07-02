@@ -1,7 +1,7 @@
 {
   "name": "tokenlens",
   "version": "2.0.0",
-  "description": "A lightweight registry of LLM model information, like name and context sizes, for building AI-powered apps.",
+  "description": "Lean model metadata, cost, context, and caching helpers for AI apps.",
   "files": [
     "dist",
     "README.md"

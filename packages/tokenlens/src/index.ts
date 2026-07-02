@@ -1,6 +1,6 @@
 import { type ModelDetails, Tokenlens } from "./client.js";
 import { getTokenlens } from "./shared.js";
-import type { GatewayId, TokenlensOptions } from "./types.js";
+import type { TokenlensOptions } from "./types.js";
 
 /**
  * Create a new Tokenlens instance with the given options.
@@ -14,21 +14,45 @@ export function createTokenlens(
   return new Tokenlens(options);
 }
 
-type WithGateway<T> = T & { gateway?: GatewayId };
+type HelperClient = {
+  tokenlens?: Tokenlens;
+};
+type HelperArgs<T> = T & TokenlensOptions & HelperClient;
 type CountTokensArgs = Parameters<Tokenlens["countTokens"]>[0];
-type EstimateCostUSDArgs = WithGateway<
+type EstimateCostUSDArgs = HelperArgs<
   Parameters<Tokenlens["estimateCostUSD"]>[0]
 >;
-type ComputeCostUSDArgs = WithGateway<
+type ComputeCostUSDArgs = HelperArgs<
   Parameters<Tokenlens["computeCostUSD"]>[0]
 >;
-type GetContextLimitsArgs = WithGateway<
+type GetContextLimitsArgs = HelperArgs<
   Parameters<Tokenlens["getContextLimits"]>[0]
 >;
-type GetModelDataArgs = WithGateway<Parameters<Tokenlens["getModelData"]>[0]>;
-type GetContextHealthArgs = WithGateway<
+type GetModelDataArgs = HelperArgs<Parameters<Tokenlens["getModelData"]>[0]>;
+type GetContextHealthArgs = HelperArgs<
   Parameters<Tokenlens["getContextHealth"]>[0]
 >;
+
+function optionsFromArgs(args: TokenlensOptions): TokenlensOptions | undefined {
+  const options: TokenlensOptions = {};
+  if (args.catalog !== undefined) options.catalog = args.catalog;
+  if (args.overrides !== undefined) options.overrides = args.overrides;
+  if (args.ttlMs !== undefined) options.ttlMs = args.ttlMs;
+  if (args.fetch !== undefined) options.fetch = args.fetch;
+  if (args.signal !== undefined) options.signal = args.signal;
+  if (args.timeoutMs !== undefined) options.timeoutMs = args.timeoutMs;
+  if (args.cache !== undefined) options.cache = args.cache;
+  if (args.cacheKey !== undefined) options.cacheKey = args.cacheKey;
+  if (args.staleIfError !== undefined) {
+    options.staleIfError = args.staleIfError;
+  }
+  if (args.tokenizer !== undefined) options.tokenizer = args.tokenizer;
+  return Object.keys(options).length ? options : undefined;
+}
+
+function clientFromArgs(args: TokenlensOptions & HelperClient): Tokenlens {
+  return args.tokenlens ?? getTokenlens(optionsFromArgs(args));
+}
 
 /**
  * Count tokens in a text string for a given model.
@@ -48,9 +72,12 @@ type GetContextHealthArgs = WithGateway<
  * ```
  */
 
-export async function countTokens(args: CountTokensArgs) {
-  const tokenlens = getTokenlens();
-  return tokenlens.countTokens(args);
+export async function countTokens(args: HelperArgs<CountTokensArgs>) {
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.countTokens({
+    data: args.data,
+    modelId: args.modelId,
+  });
 }
 
 /**
@@ -70,9 +97,12 @@ export async function countTokens(args: CountTokensArgs) {
  * ```
  */
 export async function estimateCostUSD(args: EstimateCostUSDArgs) {
-  const { gateway, ...estimateArgs } = args;
-  const tokenlens = getTokenlens(gateway);
-  return tokenlens.estimateCostUSD(estimateArgs);
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.estimateCostUSD({
+    data: args.data,
+    modelId: args.modelId,
+    ...(args.provider !== undefined ? { provider: args.provider } : {}),
+  });
 }
 
 /**
@@ -91,9 +121,12 @@ export async function estimateCostUSD(args: EstimateCostUSDArgs) {
  * ```
  */
 export async function computeCostUSD(args: ComputeCostUSDArgs) {
-  const { gateway, ...computeArgs } = args;
-  const tokenlens = getTokenlens(gateway);
-  return tokenlens.computeCostUSD(computeArgs);
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.computeCostUSD({
+    modelId: args.modelId,
+    ...(args.provider !== undefined ? { provider: args.provider } : {}),
+    usage: args.usage,
+  });
 }
 
 /**
@@ -109,9 +142,11 @@ export async function computeCostUSD(args: ComputeCostUSDArgs) {
  * ```
  */
 export async function getContextLimits(args: GetContextLimitsArgs) {
-  const { gateway, ...limitsArgs } = args;
-  const tokenlens = getTokenlens(gateway);
-  return tokenlens.getContextLimits(limitsArgs);
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.getContextLimits({
+    modelId: args.modelId,
+    ...(args.provider !== undefined ? { provider: args.provider } : {}),
+  });
 }
 
 /**
@@ -137,9 +172,11 @@ export async function getContextLimits(args: GetContextLimitsArgs) {
  * ```
  */
 export async function getModelData(args: GetModelDataArgs) {
-  const { gateway, ...modelArgs } = args;
-  const tokenlens = getTokenlens(gateway);
-  return tokenlens.getModelData(modelArgs);
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.getModelData({
+    modelId: args.modelId,
+    ...(args.provider !== undefined ? { provider: args.provider } : {}),
+  });
 }
 
 /**
@@ -167,9 +204,12 @@ export async function getModelData(args: GetModelDataArgs) {
  * ```
  */
 export async function getContextHealth(args: GetContextHealthArgs) {
-  const { gateway, ...healthArgs } = args;
-  const tokenlens = getTokenlens(gateway);
-  return tokenlens.getContextHealth(healthArgs);
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.getContextHealth({
+    modelId: args.modelId,
+    ...(args.provider !== undefined ? { provider: args.provider } : {}),
+    usage: args.usage,
+  });
 }
 
 export type {
@@ -187,4 +227,4 @@ export {
   estimateTokenSavings,
 } from "@tokenlens/helpers";
 export { Tokenlens } from "./client.js";
-export type { Catalog, TokenCounter } from "./types.js";
+export type { Catalog, CatalogId, TokenCounter } from "./types.js";

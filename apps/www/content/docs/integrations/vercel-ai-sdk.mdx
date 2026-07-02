@@ -69,6 +69,16 @@ console.log(result.providerMetadata?.tokenlens?.costs); // Token cost breakdown
 
 The middleware calls `tokenlens.computeCostUSD` internally using the model metadata and usage provided by the SDK.
 
+Cost metadata is observational by default: if Tokenlens cannot resolve pricing, the model response still succeeds and `providerMetadata.tokenlens.error` captures the failure details. Pass `{ strict: true }` as the third argument when you want cost lookup failures to fail the SDK call or stream.
+
+```ts
+const strictModel = withTokenlens(
+  anthropic("claude-3-5-sonnet-20241022"),
+  tokenlens,
+  { strict: true },
+);
+```
+
 Use `withTokenlensV5` or `tokenlensMiddlewareV5` when you want explicit AI SDK v5 names. The default `withTokenlens` helper wraps the installed AI SDK v5 language model.
 
 ## Custom Tokenlens instances
@@ -118,5 +128,5 @@ This isolates integration tests from external API fluctuations while ensuring To
 
 - Tokenlens understands Vercel AI SDK model metadata (`modelId`, `provider`).
 - Pass usage payloads directly to `computeCostUSD` or fetch metadata via `getModelData`.
-- Use `@tokenlens/vercel` middleware to automatically compute costs when generating responses.
+- Use `@tokenlens/vercel` middleware to automatically compute costs when generating responses; it fails open by default and supports `{ strict: true }` for fail-closed apps.
 - Customise the catalog and caching (e.g., fixtures, TTL, cache adapter) via `createTokenlens` when needed.

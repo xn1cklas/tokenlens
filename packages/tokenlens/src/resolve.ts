@@ -9,6 +9,7 @@ export type ResolveModelResult = {
   providerId: string;
   modelId: string; // canonical provider/model
   model: SourceModel | undefined;
+  candidates?: readonly string[];
 };
 
 export type ModelResolver = {
@@ -269,6 +270,27 @@ function resolveAcrossProviders(
   return undefined;
 }
 
+function resolveAllAcrossProviders(
+  providers: readonly ProviderLookupEntry[],
+  args: Omit<Parameters<typeof requestModelKeys>[0], "providerKeys">,
+): ResolveModelResult[] {
+  const results: ResolveModelResult[] = [];
+  const seen = new Set<string>();
+  for (const provider of providers) {
+    const resolved = resolveFromProvider(
+      provider,
+      requestModelKeys({ ...args, providerKeys: provider.providerKeys }),
+    );
+    if (!resolved) continue;
+    const key = `${resolved.providerId}/${resolved.modelId}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      results.push(resolved);
+    }
+  }
+  return results;
+}
+
 function resolveWithProviderLookup(
   providers: readonly ProviderLookupEntry[],
   args: {
@@ -326,8 +348,16 @@ function resolveWithProviderLookup(
     };
   }
 
-  const resolved = resolveAcrossProviders(providers, request);
-  if (resolved) return resolved;
+  const matches = resolveAllAcrossProviders(providers, request);
+  if (matches.length === 1) return matches[0] as ResolveModelResult;
+  if (matches.length > 1) {
+    return {
+      providerId: "",
+      modelId,
+      model: undefined,
+      candidates: matches.map((match) => match.modelId),
+    };
+  }
 
   const firstProvider = providers[0]?.catalogKey;
   return {

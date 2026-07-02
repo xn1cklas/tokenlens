@@ -5,7 +5,7 @@ export type {
   SourceProviders,
 } from "@tokenlens/core";
 export type {
-  CatalogGatewayId,
+  CatalogId,
   CatalogInput,
   CatalogSource,
   CatalogSourceId,
@@ -16,7 +16,7 @@ export {
   fetchCatalogSource,
   isCatalogSource,
   isCatalogSourceId,
-  normalizeCatalogGateway,
+  normalizeCatalogId,
 } from "./catalog-sources.js";
 export { fetchModelsDev } from "./models-dev.js";
 export { fetchOpenrouter } from "./openrouter.js";

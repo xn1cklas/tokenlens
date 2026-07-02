@@ -10,7 +10,7 @@ import {
   fetchVercelModelEndpoints,
   isCatalogSource,
   isCatalogSourceId,
-  normalizeCatalogGateway,
+  normalizeCatalogId,
 } from "../src/index.ts";
 import { fetchWithControls } from "../src/utils.ts";
 
@@ -25,9 +25,9 @@ describe("catalog source registry", () => {
     mockFetch.mockReset();
   });
 
-  it("normalizes gateway aliases and validates source IDs", () => {
-    expect(normalizeCatalogGateway("auto")).toBe("openrouter");
-    expect(normalizeCatalogGateway("models.dev")).toBe("models.dev");
+  it("normalizes catalog aliases and validates source IDs", () => {
+    expect(normalizeCatalogId("auto")).toBe("openrouter");
+    expect(normalizeCatalogId("models.dev")).toBe("models.dev");
     expect(isCatalogSourceId("openrouter")).toBe(true);
     expect(isCatalogSourceId("models.dev")).toBe(true);
     expect(isCatalogSourceId("vercel")).toBe(true);
@@ -63,6 +63,36 @@ describe("catalog source registry", () => {
       }),
     ).toBe("uncached-source");
     expect(catalogInputCacheKey("openrouter")).toBe("openrouter");
+  });
+
+  it("rejects malformed custom async catalog sources", async () => {
+    await expect(
+      fetchCatalogSource({
+        id: "broken",
+        async load() {
+          return {
+            broken: {
+              id: "broken",
+              models: {
+                "broken/chat": {
+                  id: "broken/chat",
+                  canonical_id: "broken/chat",
+                },
+              },
+            },
+          } as never;
+        },
+      }),
+    ).rejects.toMatchObject({
+      code: TokenlensError.InvalidCatalog.code,
+      meta: {
+        catalogId: "broken",
+        reason: "INVALID_FIELD",
+        field: "name",
+        providerId: "broken",
+        modelId: "broken/chat",
+      },
+    });
   });
 
   it("dispatches catalog source fetches through the selected adapter", async () => {

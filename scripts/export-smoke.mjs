@@ -265,7 +265,11 @@ async function main() {
 
     const codemodDir = join(tempRoot, "codemod-cli");
     await mkdir(codemodDir);
-    await prepareNodeModules(codemodDir, [["@tokenlens/codemod", codemod]]);
+    await prepareNodeModules(
+      codemodDir,
+      [["@tokenlens/codemod", codemod]],
+      ["typescript"],
+    );
     await writeFile(
       join(codemodDir, "index.ts"),
       'import { fetchModels, type ModelId } from "tokenlens";\nvoid fetchModels;\nconst id: ModelId = "openai/gpt-4o";\nvoid id;\n',

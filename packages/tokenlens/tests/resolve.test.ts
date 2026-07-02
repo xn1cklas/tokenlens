@@ -383,4 +383,30 @@ describe("resolveModel", () => {
       model: { name: "Loose ID" },
     });
   });
+
+  it("returns candidates for ambiguous bare model IDs", () => {
+    const resolved = resolveModel({
+      catalog: {
+        ...catalog,
+        azure: {
+          id: "azure",
+          models: {
+            "azure/gpt-4o": {
+              id: "azure/gpt-4o",
+              canonical_id: "azure/gpt-4o",
+              name: "Azure GPT-4o",
+            },
+          },
+        },
+      },
+      modelId: "gpt-4o",
+    });
+
+    expect(resolved).toEqual({
+      providerId: "",
+      modelId: "gpt-4o",
+      model: undefined,
+      candidates: ["openai/gpt-4o", "azure/gpt-4o"],
+    });
+  });
 });

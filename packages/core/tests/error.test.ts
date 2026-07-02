@@ -43,6 +43,21 @@ describe("TokenlensError", () => {
         catalogId: "openrouter",
       },
     });
+    expect(
+      new TokenlensError.AmbiguousModelId("gpt-4o", {
+        catalogId: "openrouter",
+        candidates: ["openai/gpt-4o", "azure/gpt-4o"],
+      }),
+    ).toMatchObject({
+      code: "AMBIGUOUS_MODEL_ID",
+      message:
+        'Model "gpt-4o" is ambiguous. Candidates: openai/gpt-4o, azure/gpt-4o',
+      meta: {
+        modelId: "gpt-4o",
+        catalogId: "openrouter",
+        candidates: ["openai/gpt-4o", "azure/gpt-4o"],
+      },
+    });
     expect(new TokenlensError.UnknownModelId("future-model")).toMatchObject({
       code: "UNKNOWN_MODEL_ID",
       message: "Unknown model id: future-model",

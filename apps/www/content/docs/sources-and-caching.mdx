@@ -7,27 +7,27 @@ Tokenlens loads provider catalogs through the `catalog` option. This document ex
 
 ## Built-in catalogs
 
-Pass one of the supported identifiers to `createTokenlens({ catalog })` or the class constructor to opt into a hosted catalog. Omitting `catalog` falls back to the OpenRouter catalog when you instantiate `Tokenlens`; the module-level helpers continue to pass `"auto"` (an alias for OpenRouter) unless you override the `gateway` option.
+Pass one of the supported identifiers to `createTokenlens({ catalog })` or the class constructor to opt into a hosted catalog. Omitting `catalog` falls back to the OpenRouter catalog when you instantiate `Tokenlens`; the module-level helpers continue to pass `"auto"` (an alias for OpenRouter) unless you override the `catalog` option.
 
 | Catalog id    | Description                                                                 |
 | ------------- | --------------------------------------------------------------------------- |
-| `"auto"`      | Alias for the OpenRouter gateway (default for module-level helpers).        |
+| `"auto"`      | Alias for the OpenRouter catalog (default for module-level helpers).        |
 | `"openrouter"`| Live catalog fetched from OpenRouter.                                       |
 | `"models.dev"`| Curated dataset derived from models.dev.                                    |
 | `"vercel"`    | Live catalog from the Vercel AI Gateway.                                    |
 
 Instance helpers cache the loaded catalog, so repeated method calls stay fast as long as the data remains fresh.
 
-### Per-call gateway selection
+### Per-call catalog selection
 
-The module-level helpers (`getModelData`, `computeCostUSD`, etc.) accept an optional `gateway` property. This lets you reuse the shared helper instance while forcing a specific catalog on a single call:
+The module-level helpers (`getModelData`, `computeCostUSD`, etc.) accept an optional `catalog` property. This lets you reuse the shared helper instance while forcing a specific catalog on a single call:
 
 ```ts
 import { computeCostUSD } from "tokenlens";
 
 const costs = await computeCostUSD({
   modelId: "openai/gpt-4o-mini",
-  gateway: "vercel",
+  catalog: "vercel",
   usage: { input_tokens: 1_000, output_tokens: 250 },
 });
 ```
@@ -60,7 +60,7 @@ const tokenlens = createTokenlens({ catalog: fixtureCatalog });
 
 ## Async catalog sources
 
-Use `CatalogSource` for registries you generate, host privately, or assemble from infrastructure at runtime. Tokenlens caches the loaded source the same way it caches hosted gateways.
+Use `CatalogSource` for registries you generate, host privately, or assemble from infrastructure at runtime. Tokenlens caches the loaded source the same way it caches hosted catalogs.
 
 ```ts
 import { createTokenlens, type CatalogSource } from "tokenlens";
@@ -127,7 +127,7 @@ Tokenlens caches the raw provider catalog to avoid repeated network calls. Retur
 
 ### Fetch controls
 
-Hosted gateways and async `CatalogSource` loaders receive the same fetch controls:
+Hosted catalogs and async `CatalogSource` loaders receive the same fetch controls:
 
 - `fetch`: custom fetch implementation for tests, edge runtimes, or instrumentation.
 - `signal`: abort signal passed through to the fetcher.
@@ -202,7 +202,7 @@ These hooks are useful when you know provider metadata has changed and you want 
 
 - Pick a built-in `catalog` (`"auto"`, `"openrouter"`, `"models.dev"`, `"vercel"`), supply your own `SourceProviders`, or provide an async `CatalogSource`.
 - Use `overrides` for local price/limit corrections on top of a hosted catalog.
-- Override `gateway` per call when using the shared helpers.
+- Override `catalog` per call when using the shared helpers.
 - Configure caching behaviour with `ttlMs`, `cache`, `cacheKey`, and `staleIfError`.
 - Configure network behaviour with `fetch`, `signal`, and `timeoutMs`.
 - Use `refresh()` / `invalidate()` for manual control when needed.

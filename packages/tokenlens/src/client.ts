@@ -1,4 +1,5 @@
 import {
+  assertSourceProviders,
   type SourceModel,
   type SourceProviders,
   TokenlensError,
@@ -28,7 +29,7 @@ import {
 import {
   type CacheAdapter,
   type Catalog,
-  DEFAULT_GATEWAY_ID,
+  DEFAULT_CATALOG_ID,
   type TokenCounter,
   type TokenlensOptions,
 } from "./types.js";
@@ -65,7 +66,7 @@ export class Tokenlens {
     | undefined;
 
   constructor(options?: TokenlensOptions) {
-    this.catalog = options?.catalog ?? DEFAULT_GATEWAY_ID;
+    this.catalog = options?.catalog ?? DEFAULT_CATALOG_ID;
     this.overrides = options?.overrides;
     this.ttlMs = options?.ttlMs ?? 24 * 60 * 60 * 1000;
     this.cache = options?.cache ?? new MemoryCache();
@@ -75,7 +76,7 @@ export class Tokenlens {
     this.staleIfError = options?.staleIfError ?? true;
     this.tokenizer = options?.tokenizer;
 
-    // only cache when we load the catalog from a gateway/source
+    // only cache when we load the catalog from a hosted or async source
     if (typeof this.catalog === "string" || isCatalogSource(this.catalog)) {
       this.cacheKey =
         options?.cacheKey ??
@@ -118,6 +119,7 @@ export class Tokenlens {
     force?: boolean;
   }): Promise<SourceProviders> {
     if (typeof this.catalog === "object" && !isCatalogSource(this.catalog)) {
+      assertSourceProviders(this.catalog);
       return Promise.resolve(this.applyOverrides(this.catalog));
     }
 
@@ -178,6 +180,13 @@ export class Tokenlens {
   ): TokenlensError {
     const catalogId =
       typeof this.catalog === "string" ? this.catalog : undefined;
+    if (resolved.candidates?.length) {
+      return new TokenlensError.AmbiguousModelId(args.modelId, {
+        candidates: resolved.candidates,
+        ...(catalogId ? { catalogId } : {}),
+      });
+    }
+
     const providerId =
       args.provider ?? (resolved.providerId ? resolved.providerId : undefined);
     const meta =

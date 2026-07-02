@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { toModelId } from "../src/id.js";
 
 describe("toModelId (isolated)", () => {
-  it("normalizes gateway-style ids and preserves canonical forms", () => {
+  it("normalizes catalog-style ids and preserves canonical forms", () => {
     const cases: Array<{ in: string | undefined; out: string | undefined }> = [
       // undefined and empty inputs
       { in: undefined, out: undefined },
@@ -68,7 +68,7 @@ describe("toModelId (isolated)", () => {
         out: "fireworks/mixtral-8x7b-instruct",
       },
 
-      // Gateway prefixes with nested vendor (e.g., OpenRouter)
+      // Catalog prefixes with nested vendor (e.g., OpenRouter)
       {
         in: "openrouter/anthropic/claude-3.5-sonnet",
         out: "openrouter/anthropic/claude-3.5-sonnet",

@@ -2,6 +2,7 @@ export type TokenlensErrorCode =
   | "INVALID_CATALOG"
   | "CATALOG_NOT_FOUND"
   | "MODEL_NOT_FOUND"
+  | "AMBIGUOUS_MODEL_ID"
   | "UNKNOWN_MODEL_ID"
   | "MISSING_DEPENDENCY"
   | "INVALID_JSON"
@@ -24,6 +25,11 @@ type StackTraceConstructor = abstract new (...args: never[]) => object;
 
 type ModelNotFoundOptions = TokenlensErrorOptions & {
   providerId?: string;
+  catalogId?: string;
+};
+
+type AmbiguousModelIdOptions = TokenlensErrorOptions & {
+  candidates: readonly string[];
   catalogId?: string;
 };
 
@@ -136,6 +142,31 @@ export class TokenlensError extends Error {
             {
               modelId,
               ...(providerId ? { providerId } : {}),
+              ...(catalogId ? { catalogId } : {}),
+            },
+            options,
+          ),
+        );
+      }
+    };
+
+  static AmbiguousModelId: ErrorStatic<[string, AmbiguousModelIdOptions]> =
+    class AmbiguousModelIdError extends TokenlensError {
+      static readonly code: TokenlensErrorCode = "AMBIGUOUS_MODEL_ID";
+
+      constructor(modelId: string, options: AmbiguousModelIdOptions) {
+        const candidates = [...options.candidates];
+        const catalogId = options.catalogId;
+        const suffix = candidates.length
+          ? `. Candidates: ${candidates.join(", ")}`
+          : "";
+        super(
+          AmbiguousModelIdError.code,
+          `Model "${modelId}" is ambiguous${suffix}`,
+          mergeOptions(
+            {
+              modelId,
+              candidates,
               ...(catalogId ? { catalogId } : {}),
             },
             options,

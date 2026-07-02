@@ -33,10 +33,11 @@
     "test:run": "vitest run --config ../../vitest.config.ts --project codemod",
     "prepublishOnly": "pnpm run build"
   },
-  "dependencies": {},
+  "dependencies": {
+    "typescript": "^5.9.3"
+  },
   "devDependencies": {
     "@types/node": "^24.5.2",
-    "typescript": "^5.9.3",
     "vitest": "^3.2.6"
   },
   "repository": {

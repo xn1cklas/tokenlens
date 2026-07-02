@@ -1,4 +1,4 @@
-import type { SourceProviders } from "@tokenlens/core";
+import { assertSourceProviders, type SourceProviders } from "@tokenlens/core";
 import { fetchModelsDev } from "./models-dev.js";
 import { fetchOpenrouter } from "./openrouter.js";
 import type { CommonOptions } from "./types.js";
@@ -11,13 +11,13 @@ export const CATALOG_SOURCE_OPTIONS = [
 ] as const;
 
 export type CatalogSourceId = (typeof CATALOG_SOURCE_OPTIONS)[number]["value"];
-export type CatalogGatewayId = "auto" | CatalogSourceId;
+export type CatalogId = "auto" | CatalogSourceId;
 export type CatalogSource = {
   id: string;
   cacheKey?: string;
   load(options?: CommonOptions): Promise<SourceProviders>;
 };
-export type CatalogInput = CatalogGatewayId | CatalogSource;
+export type CatalogInput = CatalogId | CatalogSource;
 
 const CATALOG_SOURCE_IDS = CATALOG_SOURCE_OPTIONS.map((source) => source.value);
 
@@ -25,10 +25,8 @@ export function isCatalogSourceId(value: string): value is CatalogSourceId {
   return CATALOG_SOURCE_IDS.includes(value as CatalogSourceId);
 }
 
-export function normalizeCatalogGateway(
-  gateway: CatalogGatewayId,
-): CatalogSourceId {
-  return gateway === "auto" ? "openrouter" : gateway;
+export function normalizeCatalogId(catalog: CatalogId): CatalogSourceId {
+  return catalog === "auto" ? "openrouter" : catalog;
 }
 
 export function isCatalogSource(value: unknown): value is CatalogSource {
@@ -51,15 +49,26 @@ export function fetchCatalogSource(
   options?: CommonOptions,
 ): Promise<SourceProviders> {
   if (isCatalogSource(source)) {
-    return source.load(options);
+    return loadAndValidate(source.cacheKey ?? source.id, () =>
+      source.load(options),
+    );
   }
 
-  switch (normalizeCatalogGateway(source)) {
+  switch (normalizeCatalogId(source)) {
     case "models.dev":
-      return fetchModelsDev(options);
+      return loadAndValidate("models.dev", () => fetchModelsDev(options));
     case "vercel":
-      return fetchVercel(options);
+      return loadAndValidate("vercel", () => fetchVercel(options));
     case "openrouter":
-      return fetchOpenrouter(options);
+      return loadAndValidate("openrouter", () => fetchOpenrouter(options));
   }
+}
+
+async function loadAndValidate(
+  target: string,
+  load: () => Promise<SourceProviders>,
+): Promise<SourceProviders> {
+  const catalog = await load();
+  assertSourceProviders(catalog, target);
+  return catalog;
 }

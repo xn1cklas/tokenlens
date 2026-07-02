@@ -15,7 +15,7 @@ This file defines canonical terminology used across the TokenLens v2 codebase an
 
 ## catalog
 - Identifier for the dataset Tokenlens loads (`auto`, `openrouter`, `models.dev`, or `vercel`).
-- Configured via `TokenlensOptions.catalog` or per-call helper options such as `gateway`.
+- Configured via `TokenlensOptions.catalog` or per-call helper options such as `catalog`.
 
 ## SourceProvider
 - Raw provider metadata emitted by a loader.
@@ -81,7 +81,7 @@ This file defines canonical terminology used across the TokenLens v2 codebase an
 - Instances can share cached data by passing the same external cache adapter and `cacheKey`.
 
 ## createTokenlens
-- Convenience factory that instantiates `Tokenlens` with sensible defaults (OpenRouter catalog when none provided; `{ catalog: "auto" }` is equivalent to the same OpenRouter gateway).
+- Convenience factory that instantiates `Tokenlens` with sensible defaults (OpenRouter catalog when none provided; `{ catalog: "auto" }` is equivalent to the same OpenRouter catalog).
 
 ## MemoryCache
 - Default cache adapter for Tokenlens.

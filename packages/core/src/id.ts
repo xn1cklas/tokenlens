@@ -2,9 +2,9 @@
  * Convert provider-scoped ids into canonical Tokenlens v2 ids ("provider/model").
  * Legacy v1 ids ("provider:model") are accepted and normalized to slash form.
  */
-export function toModelId(gatewayId?: string): string | undefined {
-  if (!gatewayId) return undefined;
-  const id = gatewayId.trim();
+export function toModelId(input?: string): string | undefined {
+  if (!input) return undefined;
+  const id = input.trim();
   if (!id) return undefined;
 
   const slashIndex = id.indexOf("/");
