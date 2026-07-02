@@ -685,6 +685,34 @@ describe("fetchOpenrouter DTO mapping", () => {
     expect(model?.cost).toBeUndefined();
   });
 
+  it("omits OpenRouter unknown-limit sentinels from scalar limits", async () => {
+    const raw = {
+      data: [
+        {
+          id: "google/gemma-4-26b-a4b-it",
+          name: "Gemma",
+          context_length: 131_072,
+          top_provider: {
+            context_length: 65_536,
+            max_completion_tokens: -1,
+          },
+        },
+      ],
+    } satisfies JsonShape;
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => raw,
+    } as Response);
+
+    const catalog = await fetchOpenrouter({});
+    const model = catalog.google?.models["google/gemma-4-26b-a4b-it"];
+
+    expect(model?.limit).toEqual({
+      context: 131_072,
+    });
+  });
+
   it("omits suspicious OpenRouter per-token prices from scalar costs", async () => {
     const raw = {
       data: [

@@ -10,6 +10,7 @@ import {
   fetchWithControls,
   filterCatalog,
   requireArrayField,
+  toNumber,
   upsertCatalogProvider,
 } from "./utils.js";
 
@@ -21,22 +22,44 @@ type OpenrouterModelJson = Record<string, unknown> & {
   last_updated?: unknown;
   pricing?: Record<string, unknown>;
   cost?: Record<string, unknown>;
-  limit?: { context?: number; input?: number; output?: number };
-  context_length?: number;
+  limit?: { context?: unknown; input?: unknown; output?: unknown };
+  context_length?: unknown;
   top_provider?: {
-    max_completion_tokens?: number;
-    context_length?: number;
+    max_completion_tokens?: unknown;
+    context_length?: unknown;
     is_moderated?: boolean;
   };
 };
 
+function toLimitNumber(value: unknown): number | undefined {
+  const n = toNumber(value);
+  return n !== undefined && n >= 0 ? n : undefined;
+}
+
+function limitFromOpenrouterModel(
+  m: OpenrouterModelJson,
+): SourceModel["limit"] | undefined {
+  const context =
+    toLimitNumber(m.limit?.context) ??
+    toLimitNumber(m.context_length) ??
+    toLimitNumber(m.top_provider?.context_length);
+  const input = toLimitNumber(m.limit?.input);
+  const output =
+    toLimitNumber(m.limit?.output) ??
+    toLimitNumber(m.top_provider?.max_completion_tokens);
+  const limit = {
+    ...(context !== undefined ? { context } : {}),
+    ...(input !== undefined ? { input } : {}),
+    ...(output !== undefined ? { output } : {}),
+  };
+
+  return Object.keys(limit).length ? limit : undefined;
+}
+
 function mapOpenrouterModel(m: OpenrouterModelJson, id: string): SourceModel {
   const pricingRaw = m.pricing ?? m.cost;
   const cost = costFromPerTokenPricing(pricingRaw);
-  const limit = m.limit;
-  const context_length = m.context_length;
-  const topProvider = m.top_provider;
-  const outputCap = topProvider?.max_completion_tokens;
+  const limit = limitFromOpenrouterModel(m);
   return {
     id,
     canonical_id: id,
@@ -49,16 +72,7 @@ function mapOpenrouterModel(m: OpenrouterModelJson, id: string): SourceModel {
       ? { last_updated: m.last_updated as string }
       : {}),
     ...(cost !== undefined ? { cost } : {}),
-    ...(limit || context_length || outputCap
-      ? {
-          limit: limit ?? {
-            ...(context_length !== undefined
-              ? { context: context_length }
-              : {}),
-            ...(outputCap !== undefined ? { output: outputCap } : {}),
-          },
-        }
-      : {}),
+    ...(limit !== undefined ? { limit } : {}),
   };
 }
 
