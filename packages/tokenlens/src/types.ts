@@ -1,12 +1,8 @@
 import type { SourceProviders } from "@tokenlens/core";
+import type { CatalogGatewayId } from "@tokenlens/fetch";
 
-export const GATEWAY_IDS = [
-  "auto",
-  "openrouter",
-  "models.dev",
-  "vercel",
-] as const;
-export type GatewayId = (typeof GATEWAY_IDS)[number];
+export const DEFAULT_GATEWAY_ID = "openrouter" satisfies CatalogGatewayId;
+export type GatewayId = CatalogGatewayId;
 
 export type CacheEntry = { value: SourceProviders; expiresAt: number };
 

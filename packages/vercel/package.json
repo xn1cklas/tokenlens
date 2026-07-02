@@ -53,7 +53,7 @@
     "tokenlens": "workspace:*"
   },
   "peerDependencies": {
-    "ai": "^5.0.0 || ^6.0.0"
+    "ai": "^5.0.0"
   },
   "devDependencies": {
     "ai": "^5.0.52",

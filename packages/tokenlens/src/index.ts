@@ -1,5 +1,5 @@
-import type { Usage } from "@tokenlens/core";
 import { type ModelDetails, Tokenlens } from "./client.js";
+import { getTokenlens } from "./shared.js";
 import type { GatewayId, TokenlensOptions } from "./types.js";
 
 /**
@@ -14,12 +14,21 @@ export function createTokenlens(
   return new Tokenlens(options);
 }
 
-interface CountTokensArgs {
-  /** The model ID (e.g., "openai/gpt-4o-mini") */
-  modelId: string;
-  /** Text content to count tokens for */
-  data: string;
-}
+type WithGateway<T> = T & { gateway?: GatewayId };
+type CountTokensArgs = Parameters<Tokenlens["countTokens"]>[0];
+type EstimateCostUSDArgs = WithGateway<
+  Parameters<Tokenlens["estimateCostUSD"]>[0]
+>;
+type ComputeCostUSDArgs = WithGateway<
+  Parameters<Tokenlens["computeCostUSD"]>[0]
+>;
+type GetContextLimitsArgs = WithGateway<
+  Parameters<Tokenlens["getContextLimits"]>[0]
+>;
+type GetModelDataArgs = WithGateway<Parameters<Tokenlens["getModelData"]>[0]>;
+type GetContextHealthArgs = WithGateway<
+  Parameters<Tokenlens["getContextHealth"]>[0]
+>;
 
 /**
  * Count tokens in a text string for a given model.
@@ -44,15 +53,6 @@ export async function countTokens(args: CountTokensArgs) {
   return tokenlens.countTokens(args);
 }
 
-interface EstimateCostUSDArgs {
-  /** The model ID (e.g., "openai/gpt-4o-mini" or just "gpt-4o-mini") */
-  modelId: string;
-  /** Provider for model lookup (e.g., "openai", "anthropic") */
-  provider?: string;
-  /** Text content to estimate costs for */
-  data: string;
-}
-
 /**
  * Estimate token costs in USD by counting tokens in text and looking up pricing.
  * This is useful for estimating costs BEFORE making an API call.
@@ -70,19 +70,9 @@ interface EstimateCostUSDArgs {
  * ```
  */
 export async function estimateCostUSD(args: EstimateCostUSDArgs) {
-  const tokenlens = getTokenlens();
-  return tokenlens.estimateCostUSD(args);
-}
-
-interface ComputeCostUSDArgs {
-  /** The model ID (e.g., "openai/gpt-4o-mini" or "gpt-4o-mini") */
-  modelId: string;
-  /** Token usage data */
-  usage: Usage;
-  /** Gateway to use for fetching catalog (defaults to "auto") */
-  gateway?: GatewayId;
-  /** Optional provider to disambiguate model lookup (e.g., "openai", "anthropic") */
-  provider?: string;
+  const { gateway, ...estimateArgs } = args;
+  const tokenlens = getTokenlens(gateway);
+  return tokenlens.estimateCostUSD(estimateArgs);
 }
 
 /**
@@ -101,17 +91,9 @@ interface ComputeCostUSDArgs {
  * ```
  */
 export async function computeCostUSD(args: ComputeCostUSDArgs) {
-  const tokenlens = getTokenlens(args.gateway);
-  return tokenlens.computeCostUSD(args);
-}
-
-interface GetContextLimitsArgs {
-  /** The model ID (e.g., "openai/gpt-4o-mini" or "gpt-4o-mini") */
-  modelId: string;
-  /** Optional provider to disambiguate model lookup (e.g., "openai", "anthropic") */
-  provider?: string;
-  /** Gateway to use for fetching catalog (defaults to "auto") */
-  gateway?: GatewayId;
+  const { gateway, ...computeArgs } = args;
+  const tokenlens = getTokenlens(gateway);
+  return tokenlens.computeCostUSD(computeArgs);
 }
 
 /**
@@ -127,18 +109,11 @@ interface GetContextLimitsArgs {
  * ```
  */
 export async function getContextLimits(args: GetContextLimitsArgs) {
-  const tokenlens = getTokenlens(args.gateway);
-  return tokenlens.getContextLimits(args);
+  const { gateway, ...limitsArgs } = args;
+  const tokenlens = getTokenlens(gateway);
+  return tokenlens.getContextLimits(limitsArgs);
 }
 
-interface GetModelDataArgs {
-  /** The model ID (e.g., "openai/gpt-4o-mini" or "gpt-4o-mini") */
-  modelId: string;
-  /** Optional provider to disambiguate model lookup (e.g., "openai", "anthropic") */
-  provider?: string;
-  /** Gateway to use for fetching catalog (defaults to "auto") */
-  gateway?: GatewayId;
-}
 /**
  * Get a model's metadata exactly as stored in the active sources.
  *
@@ -162,19 +137,9 @@ interface GetModelDataArgs {
  * ```
  */
 export async function getModelData(args: GetModelDataArgs) {
-  const tokenlens = getTokenlens(args.gateway);
-  return tokenlens.getModelData(args);
-}
-
-interface GetContextHealthArgs {
-  /** The model ID (e.g., "openai/gpt-4o-mini" or "gpt-4o-mini") */
-  modelId: string;
-  /** Token usage data */
-  usage: Usage;
-  /** Optional provider to disambiguate model lookup (e.g., "openai", "anthropic") */
-  provider?: string;
-  /** Gateway to use for fetching catalog (defaults to "auto") */
-  gateway?: GatewayId;
+  const { gateway, ...modelArgs } = args;
+  const tokenlens = getTokenlens(gateway);
+  return tokenlens.getModelData(modelArgs);
 }
 
 /**
@@ -202,34 +167,9 @@ interface GetContextHealthArgs {
  * ```
  */
 export async function getContextHealth(args: GetContextHealthArgs) {
-  const tokenlens = getTokenlens(args.gateway);
-  return tokenlens.getContextHealth(args);
-}
-
-const instances = new Map<GatewayId, Tokenlens>();
-
-/**
- * @internal
- * Lazily creates or returns the shared Tokenlens instance for a given catalog.
- */
-function getTokenlens(catalog?: GatewayId): Tokenlens {
-  const key = catalog ?? "auto";
-  let instance = instances.get(key);
-  if (!instance) {
-    instance = new Tokenlens({ catalog: key });
-    instances.set(key, instance);
-  }
-  return instance;
-}
-
-/**
- * @internal Utility for tests to override the shared Tokenlens instance.
- */
-export function setSharedTokenlens(tokenlens?: Tokenlens) {
-  instances.clear();
-  if (tokenlens) {
-    instances.set("auto", tokenlens);
-  }
+  const { gateway, ...healthArgs } = args;
+  const tokenlens = getTokenlens(gateway);
+  return tokenlens.getContextHealth(healthArgs);
 }
 
 export type {

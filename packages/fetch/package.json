@@ -20,10 +20,13 @@
     "access": "public"
   },
   "scripts": {
+    "clean": "rm -rf dist",
+    "prebuild": "pnpm run clean",
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit",
     "test": "vitest --config ../../vitest.config.ts --project fetch",
     "test:run": "vitest run --config ../../vitest.config.ts --project fetch",
+    "test:live": "RUN_LIVE_TESTS=1 vitest run --config ../../vitest.config.ts --project fetch",
     "prepublishOnly": "pnpm run build"
   },
   "repository": {

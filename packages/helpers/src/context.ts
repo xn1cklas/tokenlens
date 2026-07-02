@@ -4,7 +4,7 @@ import { normalizeUsage } from "./internal.js";
 export type ContextHealth = {
   /** Total context window size in tokens */
   totalTokens: number;
-  /** Number of tokens used (input + output + reasoning + cache reads + cache writes). Cache tokens consume model context even though they're subsets of input for pricing purposes. */
+  /** Number of tokens used after accounting for provider-specific cache/reasoning reporting semantics. */
   usedTokens: number;
   /** Number of tokens remaining */
   remainingTokens: number;
@@ -50,15 +50,26 @@ export function getContextHealth(args: {
     return undefined;
   }
 
-  // Calculate total tokens used (input + output + reasoning + cache reads + cache writes)
-  // Cache tokens consume model context even though they're subsets of input tokens for pricing
   const normalized = normalizeUsage(usage);
-  const usedTokens =
-    normalized.input +
-    normalized.output +
-    (normalized.reasoningTokens ?? 0) +
-    (normalized.cacheReads ?? 0) +
-    (normalized.cacheWrites ?? 0);
+  const reasoningTokens =
+    normalized.reasoningIncludedInOutput === false
+      ? (normalized.reasoningTokens ?? 0)
+      : 0;
+  const cacheTokens =
+    normalized.cacheTokensIncludedInInput === false
+      ? (normalized.cacheReads ?? 0) + (normalized.cacheWrites ?? 0)
+      : 0;
+  const detailedUsedTokens =
+    normalized.input + normalized.output + reasoningTokens + cacheTokens;
+  const hasDetailedUsage =
+    normalized.input > 0 ||
+    normalized.output > 0 ||
+    normalized.reasoningTokens !== undefined ||
+    normalized.cacheReads !== undefined ||
+    normalized.cacheWrites !== undefined;
+  const usedTokens = hasDetailedUsage
+    ? detailedUsedTokens
+    : (normalized.total ?? detailedUsedTokens);
 
   // Calculate remaining tokens
   const remainingTokens = Math.max(0, contextLimit - usedTokens);

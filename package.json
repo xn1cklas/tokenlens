@@ -3,7 +3,8 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/*",
+    "examples/*"
   ],
   "scripts": {
     "dev": "turbo dev",
@@ -11,14 +12,15 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test --filter=\"./packages/*\"",
     "test:run": "turbo run test:run --filter=\"./packages/*\"",
-    "test:live": "turbo run test:live --filter=\"./packages/*\"",
+    "test:exports": "node scripts/export-smoke.mjs",
+    "test:live": "pnpm -r --filter=\"./packages/*\" --if-present test:live",
     "format": "biome check --write .",
     "format:fix": "biome check --write --fix .",
     "sync:providers": "pnpm --filter tokenlens run prebuild",
     "sync:readme": "node scripts/sync-readmes.mjs root",
     "sync:pkg-readmes": "node scripts/sync-readmes.mjs packages",
     "sync:readmes": "node scripts/sync-readmes.mjs",
-    "pre-release": "pnpm format --fix && pnpm run build && pnpm run typecheck && pnpm run test:run",
+    "pre-release": "pnpm format --fix && pnpm run build && pnpm run test:exports && pnpm run typecheck && pnpm run test:run",
     "prerelease": "pnpm run pre-release",
     "release": "pnpm -r publish --access public --filter=\"@tokenlens/*\" --filter=tokenlens",
     "release:force": "pnpm -r publish --access public --filter=\"@tokenlens/*\" --filter=tokenlens --no-git-checks"

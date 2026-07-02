@@ -1,0 +1,44 @@
+name: Live Fetch Tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+
+concurrency:
+  group: live-fetch-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  live-fetch:
+    name: Live Fetchers
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+      RUN_LIVE_TESTS: "1"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run live fetcher tests
+        run: pnpm --filter @tokenlens/fetch test:live
+
+      - name: Run provider compatibility tests
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: pnpm --filter provider-tests test:live

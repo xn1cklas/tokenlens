@@ -23,6 +23,11 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
+    "test:live": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "outputs": []
+    },
     "format": {
       "dependsOn": ["^format"]
     },

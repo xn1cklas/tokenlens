@@ -3,7 +3,6 @@ import type { Tokenlens } from "tokenlens";
 import { expect, test, vi } from "vitest";
 import {
   tokenlensMiddlewareV5,
-  tokenlensMiddlewareV6,
   withTokenlens,
   withTokenlensV5,
 } from "./index.js";
@@ -83,7 +82,7 @@ const sampleCosts = {
 
 test("wrapVercelLanguageModel", async () => {
   expect(tokenlensMiddlewareV5(tokenlens).middlewareVersion).toBe("v2");
-  expect(tokenlensMiddlewareV6(tokenlens).specificationVersion).toBe("v3");
+  expect(tokenlensMiddlewareV5(tokenlens).specificationVersion).toBe("v3");
 
   computeCostUSDMock.mockImplementation(
     async ({ modelId, provider, usage }) => {

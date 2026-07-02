@@ -20,6 +20,8 @@ type ErrorStatic<P extends unknown[]> = {
   new (...args: P): TokenlensError;
 };
 
+type StackTraceConstructor = abstract new (...args: never[]) => object;
+
 type ModelNotFoundOptions = TokenlensErrorOptions & {
   providerId?: string;
   catalogId?: string;
@@ -75,12 +77,12 @@ export class TokenlensError extends Error {
       Error as ErrorConstructor & {
         captureStackTrace?: (
           targetObject: object,
-          constructorOpt?: Function,
+          constructorOpt?: StackTraceConstructor,
         ) => void;
       }
     ).captureStackTrace;
     if (typeof captureStackTrace === "function") {
-      captureStackTrace(this, new.target);
+      captureStackTrace(this, new.target as unknown as StackTraceConstructor);
     }
 
     if (options?.meta) {

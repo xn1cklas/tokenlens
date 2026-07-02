@@ -22,10 +22,13 @@ export type SourceModel = {
     input?: number;
     output?: number;
   };
+  // Source-specific model metadata that is not safe to use in generic helpers.
+  extras?: Record<string, unknown>;
 };
 
 export type SourceProvider = {
   id: string; // provider id (e.g., 'openai')
+  aliases?: readonly string[];
   name?: string;
   api?: string;
   doc?: string;

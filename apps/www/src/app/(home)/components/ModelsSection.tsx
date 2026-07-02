@@ -1,17 +1,11 @@
 import { AlertCircle } from "lucide-react";
 import { ModelMatrix } from "@/components/model-matrix";
-import type { SourceProvidersLite } from "@/components/model-matrix/types";
+import type { CatalogViewState } from "@/lib/model-catalog";
 
 export function ModelsSection({
-  openrouter,
-  modelsdev,
-  vercel,
-  lastUpdated,
+  initialCatalog,
 }: {
-  openrouter: SourceProvidersLite;
-  modelsdev: SourceProvidersLite;
-  vercel: SourceProvidersLite;
-  lastUpdated: number;
+  initialCatalog: CatalogViewState;
 }) {
   return (
     <section id="docs" className="py-24 sm:py-32 bg-card/30">
@@ -35,12 +29,7 @@ export function ModelsSection({
             </div>
           </div>
 
-          <ModelMatrix
-            openrouter={openrouter}
-            modelsdev={modelsdev}
-            vercel={vercel}
-            lastUpdated={lastUpdated}
-          />
+          <ModelMatrix initialCatalog={initialCatalog} />
         </div>
       </div>
     </section>

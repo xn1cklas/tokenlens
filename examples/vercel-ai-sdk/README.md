@@ -8,8 +8,11 @@ This example shows how to combine the [Vercel AI SDK](https://sdk.vercel.ai/docs
 
    ```bash
    pnpm install
-   pnpm --filter vercel-ai-sdk install
-   ```
+	   pnpm --filter vercel-ai-sdk install
+	   ```
+
+	   This example includes `@tokenlens/tokenizer` because it calls
+	   tokenizer-backed helpers such as `countTokens` and `estimateCostUSD`.
 
 2. Copy the `.env.example` file to `.env` and set your OpenAI-compatible API key:
 
@@ -19,7 +22,7 @@ This example shows how to combine the [Vercel AI SDK](https://sdk.vercel.ai/docs
 
    Required variables:
 
-   - `AI_SDK_OPENAI_API_KEY`
+   - `OPENAI_API_KEY`
 
 ## Run
 

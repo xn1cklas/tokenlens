@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { countTokens } from "../src/index.js";
+import { openai } from "../src/tokenizers/openai.js";
 
 // Mock the provider modules
 vi.mock("../src/tokenizers/google.js", () => ({
@@ -56,6 +57,20 @@ describe("countTokens", () => {
     it("auto-detects provider from prefixed model ID (openai)", async () => {
       const result = await countTokens("openai/gpt-4o", "Test");
       expect(result).toBe(10);
+    });
+
+    it("falls back to GPT-5 for unsupported OpenAI-prefixed model IDs", async () => {
+      const openaiMock = vi.mocked(openai);
+      const unsupported = Object.assign(new Error("Unsupported model"), {
+        code: "UNSUPPORTED_TOKENIZER_MODEL",
+      });
+      openaiMock.mockRejectedValueOnce(unsupported);
+
+      const result = await countTokens("openai/o3", "Test");
+
+      expect(result).toBe(10);
+      expect(openaiMock).toHaveBeenNthCalledWith(1, "o3", "Test");
+      expect(openaiMock).toHaveBeenNthCalledWith(2, "gpt-5", "Test");
     });
 
     it("auto-detects provider from prefixed model ID (anthropic)", async () => {

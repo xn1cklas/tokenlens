@@ -8,8 +8,11 @@ This example app calls the OpenAI Responses API and uses `tokenlens` to estimate
 
    ```bash
    pnpm install
-   pnpm --filter openai-sdk install
-   ```
+	   pnpm --filter openai-sdk install
+	   ```
+
+	   This example includes `@tokenlens/tokenizer` because it calls
+	   tokenizer-backed helpers such as `countTokens` and `estimateCostUSD`.
 
 2. Copy `env.example` to `.env` and provide your OpenAI API key:
 

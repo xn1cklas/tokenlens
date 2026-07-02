@@ -81,11 +81,10 @@ const InputDemo = () => {
         maxTokens={contextMax}
         usedTokens={usedTokens}
         usage={usage}
-        modelId={model}
         showBreakdown
       />
     ),
-    [contextMax, usedTokens, usage, model],
+    [contextMax, usedTokens, usage],
   );
 
   return (

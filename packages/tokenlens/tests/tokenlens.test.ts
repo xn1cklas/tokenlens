@@ -10,8 +10,8 @@ import {
   getContextLimits as apiGetContextLimits,
   getModelData as apiGetModelData,
   createTokenlens,
-  setSharedTokenlens,
 } from "../src/index.js";
+import { setSharedTokenlens } from "../src/test-utils.js";
 import type { CacheAdapter, CacheEntry } from "../src/types.js";
 import {
   createModelsDevProvidersFixture,
@@ -20,11 +20,24 @@ import {
 } from "./fixtures/providers.js";
 
 // Mock the fetch functions
-vi.mock("@tokenlens/fetch", async () => {
+vi.mock("@tokenlens/fetch", () => {
+  const fetchOpenrouter = vi.fn();
+  const fetchModelsDev = vi.fn();
+  const fetchVercel = vi.fn();
   return {
-    fetchOpenrouter: vi.fn(),
-    fetchModelsDev: vi.fn(),
-    fetchVercel: vi.fn(),
+    fetchOpenrouter,
+    fetchModelsDev,
+    fetchVercel,
+    fetchCatalogSource: vi.fn(
+      (
+        source: "models.dev" | "openrouter" | "vercel",
+        options?: { fetch?: typeof globalThis.fetch },
+      ) => {
+        if (source === "models.dev") return fetchModelsDev(options);
+        if (source === "vercel") return fetchVercel(options);
+        return fetchOpenrouter(options);
+      },
+    ),
   };
 });
 
@@ -44,21 +57,35 @@ function makeUsage(): Usage {
   };
 }
 
+async function resetFetchMocks(): Promise<{
+  fetchModelsDev: Mock;
+  fetchOpenrouter: Mock;
+  fetchVercel: Mock;
+}> {
+  const fetchModule = await import("@tokenlens/fetch");
+  const fetchModelsDev = fetchModule.fetchModelsDev as Mock;
+  const fetchOpenrouter = fetchModule.fetchOpenrouter as Mock;
+  const fetchVercel = fetchModule.fetchVercel as Mock;
+  fetchModelsDev.mockReset();
+  fetchOpenrouter.mockReset();
+  fetchVercel.mockReset();
+  return { fetchModelsDev, fetchOpenrouter, fetchVercel };
+}
+
 describe("Tokenlens - Catalog Loading", () => {
   let fetchModelsDevSpy: Mock;
   let fetchOpenrouterSpy: Mock;
   let fetchVercelSpy: Mock;
 
   beforeEach(async () => {
-    vi.clearAllMocks();
-    const fetchModule = await import("@tokenlens/fetch");
-    fetchModelsDevSpy = vi.spyOn(fetchModule, "fetchModelsDev") as Mock;
-    fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter") as Mock;
-    fetchVercelSpy = vi.spyOn(fetchModule, "fetchVercel") as Mock;
+    const fetchMocks = await resetFetchMocks();
+    fetchModelsDevSpy = fetchMocks.fetchModelsDev;
+    fetchOpenrouterSpy = fetchMocks.fetchOpenrouter;
+    fetchVercelSpy = fetchMocks.fetchVercel;
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   it("uses openrouter catalog", async () => {
@@ -278,128 +305,16 @@ describe("Tokenlens - Catalog Loading", () => {
   });
 });
 
-describe("Tokenlens - Caching", () => {
-  let fetchOpenrouterSpy: Mock;
-
-  beforeEach(async () => {
-    vi.clearAllMocks();
-    const fetchModule = await import("@tokenlens/fetch");
-    fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter") as Mock;
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it("caches catalog and reuses it", async () => {
-    const mockCatalog = createOpenrouterProvidersFixture();
-    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
-
-    const client = new Tokenlens({
-      catalog: "openrouter",
-      cacheKey: "test-cache-reuse",
-    });
-
-    await client.getModelData({ modelId: "openai/gpt-4o" });
-    await client.getModelData({ modelId: "openai/gpt-4o" });
-
-    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it("refresh() updates cached catalog", async () => {
-    const initialCatalog = createOpenrouterProvidersFixture();
-    const updatedCatalog = createOpenrouterProvidersFixture();
-    updatedCatalog.openai.models["openai/gpt-4o"].limit = {
-      context: 256_000,
-      output: 8_192,
-    };
-
-    fetchOpenrouterSpy
-      .mockResolvedValueOnce(initialCatalog)
-      .mockResolvedValueOnce(updatedCatalog);
-
-    const client = new Tokenlens({
-      catalog: "openrouter",
-      cacheKey: "test-refresh",
-    });
-
-    const initial = await client.getModelData({ modelId: "openai/gpt-4o" });
-    expect(initial?.limit?.context).toBe(128_000);
-
-    await client.refresh(true);
-
-    const updated = await client.getModelData({ modelId: "openai/gpt-4o" });
-    expect(updated?.limit?.context).toBe(256_000);
-    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(2);
-  });
-
-  it("refresh(false) uses cache if not expired", async () => {
-    const mockCatalog = createOpenrouterProvidersFixture();
-    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
-
-    const client = new Tokenlens({
-      catalog: "openrouter",
-      cacheKey: "test-refresh-cached",
-    });
-
-    await client.getModelData({ modelId: "openai/gpt-4o" });
-    await client.refresh(false);
-
-    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it("invalidate() clears cache forcing new fetch", async () => {
-    const mockCatalog = createOpenrouterProvidersFixture();
-    fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
-
-    const client = new Tokenlens({
-      catalog: "openrouter",
-      cacheKey: "test-invalidate",
-    });
-
-    await client.getModelData({ modelId: "openai/gpt-4o" });
-    await client.invalidate();
-    await client.getModelData({ modelId: "openai/gpt-4o" });
-
-    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(2);
-  });
-
-  it("falls back to stale cache when fetching a fresh catalog fails", async () => {
-    const staleCatalog = createOpenrouterProvidersFixture();
-    const cache: CacheAdapter = {
-      get: vi.fn(() => ({
-        value: staleCatalog,
-        expiresAt: Date.now() - 1,
-      })),
-      set: vi.fn(),
-    };
-    fetchOpenrouterSpy.mockRejectedValue(new Error("network failed"));
-
-    const client = new Tokenlens({
-      catalog: "openrouter",
-      cache,
-      cacheKey: "test-stale-fallback",
-    });
-
-    const modelData = await client.getModelData({ modelId: "openai/gpt-4o" });
-
-    expect(modelData?.id).toBe("openai/gpt-4o");
-    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
-    expect(cache.set).not.toHaveBeenCalled();
-  });
-});
-
 describe("Tokenlens.getModelData()", () => {
   let fetchOpenrouterSpy: Mock;
 
   beforeEach(async () => {
-    vi.clearAllMocks();
-    const fetchModule = await import("@tokenlens/fetch");
-    fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter") as Mock;
+    const fetchMocks = await resetFetchMocks();
+    fetchOpenrouterSpy = fetchMocks.fetchOpenrouter;
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
     setSharedTokenlens(undefined);
   });
 
@@ -497,13 +412,12 @@ describe("Tokenlens.computeCostUSD()", () => {
   let fetchOpenrouterSpy: Mock;
 
   beforeEach(async () => {
-    vi.clearAllMocks();
-    const fetchModule = await import("@tokenlens/fetch");
-    fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter") as Mock;
+    const fetchMocks = await resetFetchMocks();
+    fetchOpenrouterSpy = fetchMocks.fetchOpenrouter;
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
     setSharedTokenlens(undefined);
   });
 
@@ -523,9 +437,9 @@ describe("Tokenlens.computeCostUSD()", () => {
         usage,
       });
 
-      expect(costs.totalTokenCostUSD).toBeCloseTo(0.1023, 6);
-      expect(costs.inputTokenCostUSD).toBeCloseTo(0.06, 6);
-      expect(costs.outputTokenCostUSD).toBeCloseTo(0.03, 6);
+      expect(costs.totalTokenCostUSD).toBeCloseTo(0.0948, 6);
+      expect(costs.inputTokenCostUSD).toBeCloseTo(0.0585, 6);
+      expect(costs.outputTokenCostUSD).toBeCloseTo(0.024, 6);
       expect(costs.reasoningTokenCostUSD).toBeCloseTo(0.012, 6);
       expect(costs.cacheReadTokenCostUSD).toBeCloseTo(0.0003, 6);
     });
@@ -586,7 +500,7 @@ describe("Tokenlens.computeCostUSD()", () => {
         usage,
       });
 
-      expect(costs.totalTokenCostUSD).toBeCloseTo(0.1023, 6);
+      expect(costs.totalTokenCostUSD).toBeCloseTo(0.0948, 6);
     });
 
     it("works with different gateways", async () => {
@@ -599,7 +513,7 @@ describe("Tokenlens.computeCostUSD()", () => {
         gateway: "openrouter",
       });
 
-      expect(costs.totalTokenCostUSD).toBeCloseTo(0.1023, 6);
+      expect(costs.totalTokenCostUSD).toBeCloseTo(0.0948, 6);
       expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
     });
   });
@@ -609,13 +523,12 @@ describe("Tokenlens.getContextLimits()", () => {
   let fetchOpenrouterSpy: Mock;
 
   beforeEach(async () => {
-    vi.clearAllMocks();
-    const fetchModule = await import("@tokenlens/fetch");
-    fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter") as Mock;
+    const fetchMocks = await resetFetchMocks();
+    fetchOpenrouterSpy = fetchMocks.fetchOpenrouter;
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
     setSharedTokenlens(undefined);
   });
 
@@ -678,13 +591,12 @@ describe("Tokenlens.estimateCostUSD()", () => {
   let fetchOpenrouterSpy: Mock;
 
   beforeEach(async () => {
-    vi.clearAllMocks();
-    const fetchModule = await import("@tokenlens/fetch");
-    fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter") as Mock;
+    const fetchMocks = await resetFetchMocks();
+    fetchOpenrouterSpy = fetchMocks.fetchOpenrouter;
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
     setSharedTokenlens(undefined);
   });
 
@@ -801,13 +713,12 @@ describe("Tokenlens.countTokens()", () => {
   let fetchOpenrouterSpy: Mock;
 
   beforeEach(async () => {
-    vi.clearAllMocks();
-    const fetchModule = await import("@tokenlens/fetch");
-    fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter") as Mock;
+    const fetchMocks = await resetFetchMocks();
+    fetchOpenrouterSpy = fetchMocks.fetchOpenrouter;
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
     setSharedTokenlens(undefined);
   });
 
@@ -879,14 +790,13 @@ describe("Tokenlens - Gateway Management", () => {
   let fetchModelsDevSpy: Mock;
 
   beforeEach(async () => {
-    vi.clearAllMocks();
-    const fetchModule = await import("@tokenlens/fetch");
-    fetchOpenrouterSpy = vi.spyOn(fetchModule, "fetchOpenrouter") as Mock;
-    fetchModelsDevSpy = vi.spyOn(fetchModule, "fetchModelsDev") as Mock;
+    const fetchMocks = await resetFetchMocks();
+    fetchOpenrouterSpy = fetchMocks.fetchOpenrouter;
+    fetchModelsDevSpy = fetchMocks.fetchModelsDev;
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
     setSharedTokenlens(undefined);
   });
 

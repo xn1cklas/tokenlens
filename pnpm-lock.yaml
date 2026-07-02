@@ -208,6 +208,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.63.1
         version: 0.63.1(zod@4.1.12)
+      '@tokenlens/tokenizer':
+        specifier: workspace:*
+        version: link:../../packages/tokenizer
       dotenv:
         specifier: ^17.2.2
         version: 17.2.2
@@ -224,6 +227,9 @@ importers:
 
   examples/openai-sdk:
     dependencies:
+      '@tokenlens/tokenizer':
+        specifier: workspace:*
+        version: link:../../packages/tokenizer
       dotenv:
         specifier: ^17.2.2
         version: 17.2.2
@@ -246,6 +252,9 @@ importers:
       '@ai-sdk/openai':
         specifier: ^2.0.35
         version: 2.0.35(zod@4.1.12)
+      '@tokenlens/tokenizer':
+        specifier: workspace:*
+        version: link:../../packages/tokenizer
       ai:
         specifier: ^5.0.52
         version: 5.0.52(zod@4.1.12)
@@ -334,9 +343,6 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.65.0
         version: 0.65.0(zod@4.1.12)
-      '@anthropic-ai/tokenizer':
-        specifier: ^0.0.4
-        version: 0.0.4
       '@dqbd/tiktoken':
         specifier: ^1.0.22
         version: 1.0.22
@@ -346,19 +352,10 @@ importers:
       '@tokenlens/core':
         specifier: workspace:*
         version: link:../core
-      llama-tokenizer-js:
-        specifier: ^1.2.2
-        version: 1.2.2
     devDependencies:
-      ai:
-        specifier: ^5.0.52
-        version: 5.0.52(zod@4.1.12)
       dotenv:
         specifier: ^17.2.2
         version: 17.2.2
-      openai:
-        specifier: ^4.104.0
-        version: 4.104.0(ws@8.18.3)(zod@4.1.12)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -374,10 +371,10 @@ importers:
       '@tokenlens/helpers':
         specifier: workspace:*
         version: link:../helpers
+    devDependencies:
       '@tokenlens/tokenizer':
         specifier: workspace:*
         version: link:../tokenizer
-    devDependencies:
       '@types/node':
         specifier: ^24.5.2
         version: 24.6.2
@@ -481,9 +478,6 @@ packages:
     peerDependenciesMeta:
       zod:
         optional: true
-
-  '@anthropic-ai/tokenizer@0.0.4':
-    resolution: {integrity: sha512-EHRKbxlxlc8W4KCBEseByJ7YwyYCmgu9OyN59H9+IYIGPoKv8tXyQXinkeGDI+cI8Tiuz9wk2jZb/kK7AyvL7g==}
 
   '@babel/helper-string-parser@7.27.1':
     resolution: {integrity: sha512-qMlSxKbpRlAridDExk92nSobyDdpPijUq2DW6oDnUqd0iOGxmQjyqhMIihI9+zv4LPyZdRje2cavWPbCbWm3eA==}
@@ -3183,9 +3177,6 @@ packages:
     resolution: {integrity: sha512-xi6IyHML+c9+Q3W0S4fCQJOym42pyurFiJUHEcEyHS0CeKzia4yZDEsLlqOFykxOdHpNy0NmvVO31vcSqAxJCg==}
     engines: {node: '>= 12.0.0'}
 
-  llama-tokenizer-js@1.2.2:
-    resolution: {integrity: sha512-Wmth393dc3odWU3IzARJ3r2oIfWgw9GdJ5Gm+hGhfECNO18UHLRqEFSf511jn4E9KcQGzuuKw4Wl08pHAemLAw==}
-
   local-pkg@1.1.2:
     resolution: {integrity: sha512-arhlxbFRmoQHl33a0Zkle/YWlmNwoyt6QNZEIJcqNbdrsix5Lvc4HyyI3EnwxTYlZYc32EbYrQ8SzEZ7dqgg9A==}
     engines: {node: '>=14'}
@@ -4019,9 +4010,6 @@ packages:
     resolution: {integrity: sha512-nt6AMGKW1p/70DF/hGBdJB57B8Tspmbp5gfJ8ilhLnt7kkr2ye7hzD6NVG8GGErk2HWF34igrL2CXmNIkzKqKw==}
     engines: {node: '>=18'}
 
-  tiktoken@1.0.22:
-    resolution: {integrity: sha512-PKvy1rVF1RibfF3JlXBSP0Jrcw2uq3yXdgcEXtKTYn3QJ/cBRBHDnrJ5jHky+MENZ6DIPwNUGWpkVx+7joCpNA==}
-
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
 
@@ -4486,11 +4474,6 @@ snapshots:
       json-schema-to-ts: 3.1.1
     optionalDependencies:
       zod: 4.1.12
-
-  '@anthropic-ai/tokenizer@0.0.4':
-    dependencies:
-      '@types/node': 18.19.127
-      tiktoken: 1.0.22
 
   '@babel/helper-string-parser@7.27.1': {}
 
@@ -7312,8 +7295,6 @@ snapshots:
       lightningcss-win32-arm64-msvc: 1.30.1
       lightningcss-win32-x64-msvc: 1.30.1
 
-  llama-tokenizer-js@1.2.2: {}
-
   local-pkg@1.1.2:
     dependencies:
       mlly: 1.8.0
@@ -8566,8 +8547,6 @@ snapshots:
       minimatch: 9.0.5
 
   throttleit@2.1.0: {}
-
-  tiktoken@1.0.22: {}
 
   tinybench@2.9.0: {}
 

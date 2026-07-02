@@ -38,8 +38,8 @@ const costs = computeTokenCostsForModel({
       input: 0.15,        // per 1M tokens
       output: 0.60,       // per 1M tokens
       reasoning: 0,
-      cacheRead: 0.075,   // per 1M tokens
-      cacheWrite: 0.30,   // per 1M tokens
+      cache_read: 0.075,  // per 1M cached input tokens
+      cache_write: 0.30,  // per 1M written cache tokens
     }
   },
   usage: {
@@ -53,12 +53,11 @@ const costs = computeTokenCostsForModel({
 
 console.log(costs);
 // {
-//   inputTokenCostUSD: 0.00015,
+//   inputTokenCostUSD: 0.000105,
 //   outputTokenCostUSD: 0.0003,
-//   reasoningTokenCostUSD: 0,
 //   cacheReadTokenCostUSD: 0.000015,
 //   cacheWriteTokenCostUSD: 0.00003,
-//   totalTokenCostUSD: 0.000495
+//   totalTokenCostUSD: 0.00045
 // }
 ```
 

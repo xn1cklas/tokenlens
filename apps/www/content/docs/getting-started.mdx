@@ -15,6 +15,12 @@ pnpm add tokenlens
 
 Tokenlens ships TypeScript types out of the box. Node.js 18+ (or a Fetch-compatible runtime) is required for the hosted catalogs (OpenRouter default, models.dev, Vercel, etc.).
 
+Token counting helpers (`countTokens` and `estimateCostUSD`) load `@tokenlens/tokenizer` on demand. Install it alongside `tokenlens` when you need tokenizer-backed estimates:
+
+```bash
+npm install tokenlens @tokenlens/tokenizer
+```
+
 ## 2. Quick usage (standalone helpers)
 
 If you just need metadata, cost, or context helpers, import the top-level functions. They reuse a lazily-created Tokenlens instance configured with the default `catalog: "auto"` setting (an alias for the OpenRouter gateway). To use a different dataset (for example, models.dev), pass `{ gateway: "models.dev" }` to the helper or instantiate your own client with `createTokenlens({ catalog: "models.dev" })`.
@@ -32,8 +38,8 @@ const details = await getModelData({ modelId: "openai/gpt-4o-mini" });
 const costs = await computeCostUSD({ modelId: "openai/gpt-4o-mini", usage });
 const limits = await getContextLimits({ modelId: "openai/gpt-4o-mini" });
 
-console.log(details?.id);             // "openai/gpt-4o-mini"
-console.log(details?.limit?.context); // combined token limit
+console.log(details.id);              // "openai/gpt-4o-mini"
+console.log(details.limit?.context);  // combined token limit
 console.log(costs.totalTokenCostUSD); // USD estimate for provided usage
 console.log(limits?.context);         // context window in tokens
 ```
@@ -137,7 +143,7 @@ const costs = await computeCostUSD({
 });
 ```
 
-`ModelDetails` is simply the resolved `SourceModel` entry (or `undefined` when the model is missing). Use `computeCostUSD` and `getContextLimits` for derived information.
+`ModelDetails` is simply the resolved `SourceModel` entry. Missing models throw `TokenlensError.ModelNotFound`. Use `computeCostUSD` and `getContextLimits` for derived information.
 
 ## 6. Next steps
 - Configure advanced behaviour: [Sources & Caching](./sources-and-caching.md)

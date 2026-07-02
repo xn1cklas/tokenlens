@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { TokenlensError } from "@tokenlens/core";
 
 const ANTHROPIC_MODELS = [
@@ -16,11 +15,14 @@ export type AnthropicModelId =
   | `anthropic/${AnthropicModelName}`;
 
 export async function anthropic(modelId: AnthropicModelName, data: string) {
-  if (!process.env["ANTHROPIC_API_KEY"]) {
+  const apiKey = (process.env as { ANTHROPIC_API_KEY?: string })
+    .ANTHROPIC_API_KEY;
+  if (!apiKey) {
     throw new TokenlensError.MissingEnvironmentVariable("ANTHROPIC_API_KEY");
   }
 
-  const client = new Anthropic({ apiKey: process.env["ANTHROPIC_API_KEY"] });
+  const { default: Anthropic } = await import("@anthropic-ai/sdk");
+  const client = new Anthropic({ apiKey });
 
   const result = await client.messages.countTokens({
     model: modelId,

@@ -18,13 +18,13 @@ type TokenlensMiddleware = LanguageModelMiddleware & {
   readonly middlewareVersion: "v2";
   readonly specificationVersion: "v3";
 };
-type AiSdkV6TokenUsage = {
+type AiSdkTokenUsage = {
   total?: unknown;
   reasoning?: unknown;
   cacheRead?: unknown;
   cacheWrite?: unknown;
 };
-type AiSdkV6Usage = {
+type AiSdkUsage = {
   inputTokens?: unknown;
   outputTokens?: unknown;
 };
@@ -80,12 +80,12 @@ const toRecord = (value: unknown): Record<string, unknown> | undefined =>
 const toTokenlensUsage = (
   usage: unknown,
 ): Parameters<TokenlensClient["computeCostUSD"]>[0]["usage"] => {
-  const value = toRecord(usage) as AiSdkV6Usage | undefined;
+  const value = toRecord(usage) as AiSdkUsage | undefined;
   const inputTokens = toRecord(value?.inputTokens) as
-    | AiSdkV6TokenUsage
+    | AiSdkTokenUsage
     | undefined;
   const outputTokens = toRecord(value?.outputTokens) as
-    | AiSdkV6TokenUsage
+    | AiSdkTokenUsage
     | undefined;
 
   if (inputTokens || outputTokens) {
@@ -208,14 +208,6 @@ export const wrapVercelLanguageModel = (
  */
 export const tokenlensMiddlewareV5 = tokenlensMiddleware;
 
-/**
- * AI SDK v6 middleware helper.
- *
- * Runtime-compatible with `LanguageModelV3Middleware`; exported separately so
- * v6 users can choose an explicit major-version helper.
- */
-export const tokenlensMiddlewareV6 = tokenlensMiddleware;
-
 export const withTokenlensV5 = (
   model: WrapLanguageModelOptions["model"],
   tokenlens: TokenlensClient,
@@ -223,13 +215,4 @@ export const withTokenlensV5 = (
   wrapLanguageModel({
     model,
     middleware: tokenlensMiddlewareV5(tokenlens),
-  });
-
-export const withTokenlensV6 = (
-  model: WrapLanguageModelOptions["model"],
-  tokenlens: TokenlensClient,
-): WrappedLanguageModel =>
-  wrapLanguageModel({
-    model,
-    middleware: tokenlensMiddlewareV6(tokenlens),
   });

@@ -102,7 +102,7 @@ export function ProviderSidebar({
         <span className="text-xs opacity-60">
           (
           {selectedProvider
-            ? modelsCountByProvider[selectedProvider]
+            ? (modelsCountByProvider[selectedProvider] ?? 0)
             : totalModels}
           )
         </span>

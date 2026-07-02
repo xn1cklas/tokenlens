@@ -1,6 +1,8 @@
-import { writeFile } from "node:fs/promises";
 import { describe, expect, it, vi } from "vitest";
 import { fetchModelsDev, fetchOpenrouter, fetchVercel } from "../src/index.ts";
+
+const describeLive =
+  process.env["RUN_LIVE_TESTS"] === "1" ? describe : describe.skip;
 
 const jsonResponse = (body: unknown): Response =>
   ({
@@ -81,7 +83,7 @@ describe("fetch injection", () => {
   });
 });
 
-describe("live fetchers", () => {
+describeLive("live fetchers", () => {
   it("fetchOpenrouter returns catalog with providers and models", async () => {
     const providers = await fetchOpenrouter();
 
@@ -150,23 +152,11 @@ describe("live fetchers", () => {
     expect(typeof model.name).toBe("string");
   }, 30000);
 
-  it.skip("live parity snapshot and overlap checks", async () => {
+  it("live parity and overlap checks", async () => {
     const [openrouter, modelsdev] = await Promise.all([
       fetchOpenrouter(),
       fetchModelsDev(),
     ]);
-
-    // Dump snapshots to project temp dir for manual inspection
-    await writeFile(
-      new URL("./out-openrouter.json", import.meta.url),
-      JSON.stringify(openrouter, null, 2),
-      "utf8",
-    );
-    await writeFile(
-      new URL("./out-modelsdev.json", import.meta.url),
-      JSON.stringify(modelsdev, null, 2),
-      "utf8",
-    );
 
     // Compute overlap by canonical id
     const orIds = new Set(

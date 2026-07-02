@@ -30,6 +30,14 @@ pnpm add tokenlens
 yarn add tokenlens
 ```
 
+Token counting helpers (`countTokens` and `estimateCostUSD`) load the tokenizer package on demand:
+
+```bash
+npm install tokenlens @tokenlens/tokenizer
+# or
+pnpm add tokenlens @tokenlens/tokenizer
+```
+
 ## Quick Start
 
 ```ts
@@ -87,12 +95,12 @@ Get full model metadata including pricing, limits, and provider information.
 
 ```ts
 const model = await tokenlens.getModelData({
-  modelId: "openai/gpt-4o-mini",
-  provider?: "openai", // optional, useful when modelId doesn't include provider
+  modelId: "gpt-4o-mini",
+  provider: "openai", // optional when modelId already includes provider
 });
 ```
 
-**Returns:** `Promise<SourceModel | undefined>`
+**Returns:** `Promise<SourceModel>`; throws `TokenlensError.ModelNotFound` when the model cannot be resolved.
 
 #### `computeCostUSD(args)`
 
@@ -100,8 +108,8 @@ Calculate token costs in USD based on actual usage.
 
 ```ts
 const costs = await tokenlens.computeCostUSD({
-  modelId: "openai/gpt-4o-mini",
-  provider?: "openai", // optional
+  modelId: "gpt-4o-mini",
+  provider: "openai", // optional when modelId already includes provider
   usage: {
     input_tokens: 1000,
     output_tokens: 500,
@@ -131,7 +139,7 @@ Estimate costs by counting tokens in text before making an API call.
 ```ts
 const estimate = await tokenlens.estimateCostUSD({
   modelId: "gpt-4o", // can use short form or full provider/model
-  provider?: "openai", // optional
+  provider: "openai", // optional when modelId already includes provider
   data: "Write a story about a robot",
 });
 
@@ -144,6 +152,8 @@ console.log(`Input tokens: ${estimate.inputTokens}`);
 #### `countTokens(args)`
 
 Count tokens in text for a given model.
+
+Requires `@tokenlens/tokenizer` to be installed. You can also import tokenizers directly from `tokenlens/tokenizer`.
 
 ```ts
 const tokens = await tokenlens.countTokens({
@@ -162,8 +172,8 @@ Get context, input, and output token limits for a model.
 
 ```ts
 const limits = await tokenlens.getContextLimits({
-  modelId: "openai/gpt-4o-mini",
-  provider?: "openai", // optional
+  modelId: "gpt-4o-mini",
+  provider: "openai", // optional when modelId already includes provider
 });
 
 console.log(`Context: ${limits?.context}`);
@@ -179,17 +189,19 @@ Calculate context window health metrics.
 
 ```ts
 const health = await tokenlens.getContextHealth({
-  modelId: "openai/gpt-4o-mini",
-  provider?: "openai", // optional
+  modelId: "gpt-4o-mini",
+  provider: "openai", // optional when modelId already includes provider
   usage: {
     input_tokens: 50000,
     output_tokens: 10000,
   }
 });
 
-console.log(`Status: ${health.status}`); // "healthy" | "warning" | "critical"
-console.log(`Used: ${health.usedPercentage.toFixed(1)}%`);
-console.log(`Remaining: ${health.remainingTokens} tokens`);
+if (health) {
+  console.log(`Status: ${health.status}`); // "healthy" | "warning" | "critical"
+  console.log(`Used: ${health.usedPercentage.toFixed(1)}%`);
+  console.log(`Remaining: ${health.remainingTokens} tokens`);
+}
 ```
 
 **Returns:** Context health metrics including:
@@ -359,10 +371,10 @@ const tokenlens = new Tokenlens({
 
 ## Further Reading
 
-- [Migration Guide (v1 to v2)](docs/migrations/migration-v1-to-v2.md)
-- [Glossary](docs/glossary.md)
-- [Sources & Caching](docs/sources-and-caching.md)
-- [Testing Guide](docs/testing.md)
+- [Migration Guide (v1 to v2)](https://github.com/xn1cklas/tokenlens/blob/HEAD/apps/www/content/docs/migrations/migration-v1-to-v2.mdx)
+- [Glossary](https://github.com/xn1cklas/tokenlens/blob/HEAD/apps/www/content/docs/glossary.mdx)
+- [Sources & Caching](https://github.com/xn1cklas/tokenlens/blob/HEAD/apps/www/content/docs/sources-and-caching.mdx)
+- [Testing Guide](https://github.com/xn1cklas/tokenlens/blob/HEAD/apps/www/content/docs/testing.mdx)
 
 ## License
 

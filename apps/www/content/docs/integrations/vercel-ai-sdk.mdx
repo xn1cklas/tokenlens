@@ -3,14 +3,14 @@ title: "Vercel AI SDK Integration"
 description: "Compute costs from Vercel AI SDK usage and attach metadata via middleware."
 ---
 
-Tokenlens integrates seamlessly with the Vercel AI SDK by accepting AI SDK v5 `LanguageModelV2` and AI SDK v6 `LanguageModelV3` metadata. This guide shows you how to estimate costs from Vercel usage payloads and how to attach Tokenlens cost hints to SDK responses.
+Tokenlens integrates seamlessly with the Vercel AI SDK by accepting AI SDK v5 `LanguageModelV2` metadata. This guide shows you how to estimate costs from Vercel usage payloads and how to attach Tokenlens cost hints to SDK responses.
 
 ## Installing dependencies
 
 Install Tokenlens, the Vercel AI SDK adapter, and the AI SDK provider packages you use. The examples below cover OpenAI, Anthropic, and xAI—install only the providers relevant to your project:
 
 ```bash
-pnpm add tokenlens @tokenlens/vercel @ai-sdk/openai @ai-sdk/anthropic @ai-sdk/xai
+pnpm add tokenlens @tokenlens/vercel ai @ai-sdk/openai @ai-sdk/anthropic @ai-sdk/xai
 ```
 
 > Tokenlens works with any provider supported by the Vercel AI SDK; the examples below cover OpenAI, Anthropic, and xAI.
@@ -33,7 +33,7 @@ const usage = {
 
 const costs = await computeCostUSD({
   modelId: model.modelId,
-  provider: model.provider ?? model.providerId,
+  provider: model.provider,
   usage,
 });
 
@@ -44,7 +44,7 @@ Tokenlens normalizes provider ids that include namespaces (e.g., `openai.respons
 
 ## Attaching cost metadata via middleware
 
-Tokenlens provides middleware helpers for AI SDK v5 and v6 that add cost information to the `providerMetadata` of generated responses.
+Tokenlens provides middleware helpers for AI SDK v5 that add cost information to the `providerMetadata` of generated responses.
 
 ```ts
 import { withTokenlens } from "@tokenlens/vercel";
@@ -69,7 +69,7 @@ console.log(result.providerMetadata?.tokenlens?.costs); // Token cost breakdown
 
 The middleware calls `tokenlens.computeCostUSD` internally using the model metadata and usage provided by the SDK.
 
-Use `withTokenlensV5` or `tokenlensMiddlewareV5` when you want explicit AI SDK v5 names, and `withTokenlensV6` or `tokenlensMiddlewareV6` for explicit AI SDK v6 names. The default `withTokenlens` helper follows the installed AI SDK major.
+Use `withTokenlensV5` or `tokenlensMiddlewareV5` when you want explicit AI SDK v5 names. The default `withTokenlens` helper wraps the installed AI SDK v5 language model.
 
 ## Custom Tokenlens instances
 
@@ -116,7 +116,7 @@ This isolates integration tests from external API fluctuations while ensuring To
 
 ## Summary
 
-- Tokenlens understands Vercel AI SDK model metadata (`modelId`, `provider`/`providerId`).
+- Tokenlens understands Vercel AI SDK model metadata (`modelId`, `provider`).
 - Pass usage payloads directly to `computeCostUSD` or fetch metadata via `getModelData`.
 - Use `@tokenlens/vercel` middleware to automatically compute costs when generating responses.
 - Customise the catalog and caching (e.g., fixtures, TTL, cache adapter) via `createTokenlens` when needed.

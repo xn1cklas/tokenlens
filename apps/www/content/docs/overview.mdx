@@ -31,7 +31,7 @@ The instance exposes helper methods that all operate on the same cached catalog:
 - `computeCostUSD({ modelId, provider?, usage })`
 - `getContextLimits({ modelId, provider? })`
 - `getContextHealth({ modelId, provider?, usage })`
-- `countTokens({ modelId, data })` and `estimateCostUSD({ modelId, data, provider? })`
+- `countTokens({ modelId, data })` and `estimateCostUSD({ modelId, data, provider? })` when `@tokenlens/tokenizer` is installed.
 
 ### Catalogs
 Tokenlens ships with gateway identifiers that point at hosted catalogs:
@@ -49,7 +49,7 @@ Tokenlens caches provider metadata via an in-memory adapter (`MemoryCache`) by d
 - On fetch errors, Tokenlens falls back to the last cached entry if available.
 
 ### Standalone helpers
-The root module also exports `computeCostUSD`, `getModelData`, `getContextLimits`, `getContextHealth`, `countTokens`, and `estimateCostUSD`. The first call to any helper lazily creates a shared `Tokenlens` instance with default options (`catalog: "auto"`—the OpenRouter gateway—and an in-memory cache). Use the `gateway` option (for example, `{ gateway: "models.dev" }`) or instantiate via `createTokenlens()` when you need a different catalog.
+The root module also exports `computeCostUSD`, `getModelData`, `getContextLimits`, `getContextHealth`, `countTokens`, and `estimateCostUSD`. The token-counting helpers load `@tokenlens/tokenizer` on demand. The first call to any helper lazily creates a shared `Tokenlens` instance with default options (`catalog: "auto"`—the OpenRouter gateway—and an in-memory cache). Use the `gateway` option (for example, `{ gateway: "models.dev" }`) or instantiate via `createTokenlens()` when you need a different catalog.
 
 When you require custom configuration (specific gateway, custom cache, fixture catalogs, or local overrides), instantiate an explicit Tokenlens client via `createTokenlens` and reuse it within your application.
 

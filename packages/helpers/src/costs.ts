@@ -17,24 +17,60 @@ export type TokenCosts = {
   };
 };
 
+function usableRate(rate?: number): number | undefined {
+  return rate !== undefined && Number.isFinite(rate) && rate >= 0
+    ? rate
+    : undefined;
+}
+
 export function computeTokenCostsForModel(args: {
   model?: SourceModel;
   usage: Usage;
 }): TokenCosts {
   const { model, usage } = args;
   const normalized = normalizeUsage(usage);
-  const cost = model?.cost ?? {};
-  const inputUSD = perMTokensToUnitCostUSD(normalized.input, cost.input);
-  const outputUSD = perMTokensToUnitCostUSD(normalized.output, cost.output);
-  const reasoningUSD = normalized.reasoningTokens
-    ? perMTokensToUnitCostUSD(normalized.reasoningTokens, cost.reasoning)
+  const rawCost = model?.cost ?? {};
+  const cost = {
+    input: usableRate(rawCost.input),
+    output: usableRate(rawCost.output),
+    reasoning: usableRate(rawCost.reasoning),
+    cache_read: usableRate(rawCost.cache_read),
+    cache_write: usableRate(rawCost.cache_write),
+  };
+  const cacheReadTokens = normalized.cacheReads ?? 0;
+  const cacheWriteTokens = normalized.cacheWrites ?? 0;
+  const reasoningTokens = normalized.reasoningTokens ?? 0;
+  const cacheReadHasRate = cost.cache_read !== undefined;
+  const cacheWriteHasRate = cost.cache_write !== undefined;
+  const cacheTokensIncludedInInput =
+    normalized.cacheTokensIncludedInInput !== false;
+  const inputTokenAdjustment = cacheTokensIncludedInInput
+    ? (cacheReadHasRate ? cacheReadTokens : 0) +
+      (cacheWriteHasRate ? cacheWriteTokens : 0)
     : 0;
-  const cacheReadUSD = normalized.cacheReads
-    ? perMTokensToUnitCostUSD(normalized.cacheReads, cost.cache_read)
-    : 0;
-  const cacheWriteUSD = normalized.cacheWrites
-    ? perMTokensToUnitCostUSD(normalized.cacheWrites, cost.cache_write)
-    : 0;
+  const billableInputTokens = Math.max(
+    0,
+    normalized.input - inputTokenAdjustment,
+  );
+  const hasReasoningRate = cost.reasoning !== undefined;
+  const billableOutputTokens =
+    hasReasoningRate && normalized.reasoningIncludedInOutput
+      ? Math.max(0, normalized.output - reasoningTokens)
+      : normalized.output;
+  const inputUSD = perMTokensToUnitCostUSD(billableInputTokens, cost.input);
+  const outputUSD = perMTokensToUnitCostUSD(billableOutputTokens, cost.output);
+  const reasoningUSD =
+    reasoningTokens && hasReasoningRate
+      ? perMTokensToUnitCostUSD(reasoningTokens, cost.reasoning)
+      : 0;
+  const cacheReadUSD =
+    cacheReadTokens && cacheReadHasRate
+      ? perMTokensToUnitCostUSD(cacheReadTokens, cost.cache_read)
+      : 0;
+  const cacheWriteUSD =
+    cacheWriteTokens && cacheWriteHasRate
+      ? perMTokensToUnitCostUSD(cacheWriteTokens, cost.cache_write)
+      : 0;
   const total =
     inputUSD + outputUSD + reasoningUSD + cacheReadUSD + cacheWriteUSD;
 

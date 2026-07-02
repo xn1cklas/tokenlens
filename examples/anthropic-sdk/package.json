@@ -1,5 +1,5 @@
 {
-  "name": "anthopic-sdk",
+  "name": "anthropic-sdk",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.63.1",
+    "@tokenlens/tokenizer": "workspace:*",
     "dotenv": "^17.2.2",
     "tokenlens": "workspace:*"
   },

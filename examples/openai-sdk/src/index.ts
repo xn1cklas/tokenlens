@@ -68,10 +68,7 @@ async function main(): Promise<void> {
   if (usage) {
     const costs = await computeCostUSD({
       modelId: MODEL_ID,
-      usage: {
-        input_tokens: usage.prompt_tokens,
-        output_tokens: usage.completion_tokens,
-      },
+      usage,
     });
 
     console.log(`\nActual usage:`);
@@ -95,10 +92,7 @@ async function main(): Promise<void> {
   if (usage && model) {
     const health = await getContextHealth({
       modelId: MODEL_ID,
-      usage: {
-        input_tokens: usage.prompt_tokens,
-        output_tokens: usage.completion_tokens,
-      },
+      usage,
     });
 
     if (health) {

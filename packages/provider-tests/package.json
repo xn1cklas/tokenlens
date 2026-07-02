@@ -6,7 +6,8 @@
     "pretest": "pnpm -w --filter tokenlens build",
     "test": "vitest --config ../../vitest.config.ts --project provider-tests",
     "test:run": "vitest run --config ../../vitest.config.ts --project provider-tests",
-    "test:live": "vitest run --config ../../vitest.config.ts --project provider-tests -t smoke",
+    "test:live": "pnpm -w --filter tokenlens build && RUN_LIVE_TESTS=1 vitest run --config ../../vitest.config.ts --project provider-tests",
+    "typecheck": "tsc --noEmit",
     "bench": "tsx scripts/benchmark.ts"
   },
   "devDependencies": {

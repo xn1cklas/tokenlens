@@ -9,8 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-export type SourceValue = "openrouter" | "modelsdev" | "vercel";
+import { CATALOG_SOURCE_OPTIONS } from "@/lib/catalog-sources";
+import type { CatalogSource } from "./types";
 
 export function SearchControls({
   search,
@@ -20,8 +20,8 @@ export function SearchControls({
 }: {
   search: string;
   onSearchChange: (value: string) => void;
-  source: SourceValue;
-  onSourceChange: (value: SourceValue) => void;
+  source: CatalogSource;
+  onSourceChange: (value: CatalogSource) => void;
 }) {
   return (
     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
@@ -34,15 +34,17 @@ export function SearchControls({
         </label>
         <Select
           value={source}
-          onValueChange={(v: string) => onSourceChange(v as SourceValue)}
+          onValueChange={(v: string) => onSourceChange(v as CatalogSource)}
         >
           <SelectTrigger id="source-select" className="w-full sm:w-[160px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="openrouter">OpenRouter</SelectItem>
-            <SelectItem value="modelsdev">Models.dev</SelectItem>
-            <SelectItem value="vercel">Vercel AI Gateway</SelectItem>
+            {CATALOG_SOURCE_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

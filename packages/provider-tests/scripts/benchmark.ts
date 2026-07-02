@@ -59,14 +59,6 @@ function buildScenarios(maxTokens: number | undefined): Scenario[] {
   ];
 }
 
-function toUsagePayload(usage: ScenarioUsage) {
-  return {
-    input_tokens: usage.inputTokens,
-    output_tokens: usage.outputTokens,
-    total_tokens: usage.totalTokens,
-  };
-}
-
 function computeContextStats(args: {
   contextLimit?: number;
   inputLimit?: number;
@@ -134,7 +126,7 @@ async function main() {
   const tokenlens = createTokenlens();
   const results: Array<Record<string, unknown>> = [];
 
-  const providers: SourceProviders = await tokenlens.getProviders();
+  const providers: SourceProviders = await tokenlens.refresh();
 
   for (const [providerId, provider] of Object.entries(providers) as Array<
     [string, SourceProviders[string]]
@@ -148,19 +140,22 @@ async function main() {
 
       const scenarioResults: Array<Record<string, unknown>> = [];
       for (const scenario of scenarios) {
-        const usagePayload = toUsagePayload(scenario.usage);
         const cost: TokenCosts = await tokenlens.computeCostUSD({
           modelId: canonicalId,
           provider: providerId,
-          usage: usagePayload,
+          usage: scenario.usage,
         });
 
         const stats = computeContextStats({
-          contextLimit: limit.context,
-          inputLimit: limit.input,
-          outputLimit: limit.output,
           usage: scenario.usage,
-          reserveOutput: scenario.reserveOutput,
+          ...(limit.context !== undefined
+            ? { contextLimit: limit.context }
+            : {}),
+          ...(limit.input !== undefined ? { inputLimit: limit.input } : {}),
+          ...(limit.output !== undefined ? { outputLimit: limit.output } : {}),
+          ...(scenario.reserveOutput !== undefined
+            ? { reserveOutput: scenario.reserveOutput }
+            : {}),
         });
 
         scenarioResults.push({
@@ -177,10 +172,9 @@ async function main() {
       results.push({
         id: model?.id ?? canonicalId,
         provider: providerId,
-        status: (model?.extras as Record<string, unknown> | undefined)?.status,
         maxTokens: limit.context,
-        pricePerTokenIn: model?.cost?.input,
-        pricePerTokenOut: model?.cost?.output,
+        pricePerMillionTokensIn: model?.cost?.input,
+        pricePerMillionTokensOut: model?.cost?.output,
         source: provider?.source,
         contextWindow: {
           combinedMax: limit.context,
@@ -193,7 +187,7 @@ async function main() {
   }
 
   // Stable sort by id for reproducibility
-  results.sort((a, b) => String(a.id).localeCompare(String(b.id)));
+  results.sort((a, b) => String(a["id"]).localeCompare(String(b["id"])));
 
   const outDir = resolve(process.cwd(), "benchmarks");
   await mkdir(outDir, { recursive: true });

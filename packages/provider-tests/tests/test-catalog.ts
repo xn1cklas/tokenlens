@@ -68,6 +68,7 @@ export const testProviders: SourceProviders = {
   },
   xai: {
     id: "xai",
+    aliases: ["xai.chat"],
     name: "xAI",
     source: "package",
     schemaVersion: 1,

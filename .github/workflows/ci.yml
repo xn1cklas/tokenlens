@@ -66,11 +66,20 @@ jobs:
       - name: Build packages only (turbo)
         run: pnpm turbo run build --filter='./packages/*'
 
+      - name: Typecheck packages
+        run: pnpm turbo run typecheck --filter='./packages/*'
+
+      - name: Smoke test packed exports
+        run: pnpm run test:exports
+
       - name: Typecheck examples
         run: pnpm turbo run typecheck --filter='./examples/*'
 
       - name: Typecheck apps
         run: pnpm turbo run typecheck --filter='./apps/*'
+
+      - name: Build docs app
+        run: pnpm turbo run build --filter='./apps/www'
 
   test:
     name: Test

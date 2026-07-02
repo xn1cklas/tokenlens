@@ -1,18 +1,10 @@
-import {
-  type AnthropicModelId,
-  type AnthropicModelName,
-  anthropic,
+import { TokenlensError } from "@tokenlens/core";
+import type {
+  AnthropicModelId,
+  AnthropicModelName,
 } from "./tokenizers/anthropic.js";
-import {
-  type GoogleModelId,
-  type GoogleModelName,
-  google,
-} from "./tokenizers/google.js";
-import {
-  type OpenAIModelId,
-  type OpenAIModelName,
-  openai,
-} from "./tokenizers/openai.js";
+import type { GoogleModelId, GoogleModelName } from "./tokenizers/google.js";
+import type { OpenAIModelId, OpenAIModelName } from "./tokenizers/openai.js";
 
 /**
  * Type-safe union of all supported model IDs across all providers.
@@ -20,6 +12,95 @@ import {
  * Also allows arbitrary strings for fallback behavior.
  */
 export type ModelId = GoogleModelId | OpenAIModelId | AnthropicModelId | string;
+
+function isUnsupportedTokenizerModel(error: unknown): boolean {
+  const code =
+    error && typeof error === "object"
+      ? (error as { code?: unknown }).code
+      : undefined;
+  return code === TokenlensError.UnsupportedTokenizerModel.code;
+}
+
+async function countOpenAiTokens(
+  modelId: OpenAIModelName,
+  data: string,
+): Promise<number | undefined> {
+  const { openai } = await import("./tokenizers/openai.js");
+
+  try {
+    return await openai(modelId, data);
+  } catch (error) {
+    if (isUnsupportedTokenizerModel(error)) {
+      return await openai("gpt-5", data);
+    }
+    throw error;
+  }
+}
+
+type TokenizerProvider = {
+  providerPrefix: string;
+  modelPrefixes: readonly string[];
+  count: (modelId: string, data: string) => Promise<number | undefined>;
+};
+
+const tokenizerProviders: readonly TokenizerProvider[] = [
+  {
+    providerPrefix: "openai",
+    modelPrefixes: ["gpt-"],
+    count: (modelId, data) =>
+      countOpenAiTokens(modelId as OpenAIModelName, data),
+  },
+  {
+    providerPrefix: "anthropic",
+    modelPrefixes: ["claude-"],
+    count: async (modelId, data) => {
+      const { anthropic } = await import("./tokenizers/anthropic.js");
+      return await anthropic(modelId as AnthropicModelName, data);
+    },
+  },
+  {
+    providerPrefix: "google",
+    modelPrefixes: ["gemini-"],
+    count: async (modelId, data) => {
+      const { google } = await import("./tokenizers/google.js");
+      return await google(modelId as GoogleModelName, data);
+    },
+  },
+];
+
+function splitProviderPrefix(modelId: string):
+  | {
+      providerPrefix: string;
+      modelName: string;
+    }
+  | undefined {
+  const separatorIndex = modelId.indexOf("/");
+  if (separatorIndex <= 0) return undefined;
+  return {
+    providerPrefix: modelId.slice(0, separatorIndex),
+    modelName: modelId.slice(separatorIndex + 1),
+  };
+}
+
+function resolveTokenizerProvider(modelId: string):
+  | {
+      provider: TokenizerProvider;
+      modelName: string;
+    }
+  | undefined {
+  const split = splitProviderPrefix(modelId);
+  if (split) {
+    const provider = tokenizerProviders.find(
+      (entry) => entry.providerPrefix === split.providerPrefix,
+    );
+    return provider ? { provider, modelName: split.modelName } : undefined;
+  }
+
+  const provider = tokenizerProviders.find((entry) =>
+    entry.modelPrefixes.some((prefix) => modelId.startsWith(prefix)),
+  );
+  return provider ? { provider, modelName: modelId } : undefined;
+}
 
 /**
  * Count tokens in a text string for a given model.
@@ -45,38 +126,14 @@ export async function countTokens(
   modelId: ModelId,
   data: string,
 ): Promise<number | undefined> {
-  // Route to the correct tokenizer and strip provider prefix
-  if (modelId.startsWith("openai/")) {
-    const cleanId = modelId.replace("openai/", "") as OpenAIModelName;
-    return await openai(cleanId, data);
-  }
-
-  if (modelId.startsWith("anthropic/")) {
-    const cleanId = modelId.replace("anthropic/", "") as AnthropicModelName;
-    return await anthropic(cleanId, data);
-  }
-
-  if (modelId.startsWith("google/")) {
-    const cleanId = modelId.replace("google/", "") as GoogleModelName;
-    return await google(cleanId, data);
-  }
-
-  // Handle unprefixed model IDs
-  if (modelId.startsWith("gpt-")) {
-    return await openai(modelId as OpenAIModelName, data);
-  }
-
-  if (modelId.startsWith("claude-")) {
-    return await anthropic(modelId as AnthropicModelName, data);
-  }
-
-  if (modelId.startsWith("gemini-")) {
-    return await google(modelId as GoogleModelName, data);
+  const resolved = resolveTokenizerProvider(modelId);
+  if (resolved) {
+    return await resolved.provider.count(resolved.modelName, data);
   }
 
   // Fallback to OpenAI GPT-5 for unknown models
   console.warn(
     `Unknown model ID: "${modelId}". Falling back to OpenAI GPT-5 tokenizer (o200k_base encoding).`,
   );
-  return await openai("gpt-5", data);
+  return await countOpenAiTokens("gpt-5", data);
 }

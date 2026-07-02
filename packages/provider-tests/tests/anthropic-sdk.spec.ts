@@ -1,5 +1,4 @@
 import type { Usage as AnthropicUsage } from "@anthropic-ai/sdk/resources/messages/messages";
-import { getContextHealth } from "tokenlens";
 import { describe, expect, it } from "vitest";
 import { createTestClient } from "./test-catalog.js";
 
@@ -20,12 +19,7 @@ describe("Anthropic SDK - computeCostUSD()", () => {
 
     const costs = await tokenlens.computeCostUSD({
       modelId: "claude-3-5-sonnet-20241022",
-      usage: {
-        input_tokens: usage.input_tokens,
-        output_tokens: usage.output_tokens,
-        cache_read_tokens: usage.cache_read_input_tokens ?? undefined,
-        cache_write_tokens: usage.cache_creation_input_tokens ?? undefined,
-      },
+      usage,
     });
 
     expect(costs.inputTokenCostUSD).toBeCloseTo(0.009, 6); // 3000 * 3 / 1M
@@ -50,10 +44,7 @@ describe("Anthropic SDK - computeCostUSD()", () => {
 
     const costs = await tokenlens.computeCostUSD({
       modelId: "claude-3-5-sonnet-20241022",
-      usage: {
-        input_tokens: usage.input_tokens,
-        output_tokens: usage.output_tokens,
-      },
+      usage,
     });
 
     expect(costs.inputTokenCostUSD).toBeCloseTo(0.012, 6); // 4000 * 3 / 1M
@@ -115,10 +106,7 @@ describe("Anthropic SDK - Context Health", () => {
 
     const health = await tokenlens.getContextHealth({
       modelId: "claude-3-5-sonnet-20241022",
-      usage: {
-        input_tokens: usage.input_tokens,
-        output_tokens: usage.output_tokens,
-      },
+      usage,
     });
 
     expect(health).toBeDefined();

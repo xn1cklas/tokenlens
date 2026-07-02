@@ -17,6 +17,8 @@ Count tokens for any LLM. Auto-detects provider from model name.
 npm install @tokenlens/tokenizer
 ```
 
+Requires Node.js 20 or newer.
+
 Peer dependencies
 - OpenAI: `@dqbd/tiktoken` (local, no API key)
 - Anthropic: `@anthropic-ai/sdk` (requires `ANTHROPIC_API_KEY`)
