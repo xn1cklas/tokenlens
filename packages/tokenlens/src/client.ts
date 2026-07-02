@@ -1,126 +1,291 @@
 import {
+  assertSourceProviders,
   type SourceModel,
+  type SourceProvider,
   type SourceProviders,
   TokenlensError,
   type Usage,
 } from "@tokenlens/core";
-import { fetchModelsDev, fetchOpenrouter, fetchVercel } from "@tokenlens/fetch";
+import type { CatalogInput } from "@tokenlens/fetch";
+import {
+  catalogInputCacheKey,
+  fetchCatalogSource,
+  isCatalogSource,
+  normalizeCatalogId,
+} from "@tokenlens/fetch";
 import type { TokenCosts } from "@tokenlens/helpers";
 import {
   computeTokenCostsForModel,
   getContextHealth,
 } from "@tokenlens/helpers";
-import { countTokens, type TokenizerModelId } from "@tokenlens/tokenizer";
 import { jitter, MemoryCache } from "./cache.js";
-import { resolveModel } from "./resolve.js";
+import { applyCatalogOverrides } from "./overrides.js";
+import {
+  createModelResolver,
+  type ModelResolver,
+  type ResolveModelResult,
+} from "./resolve.js";
+import {
+  countTokensWithOptionalTokenizer,
+  type TokenizerModelId,
+} from "./tokenizer.js";
 import {
   type CacheAdapter,
-  GATEWAY_IDS,
-  type GatewayId,
+  type Catalog,
+  type CatalogOverrides,
+  DEFAULT_CATALOG_ID,
+  type TokenCounter,
   type TokenlensOptions,
+  type TokenlensSourceOptions,
 } from "./types.js";
 
-export type ModelDetails = SourceModel | undefined;
+export type ModelDetails = SourceModel;
+type ResolvedModel = Omit<ResolveModelResult, "model"> & {
+  model: SourceModel;
+};
 
 export class Tokenlens {
-  private readonly catalog: GatewayId | SourceProviders;
-  private readonly overrides: SourceProviders | undefined;
+  private readonly catalog: Catalog;
+  private readonly overrides: CatalogOverrides | undefined;
   private readonly ttlMs: number;
-  private readonly cache: CacheAdapter;
+  private readonly cache: CacheAdapter | undefined;
   private readonly cacheKey: string;
   private readonly fetchImpl: typeof globalThis.fetch;
+  private readonly signal: AbortSignal | undefined;
+  private readonly timeoutMs: number | undefined;
+  private readonly staleIfError: boolean;
+  private readonly sourceOptions: TokenlensSourceOptions | undefined;
+  private readonly tokenizer: TokenCounter | false | undefined;
+  private inFlightCatalog: Promise<SourceProviders> | undefined;
+  private catalogRequestVersion = 0;
+  private mergedCatalogCache:
+    | {
+        source: SourceProviders;
+        merged: SourceProviders;
+      }
+    | undefined;
+  private resolverCache:
+    | {
+        catalog: SourceProviders;
+        resolver: ModelResolver;
+      }
+    | undefined;
 
   constructor(options?: TokenlensOptions) {
-    // use automode as default
-    this.catalog = options?.catalog ?? GATEWAY_IDS[1];
+    this.catalog = options?.catalog ?? DEFAULT_CATALOG_ID;
     this.overrides = options?.overrides;
     this.ttlMs = options?.ttlMs ?? 24 * 60 * 60 * 1000;
-    this.cache = options?.cache ?? new MemoryCache();
+    this.cache =
+      options?.cache === false || this.ttlMs <= 0
+        ? undefined
+        : (options?.cache ?? new MemoryCache());
     this.fetchImpl = options?.fetch ?? globalThis.fetch;
+    this.signal = options?.signal;
+    this.timeoutMs = options?.timeoutMs;
+    this.staleIfError = options?.staleIfError ?? true;
+    this.sourceOptions = options?.sourceOptions;
+    this.tokenizer = options?.tokenizer;
 
-    // only cache when we load the catalog form a gateway
-    if (typeof this.catalog === "string") {
-      this.cacheKey = options?.cacheKey ?? `tokenlens:v2:${this.catalog}`;
+    // only cache when we load the catalog from a hosted or async source
+    if (typeof this.catalog === "string" || isCatalogSource(this.catalog)) {
+      this.cacheKey =
+        options?.cacheKey ??
+        `tokenlens:v2:${catalogInputCacheKey(this.catalog)}`;
     } else {
       this.cacheKey = options?.cacheKey ?? "";
     }
   }
 
-  private async fetchCatalog(): Promise<SourceProviders> {
-    if (typeof this.catalog === "object") {
-      return Promise.resolve(this.catalog);
-    }
-
-    switch (this.catalog) {
-      case "auto":
-        return fetchOpenrouter({ fetch: this.fetchImpl });
-      case "openrouter":
-        return fetchOpenrouter({ fetch: this.fetchImpl });
-      case "models.dev":
-        return fetchModelsDev({ fetch: this.fetchImpl });
-      case "vercel":
-        return fetchVercel({ fetch: this.fetchImpl });
-      // TODO implement netlify AI Gateway
-      // case "netlify":
-      //   catalog = [];
-      //   break;
-      default:
-        throw new TokenlensError.InvalidCatalog(this.catalog);
-    }
+  private async fetchCatalog(source: CatalogInput): Promise<SourceProviders> {
+    const vercelOptions =
+      typeof source === "string" && normalizeCatalogId(source) === "vercel"
+        ? this.sourceOptions?.vercel
+        : undefined;
+    return fetchCatalogSource(source, {
+      fetch: this.fetchImpl,
+      ...(this.signal ? { signal: this.signal } : {}),
+      ...(this.timeoutMs !== undefined ? { timeoutMs: this.timeoutMs } : {}),
+      ...(vercelOptions ?? {}),
+    });
   }
 
-  private async loadCatalog(): Promise<SourceProviders> {
-    if (typeof this.catalog === "object") {
-      return Promise.resolve(mergeCatalogs(this.catalog, this.overrides));
+  private applyOverrides(catalog: SourceProviders): SourceProviders {
+    if (!this.overrides) return catalog;
+    if (this.mergedCatalogCache?.source === catalog) {
+      return this.mergedCatalogCache.merged;
+    }
+
+    const merged = applyCatalogOverrides(catalog, this.overrides);
+    this.mergedCatalogCache = { source: catalog, merged };
+    return merged;
+  }
+
+  private resolverFor(catalog: SourceProviders): ModelResolver {
+    if (this.resolverCache?.catalog === catalog) {
+      return this.resolverCache.resolver;
+    }
+
+    const resolver = createModelResolver(catalog);
+    this.resolverCache = { catalog, resolver };
+    return resolver;
+  }
+
+  private async loadCatalog(options?: {
+    force?: boolean;
+  }): Promise<SourceProviders> {
+    if (typeof this.catalog === "object" && !isCatalogSource(this.catalog)) {
+      assertSourceProviders(this.catalog);
+      return Promise.resolve(this.applyOverrides(this.catalog));
     }
 
     const now = Date.now();
-    const cached = await this.cache.get(this.cacheKey);
-    if (cached && cached.expiresAt > now) {
-      return mergeCatalogs(cached.value, this.overrides);
+    const cached = await this.cache?.get(this.cacheKey);
+    if (!options?.force && cached && cached.expiresAt > now) {
+      return this.applyOverrides(cached.value);
     }
 
-    let catalog: SourceProviders;
+    let inFlight: Promise<SourceProviders> | undefined;
     try {
-      catalog = await this.fetchCatalog();
-    } catch (error) {
-      if (cached) return mergeCatalogs(cached.value, this.overrides);
-      throw error;
-    }
+      if (options?.force || !this.inFlightCatalog) {
+        const requestVersion = ++this.catalogRequestVersion;
+        const catalogSource = this.catalog as CatalogInput;
+        this.inFlightCatalog = (async () => {
+          const catalog = await this.fetchCatalog(catalogSource);
+          if (this.cache && this.catalogRequestVersion === requestVersion) {
+            const entry = {
+              value: catalog,
+              expiresAt: Date.now() + jitter(this.ttlMs),
+            };
+            await this.cache.set(this.cacheKey, entry);
+          }
+          return catalog;
+        })();
+      }
 
-    const entry = { value: catalog, expiresAt: now + jitter(this.ttlMs) };
-    await this.cache.set(this.cacheKey, entry);
-    return mergeCatalogs(catalog, this.overrides);
+      inFlight = this.inFlightCatalog;
+      const catalog = await inFlight;
+      return this.applyOverrides(catalog);
+    } catch (error) {
+      if (this.cache && this.staleIfError && !options?.force && cached) {
+        return this.applyOverrides(cached.value);
+      }
+      throw error;
+    } finally {
+      if (inFlight && this.inFlightCatalog === inFlight) {
+        this.inFlightCatalog = undefined;
+      }
+    }
   }
 
   async refresh(force?: boolean): Promise<SourceProviders> {
-    if (typeof this.catalog === "object") {
-      return Promise.resolve(mergeCatalogs(this.catalog, this.overrides));
-    }
+    return this.loadCatalog(force === undefined ? undefined : { force });
+  }
 
-    const now = Date.now();
-    const cached = await this.cache.get(this.cacheKey);
-    if (!force) {
-      if (cached && cached.expiresAt > now) {
-        return mergeCatalogs(cached.value, this.overrides);
+  async listProviders(): Promise<SourceProvider[]> {
+    const catalog = await this.loadCatalog();
+    return Object.values(catalog);
+  }
+
+  async listModels(args?: {
+    provider?: string;
+    search?: string;
+  }): Promise<ModelDetails[]> {
+    const catalog = await this.loadCatalog();
+    const providerFilter = args?.provider?.trim().toLowerCase();
+    const searchFilter = args?.search?.trim().toLowerCase();
+    const models: ModelDetails[] = [];
+
+    for (const [providerKey, provider] of Object.entries(catalog)) {
+      if (
+        providerFilter &&
+        !providerMatches(providerKey, provider, providerFilter)
+      ) {
+        continue;
+      }
+
+      for (const [modelKey, model] of Object.entries(provider.models)) {
+        if (searchFilter && !modelMatches(modelKey, model, searchFilter)) {
+          continue;
+        }
+        models.push(model);
       }
     }
 
-    let catalog: SourceProviders;
+    return models;
+  }
+
+  async tryGetModelData(args: {
+    modelId: string;
+    provider?: string;
+  }): Promise<ModelDetails | undefined> {
     try {
-      catalog = await this.fetchCatalog();
+      return await this.getModelData(args);
     } catch (error) {
-      if (cached) return mergeCatalogs(cached.value, this.overrides);
+      if (
+        error instanceof TokenlensError &&
+        (error.code === TokenlensError.ModelNotFound.code ||
+          error.code === TokenlensError.AmbiguousModelId.code)
+      ) {
+        return undefined;
+      }
       throw error;
     }
-
-    const entry = { value: catalog, expiresAt: now + jitter(this.ttlMs) };
-    await this.cache.set(this.cacheKey, entry);
-    return mergeCatalogs(catalog, this.overrides);
   }
 
   async invalidate(): Promise<void> {
-    await this.cache.delete?.(this.cacheKey);
+    await this.cache?.delete?.(this.cacheKey);
+    this.catalogRequestVersion += 1;
+    this.inFlightCatalog = undefined;
+    this.mergedCatalogCache = undefined;
+    this.resolverCache = undefined;
+  }
+
+  private modelNotFoundError(
+    args: { modelId: string; provider?: string },
+    resolved: ResolveModelResult,
+  ): TokenlensError {
+    const catalogId =
+      typeof this.catalog === "string" ? this.catalog : undefined;
+    if (resolved.candidates?.length) {
+      return new TokenlensError.AmbiguousModelId(args.modelId, {
+        candidates: resolved.candidates,
+        ...(catalogId ? { catalogId } : {}),
+      });
+    }
+
+    const providerId =
+      args.provider ?? (resolved.providerId ? resolved.providerId : undefined);
+    const meta =
+      resolved.modelId && resolved.modelId !== args.modelId
+        ? { resolvedModelId: resolved.modelId }
+        : undefined;
+
+    return new TokenlensError.ModelNotFound(args.modelId, {
+      ...(providerId ? { providerId } : {}),
+      ...(catalogId ? { catalogId } : {}),
+      ...(meta ? { meta } : {}),
+    });
+  }
+
+  private async resolveModelOrThrow(args: {
+    modelId: string;
+    provider?: string;
+  }): Promise<ResolvedModel> {
+    const catalog = await this.loadCatalog();
+    const resolved = this.resolverFor(catalog).resolveModel({
+      ...(args.provider !== undefined ? { providerId: args.provider } : {}),
+      modelId: args.modelId,
+    });
+
+    if (!resolved.model) {
+      throw this.modelNotFoundError(args, resolved);
+    }
+
+    return {
+      providerId: resolved.providerId,
+      modelId: resolved.modelId,
+      model: resolved.model,
+    };
   }
 
   /**
@@ -145,7 +310,13 @@ export class Tokenlens {
     data: string;
   }): Promise<number | undefined> {
     const { modelId, data } = args;
-    return await countTokens(modelId, data);
+    if (this.tokenizer === false) {
+      throw new TokenlensError.MissingDependency("@tokenlens/tokenizer");
+    }
+    if (this.tokenizer) {
+      return await this.tokenizer({ modelId, data });
+    }
+    return await countTokensWithOptionalTokenizer(modelId, data);
   }
 
   /**
@@ -169,29 +340,7 @@ export class Tokenlens {
     provider?: string;
     usage: Usage;
   }): Promise<TokenCosts> {
-    const catalog = await this.loadCatalog();
-    const resolved = resolveModel({
-      catalog,
-      ...(args.provider !== undefined ? { providerId: args.provider } : {}),
-      modelId: args.modelId,
-    });
-    // If we can't resolve the model within the given catalog throw an error
-    if (!resolved.model) {
-      const catalogId =
-        typeof this.catalog === "string" ? this.catalog : undefined;
-      const providerId =
-        args.provider ??
-        (resolved.providerId ? resolved.providerId : undefined);
-      const meta =
-        resolved.modelId && resolved.modelId !== args.modelId
-          ? { resolvedModelId: resolved.modelId }
-          : undefined;
-      throw new TokenlensError.ModelNotFound(args.modelId, {
-        ...(providerId ? { providerId } : {}),
-        ...(catalogId ? { catalogId } : {}),
-        ...(meta ? { meta } : {}),
-      });
-    }
+    const resolved = await this.resolveModelOrThrow(args);
     return computeTokenCostsForModel({
       model: resolved.model,
       usage: args.usage,
@@ -224,7 +373,7 @@ export class Tokenlens {
     const { modelId, provider, data } = args;
 
     // Count tokens in input text
-    const inputTokens = (await countTokens(modelId, data)) ?? 0;
+    const inputTokens = (await this.countTokens({ modelId, data })) ?? 0;
 
     // Compute costs using the existing method
     const costs = await this.computeCostUSD({
@@ -272,29 +421,7 @@ export class Tokenlens {
     modelId: string;
     provider?: string;
   }): Promise<ModelDetails> {
-    const catalog = await this.loadCatalog();
-    const resolved = resolveModel({
-      catalog,
-      ...(args.provider !== undefined ? { providerId: args.provider } : {}),
-      modelId: args.modelId,
-    });
-    // If we can't resolve the model within the given catalog throw an error
-    if (!resolved.model) {
-      const catalogId =
-        typeof this.catalog === "string" ? this.catalog : undefined;
-      const providerId =
-        args.provider ??
-        (resolved.providerId ? resolved.providerId : undefined);
-      const meta =
-        resolved.modelId && resolved.modelId !== args.modelId
-          ? { resolvedModelId: resolved.modelId }
-          : undefined;
-      throw new TokenlensError.ModelNotFound(args.modelId, {
-        ...(providerId ? { providerId } : {}),
-        ...(catalogId ? { catalogId } : {}),
-        ...(meta ? { meta } : {}),
-      });
-    }
+    const resolved = await this.resolveModelOrThrow(args);
     return resolved.model;
   }
 
@@ -321,17 +448,7 @@ export class Tokenlens {
       modelId: args.modelId,
       ...(args.provider !== undefined ? { provider: args.provider } : {}),
     });
-    // If we can't resolve the model within the given catalog throw an error
-    if (!modelData) {
-      const catalogId =
-        typeof this.catalog === "string" ? this.catalog : undefined;
-      const providerId = args.provider;
-      throw new TokenlensError.ModelNotFound(args.modelId, {
-        ...(providerId ? { providerId } : {}),
-        ...(catalogId ? { catalogId } : {}),
-      });
-    }
-    return modelData?.limit;
+    return modelData.limit;
   }
 
   /**
@@ -364,97 +481,27 @@ export class Tokenlens {
     provider?: string;
     usage: Usage;
   }) {
-    const resolved = resolveModel({
-      catalog: await this.loadCatalog(),
-      ...(args.provider !== undefined ? { providerId: args.provider } : {}),
-      modelId: args.modelId,
-    });
-
-    if (!resolved.model) {
-      const catalogId =
-        typeof this.catalog === "string" ? this.catalog : undefined;
-      const providerId =
-        args.provider ??
-        (resolved.providerId ? resolved.providerId : undefined);
-      const meta =
-        resolved.modelId && resolved.modelId !== args.modelId
-          ? { resolvedModelId: resolved.modelId }
-          : undefined;
-      throw new TokenlensError.ModelNotFound(args.modelId, {
-        ...(providerId ? { providerId } : {}),
-        ...(catalogId ? { catalogId } : {}),
-        ...(meta ? { meta } : {}),
-      });
-    }
+    const resolved = await this.resolveModelOrThrow(args);
     return getContextHealth({ model: resolved.model, usage: args.usage });
   }
 }
 
-function mergeCatalogs(
-  base: SourceProviders,
-  overrides?: SourceProviders,
-): SourceProviders {
-  if (!overrides) return base;
+function providerMatches(
+  providerKey: string,
+  provider: SourceProvider,
+  lookup: string,
+): boolean {
+  return [providerKey, provider.id, ...(provider.aliases ?? [])]
+    .map((value) => value.toLowerCase())
+    .includes(lookup);
+}
 
-  const merged: SourceProviders = {};
-  for (const [providerId, provider] of Object.entries(base)) {
-    merged[providerId] = {
-      ...provider,
-      models: { ...(provider.models ?? {}) },
-      ...(provider.extras ? { extras: { ...provider.extras } } : {}),
-    };
-  }
-
-  for (const [providerId, providerOverride] of Object.entries(overrides)) {
-    const existingProvider = merged[providerId];
-    if (!existingProvider) {
-      merged[providerId] = {
-        ...providerOverride,
-        models: { ...(providerOverride.models ?? {}) },
-        ...(providerOverride.extras
-          ? { extras: { ...providerOverride.extras } }
-          : {}),
-      };
-      continue;
-    }
-
-    const nextModels = { ...(existingProvider.models ?? {}) };
-    for (const [modelId, modelOverride] of Object.entries(
-      providerOverride.models ?? {},
-    )) {
-      const existingModel = nextModels[modelId];
-      if (!existingModel) {
-        nextModels[modelId] = modelOverride;
-        continue;
-      }
-
-      const mergedModel = { ...existingModel, ...modelOverride };
-      if (existingModel.cost || modelOverride.cost) {
-        mergedModel.cost = { ...existingModel.cost, ...modelOverride.cost };
-      }
-      if (existingModel.limit || modelOverride.limit) {
-        mergedModel.limit = { ...existingModel.limit, ...modelOverride.limit };
-      }
-      nextModels[modelId] = mergedModel;
-    }
-
-    const mergedProvider = {
-      ...existingProvider,
-      ...providerOverride,
-      models: nextModels,
-    };
-    const env = providerOverride.env ?? existingProvider.env;
-    if (env) {
-      mergedProvider.env = env;
-    }
-    if (existingProvider.extras || providerOverride.extras) {
-      mergedProvider.extras = {
-        ...existingProvider.extras,
-        ...providerOverride.extras,
-      };
-    }
-    merged[providerId] = mergedProvider;
-  }
-
-  return merged;
+function modelMatches(
+  modelKey: string,
+  model: SourceModel,
+  lookup: string,
+): boolean {
+  return [modelKey, model.id, model.canonical_id, model.name].some((value) =>
+    value.toLowerCase().includes(lookup),
+  );
 }

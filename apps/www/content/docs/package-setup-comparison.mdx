@@ -3,101 +3,25 @@ title: "Package Setup Comparison"
 description: "Compare current monorepo setup to mature patterns and outline improvements."
 ---
 
-### Package setup comparison and hardening plan
+### Package Setup Status
 
-This document compares our current monorepo/package setup to patterns used by mature libraries (e.g., Zod) and outlines a prioritized plan to improve resilience, DX, and publish hygiene.
+This repository uses a conventional modern TypeScript package setup: pnpm workspaces, Turborepo, ESM-only packages, explicit `exports`, Changesets, npm provenance, Biome, Vitest, packed export smoke tests, and Node 20/22 CI.
 
-Reference: Zod repository (`https://github.com/colinhacks/zod`).
+## Current Baseline
 
-## Snapshot of our current setup
+- **Runtime policy**: Node.js 20+ is declared in package `engines` and validated in CI.
+- **Publishing**: Changesets drives versioning and release PRs; the release workflow enables npm provenance.
+- **Package metadata**: Publishable packages include repository, homepage, bugs, license, `publishConfig.access`, README, and package-local LICENSE files.
+- **Exports**: Public packages expose root entrypoints, `./package.json`, and intentional subpaths such as `tokenlens/fetch`, `tokenlens/helpers`, `tokenlens/core`, and `tokenlens/tokenizer`.
+- **QA**: CI runs lint, package/app/example build and typecheck, coverage-gated Vitest, and packed consumer export smoke tests.
+- **Security hygiene**: Dependabot, `SECURITY.md`, `CONTRIBUTING.md`, PR template, and CODEOWNERS are present.
 
-- **Monorepo**: pnpm workspaces, Turborepo, packages under `packages/*`, apps under `apps/*`.
-- **CI**: Lint (Biome), Build (turbo), Test (vitest), and example typechecks on Node 20.
-- **Formatting/Lint**: Biome configured; lefthook pre-commit runs formatting.
-- **Publishing**: `tokenlens` published; scoped packages such as `@tokenlens/core`, `@tokenlens/fetch`, `@tokenlens/helpers`, and `@tokenlens/tokenizer` exist but need consistent publish metadata.
-- **Module format**: ESM with minimal `exports` fields.
-- **Testing**: Vitest in `tokenlens`; no coverage thresholds; no type-level API tests.
+## Remaining Improvements
 
-## Where we differ from a mature library setup
+- Add type-level public API tests with `tsd`, `expect-type`, or a dedicated packed-consumer fixture for inference-heavy APIs.
+- Add a bundle/size budget for the main `tokenlens` package so accidental runtime dependency growth is caught in CI.
+- Document the Node LTS drop policy before the next runtime floor change.
 
-- **Node versions and constraints**
-  - Ours: No `engines` fields or `.nvmrc`; CI runs on Node 20 only.
-  - Mature: Pin LTS in `.nvmrc`, set `engines` in each package, test matrix across multiple Node LTS versions.
+## Rationale
 
-- **Versioning and releases**
-  - Ours: Changesets dependency present in root, but no config or automated release workflow.
-  - Mature: Changesets-managed versions, changelog generation, provenance-enabled npm publish via GitHub Actions.
-
-- **CI quality gates**
-  - Ours: Lint/build/test; no typecheck step, no coverage thresholds, no bundle/size checks, no consumer smoke tests.
-  - Mature: Typecheck, coverage gates, size-limit, consumer import tests (ESM and CJS if supported) across Node matrix.
-
-- **Package metadata & publish hygiene**
-  - Ours: `tokenlens` has complete metadata; `@tokenlens/*` miss `repository`, `bugs`, `homepage`, `publishConfig.access`.
-  - Mature: Complete metadata for every package; explicit `publishConfig`; `prepack` safeguards and consistent `files` content.
-
-- **Exports and entrypoints**
-  - Ours: Minimal exports; some internal `dist/exports/*` not surfaced as subpath exports; no `./package.json` export.
-  - Mature: Clear ESM-only vs dual policy; subpaths exposed; `./package.json` exported for tooling.
-
-- **Tests and types**
-  - Ours: No type-level tests ensuring public surface stability.
-  - Mature: `tsd`/`expect-type` coverage for the public API.
-
-- **Dependency hygiene & OSS docs**
-  - Ours: No Dependabot/Renovate; missing `SECURITY.md`, `CONTRIBUTING.md`, templates, `CODEOWNERS`.
-  - Mature: Automated updates and OSS hygiene files standard.
-
-- **Docs in published tarballs**
-  - Ours: `files` arrays omit `README`/`LICENSE`.
-  - Mature: Ensure essential docs ship in the package.
-
-## Prioritized TODOs
-
-- **Release and versioning**
-  - Set up Changesets and npm release workflow with provenance and changelog
-  - Add `prepack`/`prepublishOnly` to clean and build before publish
-
-- **Runtime and tooling constraints**
-  - Add Node engine constraints and `.nvmrc` (LTS), enforce via CI
-  - Document and pin `packageManager` at root and enforce via CI
-
-- **Package publishing hygiene**
-  - Add `publishConfig.access: public` for scoped packages.
-  - Fill package metadata (`repository`, `homepage`, `bugs`, `license`, `funding`) for all packages
-  - Include `LICENSE` and `README` in published `files` array for all packages
-
-- **Module format and exports**
-  - Decide ESM-only vs dual CJS+ESM; implement `exports` conditions accordingly
-  - Expose secondary entrypoints via `exports` (e.g., `./core`, `./helpers`, `./models`, `./simple`)
-  - Export `./package.json` in `exports` for tooling introspection
-
-- **CI quality gates**
-  - Expand CI matrix to Node 18/20/22; add turbo typecheck/lint/test steps
-  - Enable coverage in Vitest with minimum thresholds and CI reporting
-  - Add size-limit (or similar) check for `tokenlens`, gate in CI
-  - Add smoke tests: consumer ESM (and CJS if supported) import across Node versions
-
-- **Testing depth**
-  - Type-level API tests with `tsd` (or `expect-type`) covering public surface
-
-- **Dependency and security hygiene**
-  - Add Dependabot or Renovate for dependencies and GitHub Actions updates
-  - Add OSS hygiene: `SECURITY.md`, `CONTRIBUTING.md`, issue/PR templates, `CODEOWNERS`
-
-- **Documentation**
-  - Add per-package READMEs with usage, API, and badges
-
-## Notes and rationale
-
-- Aligning on Node engines, exports, and CI gates reduces regressions for consumers and clarifies support policy.
-- Changesets-based release flow improves version discipline, changelog quality, and publish safety.
-- Type-level tests catch breaking type changes early, which is critical for TypeScript-first libraries.
-
-## References
-
-- Zod repository: [`https://github.com/colinhacks/zod`](https://github.com/colinhacks/zod)
-
-
-
-
+The project should stay ESM-only and dependency-light in the main `tokenlens` package. Heavy integrations belong in optional packages, and release confidence should come from packed consumer tests rather than compatibility shims.

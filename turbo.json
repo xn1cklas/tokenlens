@@ -23,6 +23,15 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:live": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "outputs": []
+    },
     "format": {
       "dependsOn": ["^format"]
     },

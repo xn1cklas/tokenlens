@@ -6,6 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../../LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 
+
 ![TokenLens overview](https://raw.githubusercontent.com/xn1cklas/tokenlens/HEAD/assets/tokenlens.png)
 
 Low-level utilities for computing token costs, context health metrics, and JSON compaction. These are the building blocks used by the main `tokenlens` package.
@@ -38,8 +39,8 @@ const costs = computeTokenCostsForModel({
       input: 0.15,        // per 1M tokens
       output: 0.60,       // per 1M tokens
       reasoning: 0,
-      cacheRead: 0.075,   // per 1M tokens
-      cacheWrite: 0.30,   // per 1M tokens
+      cache_read: 0.075,  // per 1M cached input tokens
+      cache_write: 0.30,  // per 1M written cache tokens
     }
   },
   usage: {
@@ -53,12 +54,11 @@ const costs = computeTokenCostsForModel({
 
 console.log(costs);
 // {
-//   inputTokenCostUSD: 0.00015,
+//   inputTokenCostUSD: 0.000105,
 //   outputTokenCostUSD: 0.0003,
-//   reasoningTokenCostUSD: 0,
 //   cacheReadTokenCostUSD: 0.000015,
 //   cacheWriteTokenCostUSD: 0.00003,
-//   totalTokenCostUSD: 0.000495
+//   totalTokenCostUSD: 0.00045
 // }
 ```
 

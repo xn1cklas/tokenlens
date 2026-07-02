@@ -11,8 +11,12 @@ concurrency:
 
 jobs:
   lint:
-    name: Lint (Biome)
+    name: Lint (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 22]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,7 +29,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node-version }}
           cache: pnpm
 
       - name: Install dependencies
@@ -35,8 +39,12 @@ jobs:
         run: pnpm exec biome lint --reporter=summary packages apps examples
 
   build:
-    name: Build
+    name: Build (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 22]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -49,7 +57,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node-version }}
           cache: pnpm
 
       - name: Restore Turbo cache
@@ -66,15 +74,28 @@ jobs:
       - name: Build packages only (turbo)
         run: pnpm turbo run build --filter='./packages/*'
 
+      - name: Typecheck packages
+        run: pnpm turbo run typecheck --filter='./packages/*'
+
+      - name: Smoke test packed exports
+        run: pnpm run test:exports
+
       - name: Typecheck examples
         run: pnpm turbo run typecheck --filter='./examples/*'
 
       - name: Typecheck apps
         run: pnpm turbo run typecheck --filter='./apps/*'
 
+      - name: Build docs app
+        run: pnpm turbo run build --filter='./apps/www'
+
   test:
-    name: Test
+    name: Test (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 22]
     env:
       CI: true
     steps:
@@ -89,7 +110,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node-version }}
           cache: pnpm
 
       - name: Restore Turbo cache
@@ -103,5 +124,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run package tests only (pnpm)
-        run: pnpm -r --filter='./packages/*' --if-present test:run
+      - name: Run coverage-gated tests
+        run: pnpm run test:coverage

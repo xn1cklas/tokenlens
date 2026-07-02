@@ -11,13 +11,18 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "scripts": {
     "clean": "rm -rf dist",
@@ -53,7 +58,7 @@
     "tokenlens": "workspace:*"
   },
   "peerDependencies": {
-    "ai": "^5.0.0 || ^6.0.0"
+    "ai": "^5.0.0"
   },
   "devDependencies": {
     "ai": "^5.0.52",

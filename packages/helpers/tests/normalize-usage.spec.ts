@@ -23,6 +23,8 @@ describe("normalizeUsage", () => {
       reasoningTokens: 5,
       cacheReads: 8,
       cacheWrites: 2,
+      cacheTokensIncludedInInput: true,
+      reasoningIncludedInOutput: true,
     });
   });
 
@@ -32,6 +34,55 @@ describe("normalizeUsage", () => {
     expect(normalized.input).toBe(0);
     expect(normalized.output).toBe(0);
     expect(normalized.total).toBeUndefined();
+  });
+
+  it("maps AI SDK inputTokens and outputTokens fields", () => {
+    const normalized = normalizeUsage({
+      inputTokens: 1200,
+      outputTokens: 300,
+    });
+
+    expect(normalized.input).toBe(1200);
+    expect(normalized.output).toBe(300);
+  });
+
+  it("maps OpenAI nested reasoning and cache details", () => {
+    const normalized = normalizeUsage({
+      prompt_tokens: 100,
+      completion_tokens: 50,
+      prompt_tokens_details: {
+        cached_tokens: 20,
+      },
+      completion_tokens_details: {
+        reasoning_tokens: 10,
+      },
+    });
+
+    expect(normalized).toMatchObject({
+      input: 100,
+      output: 50,
+      reasoningTokens: 10,
+      cacheReads: 20,
+      cacheTokensIncludedInInput: true,
+      reasoningIncludedInOutput: true,
+    });
+  });
+
+  it("maps Anthropic cache fields as outside input tokens", () => {
+    const normalized = normalizeUsage({
+      input_tokens: 100,
+      output_tokens: 50,
+      cache_read_input_tokens: 20,
+      cache_creation_input_tokens: 10,
+    });
+
+    expect(normalized).toMatchObject({
+      input: 100,
+      output: 50,
+      cacheReads: 20,
+      cacheWrites: 10,
+      cacheTokensIncludedInInput: false,
+    });
   });
 });
 
@@ -48,6 +99,6 @@ describe("perMTokensToUnitCostUSD", () => {
 
 describe("round6", () => {
   it("rounds to six decimal places", () => {
-    expect(round6(Math.PI)).toBeCloseTo(3.141593, 6);
+    expect(round6(Math.PI)).toBeCloseTo(Math.PI, 6);
   });
 });

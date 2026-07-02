@@ -2,6 +2,9 @@
   "name": "www",
   "version": "0.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "next build",
     "dev": "next dev --turbo",
@@ -20,7 +23,7 @@
     "fumadocs-mdx": "12.0.3",
     "fumadocs-ui": "15.8.5",
     "lucide-react": "^0.544.0",
-    "next": "15.5.9",
+    "next": "15.5.18",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwind-merge": "^3.3.1"

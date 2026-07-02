@@ -1,13 +1,17 @@
 {
-  "name": "anthopic-sdk",
+  "name": "anthropic-sdk",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.63.1",
+    "@tokenlens/tokenizer": "workspace:*",
     "dotenv": "^17.2.2",
     "tokenlens": "workspace:*"
   },

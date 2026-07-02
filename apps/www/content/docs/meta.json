@@ -3,7 +3,6 @@
   "pages": [
     "overview",
     "getting-started",
-    "package-setup-comparison",
     "sources-and-caching",
     "serverless-and-nextjs",
     "testing",

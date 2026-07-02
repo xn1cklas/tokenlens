@@ -1,17 +1,20 @@
 /**
- * Convert gateway-style ids (e.g. "provider/model") into canonical
- * TokenLens ids ("provider:model"). If already canonical, returns input.
+ * Convert provider-scoped ids into canonical Tokenlens v2 ids ("provider/model").
+ * Legacy v1 ids ("provider:model") are accepted and normalized to slash form.
  */
-export function toModelId(gatewayId?: string): string | undefined {
-  if (!gatewayId) return undefined;
-  const id = gatewayId.trim();
+export function toModelId(input?: string): string | undefined {
+  if (!input) return undefined;
+  const id = input.trim();
   if (!id) return undefined;
 
-  const i = id.indexOf("/");
-  if (i <= 0) return id; // no provider separator or leading '/'
+  const slashIndex = id.indexOf("/");
+  const colonIndex = id.indexOf(":");
+  const separatorIndex =
+    slashIndex > 0 ? slashIndex : colonIndex > 0 ? colonIndex : -1;
+  if (separatorIndex <= 0) return id; // no provider separator or leading separator
 
-  const provider = id.slice(0, i);
-  let model = id.slice(i + 1);
+  const provider = id.slice(0, separatorIndex);
+  let model = id.slice(separatorIndex + 1);
 
   // Provider-specific normalization
   if (provider.toLowerCase() === "anthropic") {
@@ -20,5 +23,5 @@ export function toModelId(gatewayId?: string): string | undefined {
     model = model.replace(/(\d+)\.(\d+)/g, "$1-$2");
   }
 
-  return `${provider}:${model}`;
+  return `${provider}/${model}`;
 }

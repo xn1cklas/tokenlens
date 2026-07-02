@@ -9,7 +9,7 @@
 
 ![TokenLens overview](https://raw.githubusercontent.com/xn1cklas/tokenlens/HEAD/assets/tokenlens.png)
 
-Core types and fast registry utilities for TokenLens. Build canonical model registries with alias resolution and strong typing.
+Core DTOs, model id helpers, errors, and usage types shared by Tokenlens packages.
 
 
 Install
@@ -18,26 +18,34 @@ Install
 - yarn: `yarn add @tokenlens/core`
 
 Exports
-- `createRegistry(models: Model[])` to build a fast provider+model lookup with alias resolution.
-- Types: `Model`, `Provider`, `Status`, `Pricing`, `ContextCaps`, usage shapes.
+- DTOs: `SourceProviders`, `SourceProvider`, `SourceModel`, and `SourceId`.
+- Usage types: `Usage`, `NormalizedUsage`, and `TokenBreakdown`.
+- Helpers: `toModelId` plus the shared `TokenlensError` classes.
 
 Quick Start
 ```
-import { createRegistry, type Model } from '@tokenlens/core';
+import type { SourceProviders, Usage } from '@tokenlens/core';
+import { toModelId } from '@tokenlens/core';
 
-const reg = createRegistry([
-  {
-    id: 'openai:gpt-4o',
-    provider: 'openai',
-    status: 'stable',
-    context: { combinedMax: 128000 },
-    source: 'docs',
-  } satisfies Model,
-]);
+const catalog: SourceProviders = {
+  openai: {
+    id: 'openai',
+    models: {
+      'openai/gpt-4o': {
+        id: 'openai/gpt-4o',
+        canonical_id: 'openai/gpt-4o',
+        name: 'GPT-4o',
+      },
+    },
+  },
+};
 
-// Resolve shorthands/aliases to the canonical entry
-const m = reg.resolveModel('gpt-4o');
-console.log(m?.id); // 'openai:gpt-4o'
+const usage = {
+  inputTokens: 1000,
+  outputTokens: 200,
+} satisfies Usage;
+
+console.log(toModelId('openai/gpt-4o')); // 'openai/gpt-4o'
 ```
 
 See also

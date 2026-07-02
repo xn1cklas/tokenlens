@@ -7,6 +7,7 @@ import type { Model } from "./types";
 import { formatContextK, tierColors } from "./utils";
 
 const icons = {
+  unknown: Sparkles,
   free: DollarSign,
   low: Zap,
   mid: Sparkles,
@@ -57,6 +58,7 @@ export function ModelCard({ model }: { model: Model }) {
           {model.tier === "low" && "Low Cost"}
           {model.tier === "mid" && "Mid Tier"}
           {model.tier === "high" && "Premium"}
+          {model.tier === "unknown" && "Unknown Price"}
         </div>
 
         {model.features.length > 0 && (

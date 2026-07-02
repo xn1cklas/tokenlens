@@ -5,7 +5,7 @@ description: "How to use a custom catalog with Tokenlens"
 
 # Custom Catalog
 
-Use a custom catalog when you want Tokenlens to resolve models from data you own. Use overrides when you want to keep a hosted catalog as the base and patch only the parts that differ.
+Use a custom catalog when you want Tokenlens to resolve models from data you own. Pass `SourceProviders` for fixtures and offline data, use `CatalogSource` for async registries, and use overrides when you want to keep a hosted catalog as the base while patching only the parts that differ.
 
 ## Fully custom catalog
 
@@ -34,6 +34,29 @@ const tokenlens = createTokenlens({ catalog });
 
 Passing an object as `catalog` disables hosted fetching. Tokenlens uses that object directly.
 
+## Async registry source
+
+```ts
+import { createTokenlens, type CatalogSource } from "tokenlens";
+
+const source: CatalogSource = {
+  id: "internal-registry",
+  cacheKey: "tokenlens:internal-registry",
+  async load({ fetch = globalThis.fetch, signal } = {}) {
+    const response = await fetch("https://example.com/models.json", { signal });
+    return response.json();
+  },
+};
+
+const tokenlens = createTokenlens({
+  catalog: source,
+  timeoutMs: 3_000,
+  staleIfError: true,
+});
+```
+
+Async sources are the recommended replacement for generated static registries. Tokenlens caches the loaded result using the same adapter and TTL settings as hosted catalogs.
+
 ## Override hosted metadata
 
 ```ts
@@ -41,13 +64,8 @@ const tokenlens = createTokenlens({
   catalog: "openrouter",
   overrides: {
     openai: {
-      id: "openai",
-      source: "package",
       models: {
         "openai/gpt-4o-mini": {
-          id: "openai/gpt-4o-mini",
-          canonical_id: "openai/gpt-4o-mini",
-          name: "GPT-4o Mini",
           cost: { input: 1, output: 2 },
         },
       },
@@ -56,4 +74,4 @@ const tokenlens = createTokenlens({
 });
 ```
 
-Override fields win over the base catalog. Nested `cost` and `limit` objects are merged, so omitted fields keep their hosted values.
+Override fields win over the base catalog. Nested `cost` and `limit` objects are merged, so omitted fields keep their hosted values. Provider and model ids default from the map keys when you add new entries, and provider-only patches can omit `models`.

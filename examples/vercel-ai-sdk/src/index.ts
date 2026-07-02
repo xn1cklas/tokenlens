@@ -52,10 +52,22 @@ async function main(): Promise<void> {
 
   const jsonResponse = await generateText({
     model: openai("gpt-4o-mini"),
-    prompt: "Generate a list of 5 programming languages with their types",
+    prompt:
+      'Return only a JSON array of 5 objects with string fields "name" and "type" for programming languages. Do not include markdown.',
   });
 
-  const jsonData = JSON.parse(jsonResponse.text);
+  let jsonData: Array<{ name: string; type: string }>;
+  try {
+    const parsed = JSON.parse(jsonResponse.text) as unknown;
+    if (!isLanguageList(parsed)) {
+      throw new Error("Unexpected JSON shape.");
+    }
+    jsonData = parsed;
+  } catch {
+    console.error("Expected the model to return a JSON language list.");
+    process.exitCode = 1;
+    return;
+  }
   const compactData = compactJson(jsonData);
 
   const jsonTokens = await countTokens({
@@ -144,6 +156,21 @@ async function main(): Promise<void> {
 
   console.log(`\n${"=".repeat(60)}`);
   console.log("✅ Example completed successfully!");
+}
+
+function isLanguageList(
+  value: unknown,
+): value is Array<{ name: string; type: string }> {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        item !== null &&
+        typeof item === "object" &&
+        typeof (item as { name?: unknown }).name === "string" &&
+        typeof (item as { type?: unknown }).type === "string",
+    )
+  );
 }
 
 function getHealthEmoji(status: string): string {

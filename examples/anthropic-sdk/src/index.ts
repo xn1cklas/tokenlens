@@ -64,12 +64,7 @@ async function main(): Promise<void> {
   if (usage) {
     const costs = await computeCostUSD({
       modelId: "claude-3-5-sonnet-20241022",
-      usage: {
-        input_tokens: usage.input_tokens,
-        output_tokens: usage.output_tokens,
-        cache_read_tokens: usage.cache_read_input_tokens || 0,
-        cache_write_tokens: usage.cache_creation_input_tokens || 0,
-      },
+      usage,
     });
 
     console.log(`\nActual usage:`);
@@ -98,10 +93,7 @@ async function main(): Promise<void> {
   if (usage) {
     const health = await getContextHealth({
       modelId: "claude-3-5-sonnet-20241022",
-      usage: {
-        input_tokens: usage.input_tokens,
-        output_tokens: usage.output_tokens,
-      },
+      usage,
     });
 
     if (health) {
@@ -146,7 +138,7 @@ async function main(): Promise<void> {
   }
 
   const conversationHealth = await getContextHealth({
-    modelId: "claude-3-5-sonnet",
+    modelId: "claude-3-5-sonnet-20241022",
     usage: {
       input_tokens: conversationInputTokens,
       output_tokens: conversationOutputTokens,
@@ -179,7 +171,7 @@ async function main(): Promise<void> {
     );
   }
 
-  console.log("\n" + "=".repeat(60));
+  console.log(`\n${"=".repeat(60)}`);
   console.log("✅ Example completed successfully!");
 }
 

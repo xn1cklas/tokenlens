@@ -2,12 +2,13 @@ import type { SourceModel, SourceProviders } from "@tokenlens/core";
 
 const OPENAI_GPT4O: SourceModel = {
   id: "openai/gpt-4o",
+  canonical_id: "openai/gpt-4o",
   name: "GPT-4o",
-  description: "OpenAI GPT-4o",
 };
 
 const ANTHROPIC_CLAUDE35: SourceModel = {
   id: "anthropic/claude-3.5",
+  canonical_id: "anthropic/claude-3.5",
   name: "Claude 3.5",
 };
 

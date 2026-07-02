@@ -1,12 +1,22 @@
-import type { SourceProviders } from "@tokenlens/core";
+import type {
+  SourceModel,
+  SourceProvider,
+  SourceProviders,
+} from "@tokenlens/core";
+import type {
+  CatalogSource,
+  CatalogId as FetchCatalogId,
+  FetchLike,
+  VercelOptions,
+} from "@tokenlens/fetch";
 
-export const GATEWAY_IDS = [
-  "auto",
-  "openrouter",
-  "models.dev",
-  "vercel",
-] as const;
-export type GatewayId = (typeof GATEWAY_IDS)[number];
+export const DEFAULT_CATALOG_ID = "openrouter" satisfies FetchCatalogId;
+export type CatalogId = FetchCatalogId;
+export type Catalog = CatalogId | CatalogSource | SourceProviders;
+export type TokenCounter = (args: {
+  modelId: string;
+  data: string;
+}) => Promise<number | undefined> | number | undefined;
 
 export type CacheEntry = { value: SourceProviders; expiresAt: number };
 
@@ -16,11 +26,40 @@ export interface CacheAdapter {
   delete?(key: string): Promise<void> | void;
 }
 
+export type CatalogModelOverride = Partial<
+  Omit<SourceModel, "cost" | "limit">
+> & {
+  cost?: Partial<NonNullable<SourceModel["cost"]>>;
+  limit?: Partial<NonNullable<SourceModel["limit"]>>;
+};
+
+export type CatalogProviderOverride = Partial<
+  Omit<SourceProvider, "models">
+> & {
+  models?: Record<string, CatalogModelOverride>;
+};
+
+export type CatalogOverrides = Record<string, CatalogProviderOverride>;
+
+export type VercelSourceOptions = Pick<
+  VercelOptions,
+  "endpointConcurrency" | "includeEndpointDetails"
+>;
+
+export type TokenlensSourceOptions = {
+  vercel?: VercelSourceOptions;
+};
+
 export type TokenlensOptions = {
-  catalog?: GatewayId | SourceProviders;
-  overrides?: SourceProviders;
+  catalog?: Catalog;
+  overrides?: CatalogOverrides;
   ttlMs?: number;
-  fetch?: typeof globalThis.fetch;
-  cache?: CacheAdapter;
+  fetch?: FetchLike;
+  signal?: AbortSignal;
+  timeoutMs?: number;
+  cache?: CacheAdapter | false;
   cacheKey?: string;
+  staleIfError?: boolean;
+  sourceOptions?: TokenlensSourceOptions;
+  tokenizer?: TokenCounter | false;
 };

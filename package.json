@@ -1,9 +1,13 @@
 {
   "name": "tokenlens-monorepo",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/*",
+    "examples/*"
   ],
   "scripts": {
     "dev": "turbo dev",
@@ -11,25 +15,42 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test --filter=\"./packages/*\"",
     "test:run": "turbo run test:run --filter=\"./packages/*\"",
-    "test:live": "turbo run test:live --filter=\"./packages/*\"",
+    "test:coverage": "vitest run --coverage --config vitest.config.ts",
+    "test:exports": "node scripts/export-smoke.mjs",
+    "test:live": "pnpm -r --filter=\"./packages/*\" --if-present test:live",
     "format": "biome check --write .",
-    "format:fix": "biome check --write --fix .",
+    "format:fix": "biome check --write .",
     "sync:providers": "pnpm --filter tokenlens run prebuild",
     "sync:readme": "node scripts/sync-readmes.mjs root",
     "sync:pkg-readmes": "node scripts/sync-readmes.mjs packages",
     "sync:readmes": "node scripts/sync-readmes.mjs",
-    "pre-release": "pnpm format --fix && pnpm run build && pnpm run typecheck && pnpm run test:run",
+    "pre-release": "pnpm run format:fix && pnpm run build && pnpm run test:exports && pnpm run typecheck && pnpm run test:coverage",
     "prerelease": "pnpm run pre-release",
-    "release": "pnpm -r publish --access public --filter=\"@tokenlens/*\" --filter=tokenlens",
-    "release:force": "pnpm -r publish --access public --filter=\"@tokenlens/*\" --filter=tokenlens --no-git-checks"
+    "version-packages": "changeset version",
+    "release": "changeset publish",
+    "release:manual": "pnpm -r publish --access public --filter=\"@tokenlens/*\" --filter=tokenlens --no-git-checks"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
     "@changesets/cli": "^2.29.7",
+    "@vitest/coverage-v8": "^3.2.6",
     "lefthook": "^1.13.4",
     "turbo": "^2.5.8",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "form-data": "4.0.6",
+      "jws": "4.0.1",
+      "lodash-es": "4.18.0",
+      "next": "15.5.18",
+      "path-to-regexp": "8.4.0",
+      "picomatch": "4.0.4",
+      "rollup": "4.59.0",
+      "vite": "7.3.5",
+      "ws": "8.21.0"
+    }
   },
   "packageManager": "pnpm@10.5.1+sha512.c424c076bd25c1a5b188c37bb1ca56cc1e136fbf530d98bcb3289982a08fd25527b8c9c4ec113be5e3393c39af04521dd647bcf1d0801eaf8ac6a7b14da313af"
 }

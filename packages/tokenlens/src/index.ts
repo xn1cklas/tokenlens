@@ -1,6 +1,6 @@
-import type { Usage } from "@tokenlens/core";
 import { type ModelDetails, Tokenlens } from "./client.js";
-import type { GatewayId, TokenlensOptions } from "./types.js";
+import { getTokenlens } from "./shared.js";
+import type { TokenlensOptions } from "./types.js";
 
 /**
  * Create a new Tokenlens instance with the given options.
@@ -14,11 +14,53 @@ export function createTokenlens(
   return new Tokenlens(options);
 }
 
-interface CountTokensArgs {
-  /** The model ID (e.g., "openai/gpt-4o-mini") */
-  modelId: string;
-  /** Text content to count tokens for */
-  data: string;
+type HelperClient = {
+  tokenlens?: Tokenlens;
+};
+type HelperArgs<T> = T & TokenlensOptions & HelperClient;
+type CountTokensArgs = Parameters<Tokenlens["countTokens"]>[0];
+type EstimateCostUSDArgs = HelperArgs<
+  Parameters<Tokenlens["estimateCostUSD"]>[0]
+>;
+type ComputeCostUSDArgs = HelperArgs<
+  Parameters<Tokenlens["computeCostUSD"]>[0]
+>;
+type GetContextLimitsArgs = HelperArgs<
+  Parameters<Tokenlens["getContextLimits"]>[0]
+>;
+type GetModelDataArgs = HelperArgs<Parameters<Tokenlens["getModelData"]>[0]>;
+type GetContextHealthArgs = HelperArgs<
+  Parameters<Tokenlens["getContextHealth"]>[0]
+>;
+type ListModelsArgs = HelperArgs<
+  NonNullable<Parameters<Tokenlens["listModels"]>[0]>
+>;
+type ListProvidersArgs = TokenlensOptions & HelperClient;
+type TryGetModelDataArgs = HelperArgs<
+  Parameters<Tokenlens["tryGetModelData"]>[0]
+>;
+
+function optionsFromArgs(args: TokenlensOptions): TokenlensOptions | undefined {
+  const options: TokenlensOptions = {};
+  if (args.catalog !== undefined) options.catalog = args.catalog;
+  if (args.overrides !== undefined) options.overrides = args.overrides;
+  if (args.ttlMs !== undefined) options.ttlMs = args.ttlMs;
+  if (args.fetch !== undefined) options.fetch = args.fetch;
+  if (args.signal !== undefined) options.signal = args.signal;
+  if (args.timeoutMs !== undefined) options.timeoutMs = args.timeoutMs;
+  if (args.cache !== undefined) options.cache = args.cache;
+  if (args.cacheKey !== undefined) options.cacheKey = args.cacheKey;
+  if (args.staleIfError !== undefined) {
+    options.staleIfError = args.staleIfError;
+  }
+  if (args.sourceOptions !== undefined)
+    options.sourceOptions = args.sourceOptions;
+  if (args.tokenizer !== undefined) options.tokenizer = args.tokenizer;
+  return Object.keys(options).length ? options : undefined;
+}
+
+function clientFromArgs(args: TokenlensOptions & HelperClient): Tokenlens {
+  return args.tokenlens ?? getTokenlens(optionsFromArgs(args));
 }
 
 /**
@@ -39,18 +81,12 @@ interface CountTokensArgs {
  * ```
  */
 
-export async function countTokens(args: CountTokensArgs) {
-  const tokenlens = getTokenlens();
-  return tokenlens.countTokens(args);
-}
-
-interface EstimateCostUSDArgs {
-  /** The model ID (e.g., "openai/gpt-4o-mini" or just "gpt-4o-mini") */
-  modelId: string;
-  /** Provider for model lookup (e.g., "openai", "anthropic") */
-  provider?: string;
-  /** Text content to estimate costs for */
-  data: string;
+export async function countTokens(args: HelperArgs<CountTokensArgs>) {
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.countTokens({
+    data: args.data,
+    modelId: args.modelId,
+  });
 }
 
 /**
@@ -70,19 +106,12 @@ interface EstimateCostUSDArgs {
  * ```
  */
 export async function estimateCostUSD(args: EstimateCostUSDArgs) {
-  const tokenlens = getTokenlens();
-  return tokenlens.estimateCostUSD(args);
-}
-
-interface ComputeCostUSDArgs {
-  /** The model ID (e.g., "openai/gpt-4o-mini" or "gpt-4o-mini") */
-  modelId: string;
-  /** Token usage data */
-  usage: Usage;
-  /** Gateway to use for fetching catalog (defaults to "auto") */
-  gateway?: GatewayId;
-  /** Optional provider to disambiguate model lookup (e.g., "openai", "anthropic") */
-  provider?: string;
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.estimateCostUSD({
+    data: args.data,
+    modelId: args.modelId,
+    ...(args.provider !== undefined ? { provider: args.provider } : {}),
+  });
 }
 
 /**
@@ -101,17 +130,12 @@ interface ComputeCostUSDArgs {
  * ```
  */
 export async function computeCostUSD(args: ComputeCostUSDArgs) {
-  const tokenlens = getTokenlens(args.gateway);
-  return tokenlens.computeCostUSD(args);
-}
-
-interface GetContextLimitsArgs {
-  /** The model ID (e.g., "openai/gpt-4o-mini" or "gpt-4o-mini") */
-  modelId: string;
-  /** Optional provider to disambiguate model lookup (e.g., "openai", "anthropic") */
-  provider?: string;
-  /** Gateway to use for fetching catalog (defaults to "auto") */
-  gateway?: GatewayId;
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.computeCostUSD({
+    modelId: args.modelId,
+    ...(args.provider !== undefined ? { provider: args.provider } : {}),
+    usage: args.usage,
+  });
 }
 
 /**
@@ -127,18 +151,13 @@ interface GetContextLimitsArgs {
  * ```
  */
 export async function getContextLimits(args: GetContextLimitsArgs) {
-  const tokenlens = getTokenlens(args.gateway);
-  return tokenlens.getContextLimits(args);
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.getContextLimits({
+    modelId: args.modelId,
+    ...(args.provider !== undefined ? { provider: args.provider } : {}),
+  });
 }
 
-interface GetModelDataArgs {
-  /** The model ID (e.g., "openai/gpt-4o-mini" or "gpt-4o-mini") */
-  modelId: string;
-  /** Optional provider to disambiguate model lookup (e.g., "openai", "anthropic") */
-  provider?: string;
-  /** Gateway to use for fetching catalog (defaults to "auto") */
-  gateway?: GatewayId;
-}
 /**
  * Get a model's metadata exactly as stored in the active sources.
  *
@@ -162,19 +181,32 @@ interface GetModelDataArgs {
  * ```
  */
 export async function getModelData(args: GetModelDataArgs) {
-  const tokenlens = getTokenlens(args.gateway);
-  return tokenlens.getModelData(args);
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.getModelData({
+    modelId: args.modelId,
+    ...(args.provider !== undefined ? { provider: args.provider } : {}),
+  });
 }
 
-interface GetContextHealthArgs {
-  /** The model ID (e.g., "openai/gpt-4o-mini" or "gpt-4o-mini") */
-  modelId: string;
-  /** Token usage data */
-  usage: Usage;
-  /** Optional provider to disambiguate model lookup (e.g., "openai", "anthropic") */
-  provider?: string;
-  /** Gateway to use for fetching catalog (defaults to "auto") */
-  gateway?: GatewayId;
+export async function tryGetModelData(args: TryGetModelDataArgs) {
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.tryGetModelData({
+    modelId: args.modelId,
+    ...(args.provider !== undefined ? { provider: args.provider } : {}),
+  });
+}
+
+export async function listModels(args: ListModelsArgs = {}) {
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.listModels({
+    ...(args.provider !== undefined ? { provider: args.provider } : {}),
+    ...(args.search !== undefined ? { search: args.search } : {}),
+  });
+}
+
+export async function listProviders(args: ListProvidersArgs = {}) {
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.listProviders();
 }
 
 /**
@@ -202,43 +234,23 @@ interface GetContextHealthArgs {
  * ```
  */
 export async function getContextHealth(args: GetContextHealthArgs) {
-  const tokenlens = getTokenlens(args.gateway);
-  return tokenlens.getContextHealth(args);
-}
-
-const instances = new Map<GatewayId, Tokenlens>();
-
-/**
- * @internal
- * Lazily creates or returns the shared Tokenlens instance for a given catalog.
- */
-function getTokenlens(catalog?: GatewayId): Tokenlens {
-  const key = catalog ?? "auto";
-  let instance = instances.get(key);
-  if (!instance) {
-    instance = new Tokenlens({ catalog: key });
-    instances.set(key, instance);
-  }
-  return instance;
-}
-
-/**
- * @internal Utility for tests to override the shared Tokenlens instance.
- */
-export function setSharedTokenlens(tokenlens?: Tokenlens) {
-  instances.clear();
-  if (tokenlens) {
-    instances.set("auto", tokenlens);
-  }
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.getContextHealth({
+    modelId: args.modelId,
+    ...(args.provider !== undefined ? { provider: args.provider } : {}),
+    usage: args.usage,
+  });
 }
 
 export type {
   SourceId,
   SourceModel,
+  SourceProvider,
   SourceProviders,
   Usage,
 } from "@tokenlens/core";
 export type { ModelDetails, TokenlensOptions };
+export type { CatalogSource } from "@tokenlens/fetch";
 export type { ContextHealth, TokenCosts } from "@tokenlens/helpers";
 // Re-export helper utilities
 export {
@@ -246,3 +258,15 @@ export {
   estimateTokenSavings,
 } from "@tokenlens/helpers";
 export { Tokenlens } from "./client.js";
+export type {
+  CacheAdapter,
+  CacheEntry,
+  Catalog,
+  CatalogId,
+  CatalogModelOverride,
+  CatalogOverrides,
+  CatalogProviderOverride,
+  TokenCounter,
+  TokenlensSourceOptions,
+  VercelSourceOptions,
+} from "./types.js";

@@ -2,12 +2,16 @@
   "name": "vercel-ai-sdk",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.35",
+    "@tokenlens/tokenizer": "workspace:*",
     "ai": "^5.0.52",
     "dotenv": "^17.2.2",
     "tokenlens": "workspace:*"

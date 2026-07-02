@@ -166,6 +166,99 @@ describe("getContextHealth", () => {
     expect(health?.remainingTokens).toBe(100000);
   });
 
+  it("uses total_tokens when detailed token counters are absent", () => {
+    const model: SourceModel = {
+      id: "gpt-4o",
+      canonical_id: "openai/gpt-4o",
+      name: "GPT-4o",
+      limit: { context: 100000 },
+    };
+
+    const health = getContextHealth({
+      model,
+      usage: {
+        total_tokens: 75_000,
+      },
+    });
+
+    expect(health?.usedTokens).toBe(75_000);
+    expect(health?.remainingTokens).toBe(25_000);
+    expect(health?.status).toBe("warning");
+  });
+
+  it("adds reasoning and Anthropic cache counters when they are not included in totals", () => {
+    const model: SourceModel = {
+      id: "claude-sonnet-4-5",
+      canonical_id: "anthropic/claude-sonnet-4-5",
+      name: "Claude Sonnet 4.5",
+      limit: { context: 100000 },
+    };
+
+    const health = getContextHealth({
+      model,
+      usage: {
+        input_tokens: 10_000,
+        output_tokens: 0,
+        reasoning_tokens: 5_000,
+        cache_read_input_tokens: 2_000,
+        cache_creation_input_tokens: 3_000,
+      },
+    });
+
+    expect(health?.usedTokens).toBe(20_000);
+    expect(health?.remainingTokens).toBe(80_000);
+    expect(health?.status).toBe("healthy");
+  });
+
+  it("handles Anthropic cache read-only and write-only counters", () => {
+    const model: SourceModel = {
+      id: "claude-sonnet-4-5",
+      canonical_id: "anthropic/claude-sonnet-4-5",
+      name: "Claude Sonnet 4.5",
+      limit: { context: 100000 },
+    };
+
+    const readOnly = getContextHealth({
+      model,
+      usage: {
+        input_tokens: 10_000,
+        output_tokens: 1_000,
+        cache_read_input_tokens: 2_000,
+      },
+    });
+    const writeOnly = getContextHealth({
+      model,
+      usage: {
+        input_tokens: 10_000,
+        output_tokens: 1_000,
+        cache_creation_input_tokens: 3_000,
+      },
+    });
+
+    expect(readOnly?.usedTokens).toBe(13_000);
+    expect(writeOnly?.usedTokens).toBe(14_000);
+  });
+
+  it("uses totalTokens when detailed camelCase counters are absent", () => {
+    const model: SourceModel = {
+      id: "gpt-4o",
+      canonical_id: "openai/gpt-4o",
+      name: "GPT-4o",
+      limit: { context: 100000 },
+    };
+
+    const health = getContextHealth({
+      model,
+      usage: {
+        totalTokens: 95_000,
+      },
+    });
+
+    expect(health?.usedTokens).toBe(95_000);
+    expect(health?.remainingTokens).toBe(5_000);
+    expect(health?.status).toBe("critical");
+  });
+
   it("returns undefined when context limit is missing", () => {
     const model: SourceModel = {
       id: "gpt-4o",
@@ -261,7 +354,7 @@ describe("getContextHealth", () => {
     expect(health?.status).toBe("healthy");
   });
 
-  it("includes reasoning tokens in usage calculation", () => {
+  it("includes reasoning tokens when no output total contains them", () => {
     const model: SourceModel = {
       id: "o1-preview",
       canonical_id: "openai/o1-preview",
@@ -271,18 +364,39 @@ describe("getContextHealth", () => {
 
     const usage: Usage = {
       input_tokens: 10000,
-      output_tokens: 5000,
+      output_tokens: 0,
       reasoning_tokens: 20000, // Additional reasoning tokens
     };
 
     const health = getContextHealth({ model, usage });
 
     expect(health).toBeDefined();
-    expect(health?.usedTokens).toBe(35000); // 10000 + 5000 + 20000
-    expect(health?.remainingTokens).toBe(93000);
+    expect(health?.usedTokens).toBe(30000); // 10000 + 20000
+    expect(health?.remainingTokens).toBe(98000);
   });
 
-  it("includes cache tokens in context usage calculation", () => {
+  it("does not double-count OpenAI reasoning tokens included in output", () => {
+    const model: SourceModel = {
+      id: "o1-preview",
+      canonical_id: "openai/o1-preview",
+      name: "O1 Preview",
+      limit: { context: 128000 },
+    };
+
+    const usage: Usage = {
+      prompt_tokens: 10000,
+      completion_tokens: 5000,
+      completion_tokens_details: {
+        reasoning_tokens: 2000,
+      },
+    };
+
+    const health = getContextHealth({ model, usage });
+
+    expect(health?.usedTokens).toBe(15000);
+  });
+
+  it("does not double-count cache tokens in context usage", () => {
     const model: SourceModel = {
       id: "claude-sonnet-4-5",
       canonical_id: "anthropic/claude-sonnet-4-5",
@@ -293,19 +407,19 @@ describe("getContextHealth", () => {
     const usage: Usage = {
       input_tokens: 50000,
       output_tokens: 10000,
-      cache_read_tokens: 30000, // Consumes context even though subset for pricing
-      cache_write_tokens: 5000, // Consumes context even though subset for pricing
+      cache_read_tokens: 30000,
+      cache_write_tokens: 5000,
     };
 
     const health = getContextHealth({ model, usage });
 
     expect(health).toBeDefined();
-    expect(health?.usedTokens).toBe(95000); // 50000 + 10000 + 30000 + 5000 (cache tokens consume context)
-    expect(health?.remainingTokens).toBe(105000);
+    expect(health?.usedTokens).toBe(60000);
+    expect(health?.remainingTokens).toBe(140000);
     expect(health?.status).toBe("healthy");
   });
 
-  it("correctly handles reasoning tokens and includes cache tokens in context usage", () => {
+  it("handles reasoning tokens without double-counting cache tokens", () => {
     const model: SourceModel = {
       id: "test-model",
       canonical_id: "test/test-model",
@@ -317,16 +431,16 @@ describe("getContextHealth", () => {
       input_tokens: 20000,
       output_tokens: 10000,
       reasoning_tokens: 15000,
-      cache_read_tokens: 25000, // Consumes context even though subset for pricing
-      cache_write_tokens: 5000, // Consumes context even though subset for pricing
+      cache_read_tokens: 25000,
+      cache_write_tokens: 5000,
     };
 
     const health = getContextHealth({ model, usage });
 
     expect(health).toBeDefined();
-    expect(health?.usedTokens).toBe(75000); // 20000 + 10000 + 15000 + 25000 + 5000 (cache tokens consume context)
-    expect(health?.remainingTokens).toBe(25000);
-    expect(health?.status).toBe("warning"); // 75% usage
+    expect(health?.usedTokens).toBe(30000);
+    expect(health?.remainingTokens).toBe(70000);
+    expect(health?.status).toBe("healthy");
   });
 });
 

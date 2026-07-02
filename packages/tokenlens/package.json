@@ -1,9 +1,10 @@
 {
   "name": "tokenlens",
   "version": "2.0.0",
-  "description": "A lightweight registry of LLM model information, like name and context sizes, for building AI-powered apps.",
+  "description": "Lean model metadata, cost, context, and caching helpers for AI apps.",
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "type": "module",
   "main": "dist/index.js",
@@ -25,13 +26,22 @@
     "./core": {
       "types": "./dist/exports/core.d.ts",
       "default": "./dist/exports/core.js"
-    }
+    },
+    "./tokenizer": {
+      "types": "./dist/exports/tokenizer.d.ts",
+      "default": "./dist/exports/tokenizer.js"
+    },
+    "./package.json": "./package.json"
   },
   "publishConfig": {
     "access": "public"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "prebuild": "pnpm --filter @tokenlens/core run build && pnpm --filter @tokenlens/helpers run build && pnpm --filter @tokenlens/fetch run build && pnpm --filter @tokenlens/tokenizer run build",
+    "clean": "rm -rf dist",
+    "prebuild": "pnpm run clean && pnpm --filter @tokenlens/core run build && pnpm --filter @tokenlens/helpers run build && pnpm --filter @tokenlens/fetch run build && pnpm --filter @tokenlens/tokenizer run build",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "pnpm run build && vitest --config ../../vitest.config.ts --project tokenlens",
@@ -76,13 +86,21 @@
   },
   "homepage": "https://github.com/xn1cklas/tokenlens/tree/HEAD/packages/tokenlens#readme",
   "devDependencies": {
+    "@tokenlens/tokenizer": "workspace:*",
     "@types/node": "^24.5.2",
     "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "@tokenlens/tokenizer": "^2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@tokenlens/tokenizer": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@tokenlens/core": "workspace:*",
     "@tokenlens/fetch": "workspace:*",
-    "@tokenlens/helpers": "workspace:*",
-    "@tokenlens/tokenizer": "workspace:*"
+    "@tokenlens/helpers": "workspace:*"
   }
 }

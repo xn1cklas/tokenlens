@@ -2,7 +2,7 @@
   "name": "@tokenlens/fetch",
   "version": "2.0.0",
   "private": false,
-  "description": "Typed client for models.dev to fetch model catalogs with friendly errors.",
+  "description": "Typed fetchers for hosted Tokenlens model catalogs with friendly errors.",
   "type": "module",
   "sideEffects": false,
   "main": "dist/index.js",
@@ -11,19 +11,27 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "publishConfig": {
     "access": "public"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
+    "clean": "rm -rf dist",
+    "prebuild": "pnpm run clean",
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit",
     "test": "vitest --config ../../vitest.config.ts --project fetch",
     "test:run": "vitest run --config ../../vitest.config.ts --project fetch",
+    "test:live": "RUN_LIVE_TESTS=1 vitest run --config ../../vitest.config.ts --project fetch",
     "prepublishOnly": "pnpm run build"
   },
   "repository": {

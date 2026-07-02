@@ -27,10 +27,7 @@ describe("Vercel AI SDK - computeCostUSD()", () => {
     const costs = await tokenlens.computeCostUSD({
       modelId: model.modelId,
       provider: "openai",
-      usage: {
-        input_tokens: usage.inputTokens,
-        output_tokens: usage.outputTokens,
-      },
+      usage,
     });
 
     expect(costs.inputTokenCostUSD).toBeCloseTo(0.036, 6); // 1200 * 30 / 1M
@@ -51,10 +48,7 @@ describe("Vercel AI SDK - computeCostUSD()", () => {
     const costs = await tokenlens.computeCostUSD({
       modelId: model.modelId,
       provider: "anthropic",
-      usage: {
-        input_tokens: usage.inputTokens,
-        output_tokens: usage.outputTokens,
-      },
+      usage,
     });
 
     expect(costs.inputTokenCostUSD).toBeCloseTo(0.003, 6);
@@ -74,11 +68,8 @@ describe("Vercel AI SDK - computeCostUSD()", () => {
 
     const costs = await tokenlens.computeCostUSD({
       modelId: model.modelId,
-      provider: "xai",
-      usage: {
-        input_tokens: usage.inputTokens,
-        output_tokens: usage.outputTokens,
-      },
+      provider: model.provider,
+      usage,
     });
 
     expect(costs.inputTokenCostUSD).toBeCloseTo(0.02, 6); // 1000 * 20 / 1M

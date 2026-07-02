@@ -17,8 +17,6 @@ export type ContextProps = ComponentProps<"button"> & {
   usedTokens: number;
   /** Optional full usage payload to enable breakdown view */
   usage?: LanguageModelUsage | undefined;
-  /** Optional model id (canonical or alias) to compute cost */
-  modelId?: string;
   /** Show token breakdown and optional cost inside hover */
   showBreakdown?: boolean;
 };
@@ -113,7 +111,6 @@ export const Context = ({
   maxTokens,
   usedTokens,
   usage,
-  modelId: _modelId,
   showBreakdown,
   ...props
 }: ContextProps) => {

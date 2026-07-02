@@ -1,5 +1,5 @@
 import type OpenAI from "openai";
-import { countTokens, getContextHealth } from "tokenlens";
+import { countTokens } from "tokenlens";
 import { describe, expect, it } from "vitest";
 import { createTestClient } from "./test-catalog.js";
 
@@ -28,17 +28,13 @@ describe("OpenAI SDK - computeCostUSD()", () => {
 
     const costs = await tokenlens.computeCostUSD({
       modelId: "gpt-5",
-      usage: {
-        input_tokens: usage.prompt_tokens,
-        output_tokens: usage.completion_tokens,
-        reasoning_tokens: usage.completion_tokens_details?.reasoning_tokens,
-      },
+      usage,
     });
 
     expect(costs.inputTokenCostUSD).toBeCloseTo(0.036, 6); // 1200 * 30 / 1M
-    expect(costs.outputTokenCostUSD).toBeCloseTo(0.036, 6); // 600 * 60 / 1M
+    expect(costs.outputTokenCostUSD).toBeCloseTo(0.0288, 6); // (600 - 120) * 60 / 1M
     expect(costs.reasoningTokenCostUSD).toBeCloseTo(0.0144, 6); // 120 * 120 / 1M
-    expect(costs.totalTokenCostUSD).toBeCloseTo(0.0864, 6);
+    expect(costs.totalTokenCostUSD).toBeCloseTo(0.0792, 6);
   });
 
   it("computes costs with prompt caching", async () => {
@@ -56,16 +52,13 @@ describe("OpenAI SDK - computeCostUSD()", () => {
 
     const costs = await tokenlens.computeCostUSD({
       modelId: "gpt-5",
-      usage: {
-        input_tokens: usage.prompt_tokens,
-        output_tokens: usage.completion_tokens,
-        cache_read_tokens: usage.prompt_tokens_details?.cached_tokens,
-      },
+      usage,
     });
 
-    expect(costs.inputTokenCostUSD).toBeCloseTo(0.03, 6);
+    expect(costs.inputTokenCostUSD).toBeCloseTo(0.021, 6);
     expect(costs.outputTokenCostUSD).toBeCloseTo(0.03, 6);
     expect(costs.cacheReadTokenCostUSD).toBeCloseTo(0.0018, 6);
+    expect(costs.totalTokenCostUSD).toBeCloseTo(0.0528, 6);
   });
 });
 

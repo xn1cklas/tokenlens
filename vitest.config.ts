@@ -43,13 +43,33 @@ export default defineConfig({
   },
   test: {
     coverage: {
+      provider: "v8",
+      include: ["packages/*/src/**/*.ts"],
+      exclude: [
+        "node_modules/**",
+        "dist/**",
+        "coverage/**",
+        "**/.next/**",
+        "**/*.test.ts",
+        "**/*.spec.ts",
+        "packages/codemod/src/index.ts",
+        "packages/*/src/types.ts",
+        "packages/core/src/dto.ts",
+        "packages/core/src/usage.ts",
+      ],
       reporter: ["text", "json", "html"],
-      exclude: ["node_modules/", "dist/"],
+      thresholds: {
+        statements: 98,
+        branches: 98,
+        functions: 98,
+        lines: 98,
+      },
     },
     projects: [
       project("core", "packages/core", ["tests/**/*.test.ts"]),
       project("helpers", "packages/helpers", ["tests/**/*.spec.ts"]),
       project("fetch", "packages/fetch", ["tests/**/*.spec.ts"]),
+      project("codemod", "packages/codemod", ["tests/**/*.spec.ts"]),
       project("tokenizer", "packages/tokenizer", ["tests/**/*.spec.ts"], {
         globals: true,
       }),

@@ -2,7 +2,7 @@
   "name": "@tokenlens/core",
   "version": "2.0.0",
   "private": false,
-  "description": "Core types and registry utilities for TokenLens (model metadata).",
+  "description": "Core DTOs, errors, model id helpers, and usage types for Tokenlens.",
   "type": "module",
   "sideEffects": false,
   "main": "dist/index.js",
@@ -20,26 +20,28 @@
       "types": "./dist/id.d.ts",
       "default": "./dist/id.js"
     },
-    "./registry": {
-      "types": "./dist/registry.d.ts",
-      "default": "./dist/registry.js"
-    },
-    "./types": {
-      "types": "./dist/types.d.ts",
-      "default": "./dist/types.js"
+    "./usage": {
+      "types": "./dist/usage.d.ts",
+      "default": "./dist/usage.js"
     },
     "./error": {
       "types": "./dist/error.d.ts",
       "default": "./dist/error.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "publishConfig": {
     "access": "public"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
+    "prebuild": "rm -rf dist",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest --config ../../vitest.config.ts --project core",
@@ -54,9 +56,7 @@
   "keywords": [
     "ai",
     "llm",
-    "model registry",
     "model metadata",
-    "registry",
     "types",
     "context window",
     "token usage",

@@ -18,13 +18,21 @@ type TokenlensMiddleware = LanguageModelMiddleware & {
   readonly middlewareVersion: "v2";
   readonly specificationVersion: "v3";
 };
-type AiSdkV6TokenUsage = {
+export type TokenlensMiddlewareOptions = {
+  /**
+   * When true, cost computation errors fail the AI SDK call/stream.
+   * The default is fail-open so observability metadata cannot break a
+   * successful model response.
+   */
+  strict?: boolean;
+};
+type AiSdkTokenUsage = {
   total?: unknown;
   reasoning?: unknown;
   cacheRead?: unknown;
   cacheWrite?: unknown;
 };
-type AiSdkV6Usage = {
+type AiSdkUsage = {
   inputTokens?: unknown;
   outputTokens?: unknown;
 };
@@ -58,16 +66,39 @@ const withTokenlensMetadata = <
   T extends { providerMetadata?: Record<string, unknown> },
 >(
   value: T,
-  costs: Awaited<ReturnType<TokenlensClient["computeCostUSD"]>>,
+  metadata: Record<string, JSONValue>,
 ): T => ({
   ...value,
   providerMetadata: {
     ...value.providerMetadata,
     tokenlens: {
-      costs: toJSONValue(costs),
+      ...metadata,
     },
   },
 });
+
+const tokenlensErrorMetadata = (error: unknown): Record<string, JSONValue> => {
+  if (error instanceof Error) {
+    const code =
+      "code" in error && typeof error.code === "string"
+        ? error.code
+        : undefined;
+    const meta = "meta" in error ? toJSONValue(error.meta) : undefined;
+    return {
+      error: {
+        message: error.message,
+        ...(code ? { code } : {}),
+        ...(meta !== undefined ? { meta } : {}),
+      },
+    };
+  }
+
+  return {
+    error: {
+      message: String(error),
+    },
+  };
+};
 
 const num = (value: unknown): number | undefined =>
   typeof value === "number" && Number.isFinite(value) ? value : undefined;
@@ -80,12 +111,12 @@ const toRecord = (value: unknown): Record<string, unknown> | undefined =>
 const toTokenlensUsage = (
   usage: unknown,
 ): Parameters<TokenlensClient["computeCostUSD"]>[0]["usage"] => {
-  const value = toRecord(usage) as AiSdkV6Usage | undefined;
+  const value = toRecord(usage) as AiSdkUsage | undefined;
   const inputTokens = toRecord(value?.inputTokens) as
-    | AiSdkV6TokenUsage
+    | AiSdkTokenUsage
     | undefined;
   const outputTokens = toRecord(value?.outputTokens) as
-    | AiSdkV6TokenUsage
+    | AiSdkTokenUsage
     | undefined;
 
   if (inputTokens || outputTokens) {
@@ -140,6 +171,7 @@ const computeCosts = async ({
  */
 export const tokenlensMiddleware = (
   tokenlens: TokenlensClient,
+  options: TokenlensMiddlewareOptions = {},
 ): TokenlensMiddleware => ({
   middlewareVersion: "v2",
   specificationVersion: "v3",
@@ -147,16 +179,21 @@ export const tokenlensMiddleware = (
     const result = await doGenerate();
     if (!result.usage) return result;
 
-    const costs = await computeCosts({
-      tokenlens,
-      model,
-      usage: result.usage,
-    });
+    try {
+      const costs = await computeCosts({
+        tokenlens,
+        model,
+        usage: result.usage,
+      });
 
-    return {
-      costs,
-      ...withTokenlensMetadata(result, costs),
-    };
+      return {
+        costs,
+        ...withTokenlensMetadata(result, { costs: toJSONValue(costs) }),
+      };
+    } catch (error) {
+      if (options.strict) throw error;
+      return withTokenlensMetadata(result, tokenlensErrorMetadata(error));
+    }
   },
   wrapStream: async ({ doStream, model }) => {
     const result = await doStream();
@@ -171,13 +208,22 @@ export const tokenlensMiddleware = (
               return;
             }
 
-            const costs = await computeCosts({
-              tokenlens,
-              model,
-              usage: part.usage,
-            });
+            try {
+              const costs = await computeCosts({
+                tokenlens,
+                model,
+                usage: part.usage,
+              });
 
-            controller.enqueue(withTokenlensMetadata(part, costs));
+              controller.enqueue(
+                withTokenlensMetadata(part, { costs: toJSONValue(costs) }),
+              );
+            } catch (error) {
+              if (options.strict) throw error;
+              controller.enqueue(
+                withTokenlensMetadata(part, tokenlensErrorMetadata(error)),
+              );
+            }
           },
         }),
       ),
@@ -194,10 +240,11 @@ export const tokenlensMiddleware = (
 export const wrapVercelLanguageModel = (
   model: WrapLanguageModelOptions["model"],
   tokenlens: TokenlensClient,
+  options?: TokenlensMiddlewareOptions,
 ): WrappedLanguageModel =>
   wrapLanguageModel({
     model,
-    middleware: tokenlensMiddleware(tokenlens),
+    middleware: tokenlensMiddleware(tokenlens, options),
   });
 
 /**
@@ -208,28 +255,12 @@ export const wrapVercelLanguageModel = (
  */
 export const tokenlensMiddlewareV5 = tokenlensMiddleware;
 
-/**
- * AI SDK v6 middleware helper.
- *
- * Runtime-compatible with `LanguageModelV3Middleware`; exported separately so
- * v6 users can choose an explicit major-version helper.
- */
-export const tokenlensMiddlewareV6 = tokenlensMiddleware;
-
 export const withTokenlensV5 = (
   model: WrapLanguageModelOptions["model"],
   tokenlens: TokenlensClient,
+  options?: TokenlensMiddlewareOptions,
 ): WrappedLanguageModel =>
   wrapLanguageModel({
     model,
-    middleware: tokenlensMiddlewareV5(tokenlens),
-  });
-
-export const withTokenlensV6 = (
-  model: WrapLanguageModelOptions["model"],
-  tokenlens: TokenlensClient,
-): WrappedLanguageModel =>
-  wrapLanguageModel({
-    model,
-    middleware: tokenlensMiddlewareV6(tokenlens),
+    middleware: tokenlensMiddlewareV5(tokenlens, options),
   });

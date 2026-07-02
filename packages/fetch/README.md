@@ -60,13 +60,14 @@ const providers = combine([
 
 API
 - `fetchModelsDev(options?: { provider?: string; model?: string; fetch?: typeof globalThis.fetch })`
+  - Normalizes bare models.dev model keys such as `gpt-5` into canonical provider-prefixed IDs such as `openai/gpt-5`.
   - Fetches the public models.dev JSON, normalizes provider metadata and models, and optionally filters.
 - `fetchOpenrouter(options?: { provider?: string; model?: string; fetch?: typeof globalThis.fetch })`
   - Calls `https://openrouter.ai/api/v1/models`, groups models by namespace, and keeps pricing/limit details.
 - `fetchVercel(options?: { provider?: string; model?: string; includeEndpointDetails?: boolean; fetch?: FetchLike })`
   - Loads `https://ai-gateway.vercel.sh/v1/models`, groups models by upstream provider, and converts pricing.
   - When `includeEndpointDetails` is true, also loads `https://ai-gateway.vercel.sh/v1/models/{provider}/{model}/endpoints` for each matched model and prefers endpoint-level pricing/context data.
-- `fetchVercelModelEndpoints(modelId: string)`
+- `fetchVercelModelEndpoints(modelId: string, options?: { fetch?: FetchLike })`
   - Loads endpoint details for one Vercel AI Gateway model id, for example `anthropic/claude-sonnet-4`.
 - `FetchLike`
   - Minimal fetch contract accepted by both functions. Useful when wiring Node, Deno, Cloudflare Workers, etc.
@@ -83,7 +84,8 @@ import type {
 The types mirror the definitions in `@tokenlens/core/dto` and are re-exported here for convenience.
 
 Testing
-- `pnpm test --filter @tokenlens/fetch` runs both unit tests (mocked DTO transforms) and live integration tests hitting models.dev, Vercel AI Gateway, and OpenRouter. Ensure you have network access when running the suite.
+- `pnpm --filter @tokenlens/fetch test:run` runs deterministic unit tests with mocked DTO transforms.
+- `pnpm --filter @tokenlens/fetch test:live` runs live integration tests against models.dev, Vercel AI Gateway, and OpenRouter. The repository also runs these through the scheduled/manual "Live Fetch Tests" workflow.
 
 License
 MIT

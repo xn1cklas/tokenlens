@@ -2,11 +2,15 @@
   "name": "openai-sdk",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@tokenlens/tokenizer": "workspace:*",
     "dotenv": "^17.2.2",
     "openai": "^5.23.0",
     "tokenlens": "workspace:*"
