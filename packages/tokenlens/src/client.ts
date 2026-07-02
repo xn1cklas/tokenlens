@@ -1,6 +1,7 @@
 import {
   assertSourceProviders,
   type SourceModel,
+  type SourceProvider,
   type SourceProviders,
   TokenlensError,
   type Usage,
@@ -10,6 +11,7 @@ import {
   catalogInputCacheKey,
   fetchCatalogSource,
   isCatalogSource,
+  normalizeCatalogId,
 } from "@tokenlens/fetch";
 import type { TokenCosts } from "@tokenlens/helpers";
 import {
@@ -29,9 +31,12 @@ import {
 import {
   type CacheAdapter,
   type Catalog,
+  type CatalogModelOverride,
+  type CatalogOverrides,
   DEFAULT_CATALOG_ID,
   type TokenCounter,
   type TokenlensOptions,
+  type TokenlensSourceOptions,
 } from "./types.js";
 
 export type ModelDetails = SourceModel;
@@ -41,14 +46,15 @@ type ResolvedModel = Omit<ResolveModelResult, "model"> & {
 
 export class Tokenlens {
   private readonly catalog: Catalog;
-  private readonly overrides: SourceProviders | undefined;
+  private readonly overrides: CatalogOverrides | undefined;
   private readonly ttlMs: number;
-  private readonly cache: CacheAdapter;
+  private readonly cache: CacheAdapter | undefined;
   private readonly cacheKey: string;
   private readonly fetchImpl: typeof globalThis.fetch;
   private readonly signal: AbortSignal | undefined;
   private readonly timeoutMs: number | undefined;
   private readonly staleIfError: boolean;
+  private readonly sourceOptions: TokenlensSourceOptions | undefined;
   private readonly tokenizer: TokenCounter | false | undefined;
   private inFlightCatalog: Promise<SourceProviders> | undefined;
   private catalogRequestVersion = 0;
@@ -69,11 +75,15 @@ export class Tokenlens {
     this.catalog = options?.catalog ?? DEFAULT_CATALOG_ID;
     this.overrides = options?.overrides;
     this.ttlMs = options?.ttlMs ?? 24 * 60 * 60 * 1000;
-    this.cache = options?.cache ?? new MemoryCache();
+    this.cache =
+      options?.cache === false || this.ttlMs <= 0
+        ? undefined
+        : (options?.cache ?? new MemoryCache());
     this.fetchImpl = options?.fetch ?? globalThis.fetch;
     this.signal = options?.signal;
     this.timeoutMs = options?.timeoutMs;
     this.staleIfError = options?.staleIfError ?? true;
+    this.sourceOptions = options?.sourceOptions;
     this.tokenizer = options?.tokenizer;
 
     // only cache when we load the catalog from a hosted or async source
@@ -87,20 +97,27 @@ export class Tokenlens {
   }
 
   private async fetchCatalog(source: CatalogInput): Promise<SourceProviders> {
+    const vercelOptions =
+      typeof source === "string" && normalizeCatalogId(source) === "vercel"
+        ? this.sourceOptions?.vercel
+        : undefined;
     return fetchCatalogSource(source, {
       fetch: this.fetchImpl,
       ...(this.signal ? { signal: this.signal } : {}),
       ...(this.timeoutMs !== undefined ? { timeoutMs: this.timeoutMs } : {}),
+      ...(vercelOptions ?? {}),
     });
   }
 
   private applyOverrides(catalog: SourceProviders): SourceProviders {
     if (!this.overrides) return catalog;
+    assertCatalogOverrides(this.overrides);
     if (this.mergedCatalogCache?.source === catalog) {
       return this.mergedCatalogCache.merged;
     }
 
     const merged = mergeCatalogs(catalog, this.overrides);
+    assertSourceProviders(merged, "merged catalog");
     this.mergedCatalogCache = { source: catalog, merged };
     return merged;
   }
@@ -124,7 +141,7 @@ export class Tokenlens {
     }
 
     const now = Date.now();
-    const cached = await this.cache.get(this.cacheKey);
+    const cached = await this.cache?.get(this.cacheKey);
     if (!options?.force && cached && cached.expiresAt > now) {
       return this.applyOverrides(cached.value);
     }
@@ -136,7 +153,7 @@ export class Tokenlens {
         const catalogSource = this.catalog as CatalogInput;
         this.inFlightCatalog = (async () => {
           const catalog = await this.fetchCatalog(catalogSource);
-          if (this.catalogRequestVersion === requestVersion) {
+          if (this.cache && this.catalogRequestVersion === requestVersion) {
             const entry = {
               value: catalog,
               expiresAt: Date.now() + jitter(this.ttlMs),
@@ -151,7 +168,7 @@ export class Tokenlens {
       const catalog = await inFlight;
       return this.applyOverrides(catalog);
     } catch (error) {
-      if (this.staleIfError && !options?.force && cached) {
+      if (this.cache && this.staleIfError && !options?.force && cached) {
         return this.applyOverrides(cached.value);
       }
       throw error;
@@ -166,8 +183,59 @@ export class Tokenlens {
     return this.loadCatalog(force === undefined ? undefined : { force });
   }
 
+  async listProviders(): Promise<SourceProvider[]> {
+    const catalog = await this.loadCatalog();
+    return Object.values(catalog);
+  }
+
+  async listModels(args?: {
+    provider?: string;
+    search?: string;
+  }): Promise<ModelDetails[]> {
+    const catalog = await this.loadCatalog();
+    const providerFilter = args?.provider?.trim().toLowerCase();
+    const searchFilter = args?.search?.trim().toLowerCase();
+    const models: ModelDetails[] = [];
+
+    for (const [providerKey, provider] of Object.entries(catalog)) {
+      if (
+        providerFilter &&
+        !providerMatches(providerKey, provider, providerFilter)
+      ) {
+        continue;
+      }
+
+      for (const [modelKey, model] of Object.entries(provider.models)) {
+        if (searchFilter && !modelMatches(modelKey, model, searchFilter)) {
+          continue;
+        }
+        models.push(model);
+      }
+    }
+
+    return models;
+  }
+
+  async tryGetModelData(args: {
+    modelId: string;
+    provider?: string;
+  }): Promise<ModelDetails | undefined> {
+    try {
+      return await this.getModelData(args);
+    } catch (error) {
+      if (
+        error instanceof TokenlensError &&
+        (error.code === TokenlensError.ModelNotFound.code ||
+          error.code === TokenlensError.AmbiguousModelId.code)
+      ) {
+        return undefined;
+      }
+      throw error;
+    }
+  }
+
   async invalidate(): Promise<void> {
-    await this.cache.delete?.(this.cacheKey);
+    await this.cache?.delete?.(this.cacheKey);
     this.catalogRequestVersion += 1;
     this.inFlightCatalog = undefined;
     this.mergedCatalogCache = undefined;
@@ -420,9 +488,185 @@ export class Tokenlens {
   }
 }
 
+function providerMatches(
+  providerKey: string,
+  provider: SourceProvider,
+  lookup: string,
+): boolean {
+  return [providerKey, provider.id, ...(provider.aliases ?? [])]
+    .map((value) => value.toLowerCase())
+    .includes(lookup);
+}
+
+function modelMatches(
+  modelKey: string,
+  model: SourceModel,
+  lookup: string,
+): boolean {
+  return [modelKey, model.id, model.canonical_id, model.name].some((value) =>
+    value.toLowerCase().includes(lookup),
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function invalidOverrides(meta: Record<string, unknown>): never {
+  throw new TokenlensError.InvalidCatalog("overrides", { meta });
+}
+
+function assertOptionalStringField(args: {
+  value: Record<string, unknown>;
+  field: string;
+  providerId?: string;
+  modelId?: string;
+}) {
+  const fieldValue = args.value[args.field];
+  if (fieldValue !== undefined && typeof fieldValue !== "string") {
+    invalidOverrides({
+      reason: "INVALID_FIELD",
+      field: args.field,
+      ...(args.providerId ? { providerId: args.providerId } : {}),
+      ...(args.modelId ? { modelId: args.modelId } : {}),
+    });
+  }
+}
+
+function assertOptionalNumberMap(args: {
+  value: Record<string, unknown>;
+  field: "cost" | "limit";
+  providerId: string;
+  modelId: string;
+}) {
+  const nested = args.value[args.field];
+  if (nested === undefined) return;
+  if (!isRecord(nested)) {
+    invalidOverrides({
+      reason: "INVALID_FIELD",
+      field: args.field,
+      providerId: args.providerId,
+      modelId: args.modelId,
+    });
+  }
+
+  for (const [key, value] of Object.entries(nested)) {
+    if (
+      value !== undefined &&
+      (typeof value !== "number" || !Number.isFinite(value) || value < 0)
+    ) {
+      invalidOverrides({
+        reason: "INVALID_FIELD",
+        field: `${args.field}.${key}`,
+        providerId: args.providerId,
+        modelId: args.modelId,
+      });
+    }
+  }
+}
+
+function assertCatalogOverrides(
+  value: unknown,
+): asserts value is CatalogOverrides {
+  if (!isRecord(value)) {
+    invalidOverrides({ reason: "INVALID_ROOT" });
+  }
+
+  for (const [providerKey, provider] of Object.entries(value)) {
+    if (!isRecord(provider)) {
+      invalidOverrides({
+        reason: "INVALID_PROVIDER",
+        providerId: providerKey,
+      });
+    }
+    assertOptionalStringField({
+      value: provider,
+      field: "id",
+      providerId: providerKey,
+    });
+
+    const models = provider["models"];
+    if (models === undefined) {
+      continue;
+    }
+    if (!isRecord(models)) {
+      invalidOverrides({
+        reason: "INVALID_FIELD",
+        field: "models",
+        providerId: providerKey,
+      });
+    }
+
+    for (const [modelKey, model] of Object.entries(models)) {
+      if (!isRecord(model)) {
+        invalidOverrides({
+          reason: "INVALID_MODEL",
+          providerId: providerKey,
+          modelId: modelKey,
+        });
+      }
+      assertOptionalStringField({
+        value: model,
+        field: "id",
+        providerId: providerKey,
+        modelId: modelKey,
+      });
+      assertOptionalStringField({
+        value: model,
+        field: "canonical_id",
+        providerId: providerKey,
+        modelId: modelKey,
+      });
+      assertOptionalStringField({
+        value: model,
+        field: "name",
+        providerId: providerKey,
+        modelId: modelKey,
+      });
+      assertOptionalNumberMap({
+        value: model,
+        field: "cost",
+        providerId: providerKey,
+        modelId: modelKey,
+      });
+      assertOptionalNumberMap({
+        value: model,
+        field: "limit",
+        providerId: providerKey,
+        modelId: modelKey,
+      });
+    }
+  }
+}
+
+function definedObject<T extends Record<string, unknown>>(
+  value: T,
+): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => entry !== undefined),
+  ) as Partial<T>;
+}
+
+function completeOverrideModel(
+  modelId: string,
+  modelOverride: CatalogModelOverride,
+): SourceModel {
+  const fields = definedObject(modelOverride);
+  return {
+    id: modelOverride.id ?? modelId,
+    canonical_id: modelOverride.canonical_id ?? modelOverride.id ?? modelId,
+    name:
+      modelOverride.name ??
+      modelOverride.canonical_id ??
+      modelOverride.id ??
+      modelId,
+    ...fields,
+  };
+}
+
 function mergeCatalogs(
   base: SourceProviders,
-  overrides: SourceProviders,
+  overrides: CatalogOverrides,
 ): SourceProviders {
   const merged: SourceProviders = {};
   for (const [providerId, provider] of Object.entries(base)) {
@@ -434,11 +678,18 @@ function mergeCatalogs(
   }
 
   for (const [providerId, providerOverride] of Object.entries(overrides)) {
+    const { models: overrideModels = {}, ...providerFields } = providerOverride;
     const existingProvider = merged[providerId];
     if (!existingProvider) {
       merged[providerId] = {
-        ...providerOverride,
-        models: { ...providerOverride.models },
+        id: providerOverride.id ?? providerId,
+        ...definedObject(providerFields),
+        models: Object.fromEntries(
+          Object.entries(overrideModels).map(([modelId, modelOverride]) => [
+            modelId,
+            completeOverrideModel(modelId, modelOverride),
+          ]),
+        ),
         ...(providerOverride.extras
           ? { extras: { ...providerOverride.extras } }
           : {}),
@@ -447,16 +698,14 @@ function mergeCatalogs(
     }
 
     const nextModels = { ...existingProvider.models };
-    for (const [modelId, modelOverride] of Object.entries(
-      providerOverride.models,
-    )) {
+    for (const [modelId, modelOverride] of Object.entries(overrideModels)) {
       const existingModel = nextModels[modelId];
       if (!existingModel) {
-        nextModels[modelId] = modelOverride;
+        nextModels[modelId] = completeOverrideModel(modelId, modelOverride);
         continue;
       }
 
-      const mergedModel = { ...existingModel, ...modelOverride };
+      const mergedModel = { ...existingModel, ...definedObject(modelOverride) };
       if (existingModel.cost || modelOverride.cost) {
         mergedModel.cost = { ...existingModel.cost, ...modelOverride.cost };
       }
@@ -468,7 +717,7 @@ function mergeCatalogs(
 
     const mergedProvider = {
       ...existingProvider,
-      ...providerOverride,
+      ...definedObject(providerFields),
       models: nextModels,
     };
     const env = providerOverride.env ?? existingProvider.env;

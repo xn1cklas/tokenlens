@@ -64,13 +64,8 @@ const tokenlens = createTokenlens({
   catalog: "openrouter",
   overrides: {
     openai: {
-      id: "openai",
-      source: "package",
       models: {
         "openai/gpt-4o-mini": {
-          id: "openai/gpt-4o-mini",
-          canonical_id: "openai/gpt-4o-mini",
-          name: "GPT-4o Mini",
           cost: { input: 1, output: 2 },
         },
       },
@@ -79,4 +74,4 @@ const tokenlens = createTokenlens({
 });
 ```
 
-Override fields win over the base catalog. Nested `cost` and `limit` objects are merged, so omitted fields keep their hosted values.
+Override fields win over the base catalog. Nested `cost` and `limit` objects are merged, so omitted fields keep their hosted values. Provider and model ids default from the map keys when you add new entries, and provider-only patches can omit `models`.

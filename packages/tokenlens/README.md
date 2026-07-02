@@ -84,14 +84,15 @@ const tokenlens = new Tokenlens(options?: TokenlensOptions);
 
 **Options:**
 - `catalog`: `"auto" | "openrouter" | "models.dev" | "vercel"`, a custom `SourceProviders` object, or a custom async `CatalogSource` (default: `"openrouter"`; `"auto"` is an alias for the same OpenRouter catalog)
-- `overrides`: Custom `SourceProviders` object merged over the base catalog. Use this for local price or limit corrections while preserving hosted metadata.
+- `overrides`: Patch-style `CatalogOverrides` merged over the base catalog. Use this for local price, limit, or provider metadata corrections while preserving hosted metadata.
 - `ttlMs`: Cache TTL in milliseconds (default: 24 hours)
-- `cache`: Custom cache adapter with `{ get(key), set(key, entry), delete?(key) }` methods where `entry` is `{ value: SourceProviders; expiresAt: number }` (default: in-memory cache)
+- `cache`: Custom cache adapter with `{ get(key), set(key, entry), delete?(key) }` methods where `entry` is `{ value: SourceProviders; expiresAt: number }` (default: in-memory cache), or `false` to disable TokenLens caching entirely
 - `cacheKey`: Custom cache key for the catalog (default: `tokenlens:v2:{catalog}`)
 - `fetch`: Custom fetch implementation
 - `signal`: Abort signal passed to hosted or async catalog fetches
 - `timeoutMs`: Timeout for hosted or async catalog fetches
 - `staleIfError`: Return the last cached catalog when refresh fails (default: `true`)
+- `sourceOptions`: Source-specific loader options, such as `{ vercel: { includeEndpointDetails: true, endpointConcurrency: 2 } }`
 - `tokenizer`: Optional token counting function; pass `false` to disable implicit `@tokenlens/tokenizer` loading
 
 ### Standalone Helpers
@@ -109,6 +110,9 @@ await computeCostUSD({
 
 const tokenlens = createTokenlens({
   catalog: "vercel",
+  sourceOptions: {
+    vercel: { includeEndpointDetails: true },
+  },
   ttlMs: 10 * 60 * 1000,
 });
 
@@ -135,6 +139,41 @@ const model = await tokenlens.getModelData({
 ```
 
 **Returns:** `Promise<SourceModel>`; throws `TokenlensError.ModelNotFound` when the model cannot be resolved, or `TokenlensError.AmbiguousModelId` when a bare model id matches multiple providers.
+
+#### `tryGetModelData(args)`
+
+Return model metadata when available, or `undefined` when lookup fails.
+
+```ts
+const model = await tokenlens.tryGetModelData({
+  modelId: "openai/gpt-4o-mini",
+});
+```
+
+**Returns:** `Promise<SourceModel | undefined>`
+
+#### `listProviders()`
+
+List providers from the active cached catalog.
+
+```ts
+const providers = await tokenlens.listProviders();
+```
+
+**Returns:** `Promise<SourceProvider[]>`
+
+#### `listModels(args?)`
+
+List models from the active cached catalog, optionally filtering by provider and search text.
+
+```ts
+const models = await tokenlens.listModels({
+  provider: "openai",
+  search: "gpt-4o",
+});
+```
+
+**Returns:** `Promise<SourceModel[]>`
 
 #### `computeCostUSD(args)`
 
@@ -333,13 +372,8 @@ const pricedTokenlens = new Tokenlens({
   catalog: "openrouter",
   overrides: {
     openai: {
-      id: "openai",
-      source: "package",
       models: {
         "openai/gpt-4o-mini": {
-          id: "openai/gpt-4o-mini",
-          canonical_id: "openai/gpt-4o-mini",
-          name: "GPT-4o Mini",
           cost: { input: 1, output: 2 },
         },
       },
@@ -380,6 +414,8 @@ const tokenlens = new Tokenlens({
 });
 ```
 
+Set `cache: false` or `ttlMs: 0` when you want TokenLens to make a fresh catalog request on every call and never return stale TokenLens cache entries.
+
 ### Tokenizer injection
 
 ```ts
@@ -403,9 +439,11 @@ Inject a tokenizer when your app already owns token counting. Install `@tokenlen
 import type {
   Usage,
   SourceModel,
+  SourceProvider,
   SourceProviders,
   TokenCosts,
   TokenlensOptions,
+  CatalogOverrides,
 } from "tokenlens";
 ```
 

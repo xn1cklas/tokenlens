@@ -1,8 +1,13 @@
-import type { SourceProviders } from "@tokenlens/core";
+import type {
+  SourceModel,
+  SourceProvider,
+  SourceProviders,
+} from "@tokenlens/core";
 import type {
   CatalogSource,
   CatalogId as FetchCatalogId,
   FetchLike,
+  VercelOptions,
 } from "@tokenlens/fetch";
 
 export const DEFAULT_CATALOG_ID = "openrouter" satisfies FetchCatalogId;
@@ -21,15 +26,40 @@ export interface CacheAdapter {
   delete?(key: string): Promise<void> | void;
 }
 
+export type CatalogModelOverride = Partial<
+  Omit<SourceModel, "cost" | "limit">
+> & {
+  cost?: Partial<NonNullable<SourceModel["cost"]>>;
+  limit?: Partial<NonNullable<SourceModel["limit"]>>;
+};
+
+export type CatalogProviderOverride = Partial<
+  Omit<SourceProvider, "models">
+> & {
+  models?: Record<string, CatalogModelOverride>;
+};
+
+export type CatalogOverrides = Record<string, CatalogProviderOverride>;
+
+export type VercelSourceOptions = Pick<
+  VercelOptions,
+  "endpointConcurrency" | "includeEndpointDetails"
+>;
+
+export type TokenlensSourceOptions = {
+  vercel?: VercelSourceOptions;
+};
+
 export type TokenlensOptions = {
   catalog?: Catalog;
-  overrides?: SourceProviders;
+  overrides?: CatalogOverrides;
   ttlMs?: number;
   fetch?: FetchLike;
   signal?: AbortSignal;
   timeoutMs?: number;
-  cache?: CacheAdapter;
+  cache?: CacheAdapter | false;
   cacheKey?: string;
   staleIfError?: boolean;
+  sourceOptions?: TokenlensSourceOptions;
   tokenizer?: TokenCounter | false;
 };

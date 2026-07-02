@@ -9,7 +9,7 @@ Tokenlens can cache its merged catalog internally, but in serverless frameworks 
 
 ## Recommended setup
 
-1) Disable Tokenlens' internal cache by setting `ttlMs: 0`.
+1) Disable Tokenlens' internal cache by setting `cache: false`.
 
 2) Forward Next.js' `fetch` (which supports Data Cache, `next.revalidate`, and cache tags) into Tokenlens via the `fetch` option. Apply your desired `revalidate` interval and `tags`.
 
@@ -19,7 +19,7 @@ import { createTokenlens } from "tokenlens";
 
 export const tokenlens = createTokenlens({
   // Disable Tokenlens' own cache; let Next.js own caching.
-  ttlMs: 0,
+  cache: false,
   // Use Next.js fetch with Data Cache features (revalidate + tags)
   fetch: (input, init) =>
     fetch(input, {
@@ -90,7 +90,7 @@ export const getModel = cache(async (modelId: string) => {
 
 ## Summary
 
-- Set `ttlMs: 0` to disable Tokenlens' internal cache.
+- Set `cache: false` to disable Tokenlens' internal cache.
 - Forward Next.js' `fetch` into Tokenlens and configure `next.revalidate` and `next.tags`.
 - Invalidate with `revalidateTag("tokenlens:catalog")`, or use `revalidatePath`/`router.refresh` based on your UX needs.
 - Keep dynamic route caveats in mind when using cookies/headers.

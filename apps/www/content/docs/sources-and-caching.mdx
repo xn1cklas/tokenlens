@@ -18,6 +18,22 @@ Pass one of the supported identifiers to `createTokenlens({ catalog })` or the c
 
 Instance helpers cache the loaded catalog, so repeated method calls stay fast as long as the data remains fresh.
 
+### Vercel source options
+
+The Vercel catalog can also load endpoint metadata when you need richer routing information:
+
+```ts
+const tokenlens = createTokenlens({
+  catalog: "vercel",
+  sourceOptions: {
+    vercel: {
+      includeEndpointDetails: true,
+      endpointConcurrency: 4,
+    },
+  },
+});
+```
+
 ### Per-call catalog selection
 
 The module-level helpers (`getModelData`, `computeCostUSD`, etc.) accept an optional `catalog` property. This lets you reuse the shared helper instance while forcing a specific catalog on a single call:
@@ -89,17 +105,12 @@ Use `overrides` when you want a hosted catalog as the base but need local correc
 
 ```ts
 import { createTokenlens } from "tokenlens";
-import type { SourceProviders } from "tokenlens";
+import type { CatalogOverrides } from "tokenlens";
 
-const priceOverrides: SourceProviders = {
+const priceOverrides: CatalogOverrides = {
   openai: {
-    id: "openai",
-    source: "package",
     models: {
       "openai/gpt-4o-mini": {
-        id: "openai/gpt-4o-mini",
-        canonical_id: "openai/gpt-4o-mini",
-        name: "GPT-4o Mini",
         cost: { input: 1, output: 2 },
       },
     },
@@ -112,7 +123,7 @@ const tokenlens = createTokenlens({
 });
 ```
 
-`source: "package"` is useful provenance for local or package-provided data. It is not a value for the `catalog` option.
+Overrides are patch-style: provider ids, model ids, and names default from the map keys when you add a new entry, while existing hosted metadata is preserved unless you replace a field. Omit `models` when you only need to patch provider metadata.
 
 ## Caching
 
@@ -120,9 +131,9 @@ Tokenlens caches the raw provider catalog to avoid repeated network calls. Retur
 
 ### Key options
 
-- `ttlMs`: cache duration in milliseconds (default `24 * 60 * 60 * 1000`).
+- `ttlMs`: cache duration in milliseconds (default `24 * 60 * 60 * 1000`). Set `ttlMs: 0` to disable Tokenlens' cache.
 - `cacheKey`: unique identifier for the cached entry. When running multiple instances with different catalogs, specify unique keys to avoid collisions.
-- `cache`: custom adapter implementing `{ get(key), set(key, entry), delete?(key) }` where `entry` is `{ value: SourceProviders; expiresAt: number }`.
+- `cache`: custom adapter implementing `{ get(key), set(key, entry), delete?(key) }` where `entry` is `{ value: SourceProviders; expiresAt: number }`, or `false` to disable Tokenlens' cache.
 - `staleIfError`: return the last cached catalog when refresh fails (default `true`). Set to `false` when callers should observe refresh errors.
 
 ### Fetch controls
@@ -183,7 +194,7 @@ const tokenlens = createTokenlens({
 
 ### No caching
 
-Set `ttlMs: 0` to force Tokenlens to reload the catalog on every call—useful for short-lived test runs.
+Set `cache: false` to force Tokenlens to reload the catalog on every call and never return stale Tokenlens cache entries. `ttlMs: 0` has the same no-cache behavior.
 
 ### Error handling
 
@@ -203,7 +214,7 @@ These hooks are useful when you know provider metadata has changed and you want 
 - Pick a built-in `catalog` (`"auto"`, `"openrouter"`, `"models.dev"`, `"vercel"`), supply your own `SourceProviders`, or provide an async `CatalogSource`.
 - Use `overrides` for local price/limit corrections on top of a hosted catalog.
 - Override `catalog` per call when using the shared helpers.
-- Configure caching behaviour with `ttlMs`, `cache`, `cacheKey`, and `staleIfError`.
+- Configure caching behaviour with `ttlMs`, `cache`, `cacheKey`, and `staleIfError`; use `cache: false` when an external framework owns caching.
 - Configure network behaviour with `fetch`, `signal`, and `timeoutMs`.
 - Use `refresh()` / `invalidate()` for manual control when needed.
 

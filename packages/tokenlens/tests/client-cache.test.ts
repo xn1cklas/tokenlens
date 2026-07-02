@@ -18,6 +18,9 @@ vi.mock("@tokenlens/fetch", () => {
             cacheKey?: string;
           },
     ) => (typeof source === "string" ? source : (source.cacheKey ?? source.id)),
+    normalizeCatalogId: (
+      source: "auto" | "models.dev" | "openrouter" | "vercel",
+    ) => (source === "auto" ? "openrouter" : source),
     fetchOpenrouter,
     fetchModelsDev,
     fetchVercel,
@@ -277,6 +280,52 @@ describe("Tokenlens - Client Caching", () => {
 
     await expect(client.refresh()).rejects.toThrow("network failed");
     expect(cache.set).not.toHaveBeenCalled();
+  });
+
+  it("disables cache reads, writes, and stale fallback with cache false", async () => {
+    const catalog = createOpenrouterProvidersFixture();
+    fetchOpenrouterSpy.mockResolvedValue(catalog);
+
+    const client = new Tokenlens({
+      cache: false,
+      catalog: "openrouter",
+    });
+
+    await client.getModelData({ modelId: "openai/gpt-4o" });
+    await client.getModelData({ modelId: "openai/gpt-4o" });
+
+    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(2);
+
+    fetchOpenrouterSpy.mockReset();
+    fetchOpenrouterSpy.mockRejectedValue(new Error("network failed"));
+    await expect(
+      client.getModelData({ modelId: "openai/gpt-4o" }),
+    ).rejects.toThrow("network failed");
+  });
+
+  it("treats ttlMs zero as no Tokenlens cache", async () => {
+    const catalog = createOpenrouterProvidersFixture();
+    const cache: CacheAdapter = {
+      get: vi.fn(() => ({
+        value: catalog,
+        expiresAt: Date.now() + 60_000,
+      })),
+      set: vi.fn(),
+    };
+    fetchOpenrouterSpy.mockResolvedValue(catalog);
+
+    const client = new Tokenlens({
+      cache,
+      catalog: "openrouter",
+      ttlMs: 0,
+    });
+
+    await client.getModelData({ modelId: "openai/gpt-4o" });
+    await client.getModelData({ modelId: "openai/gpt-4o" });
+
+    expect(cache.get).not.toHaveBeenCalled();
+    expect(cache.set).not.toHaveBeenCalled();
+    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(2);
   });
 
   it("loads and caches custom async catalog sources", async () => {

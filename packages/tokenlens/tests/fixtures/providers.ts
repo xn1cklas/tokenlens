@@ -17,6 +17,7 @@ const OPENROUTER_PROVIDERS: SourceProviders = {
   openai: {
     id: "openai",
     name: "OpenAI",
+    aliases: ["openai.responses"],
     api: "https://openrouter.ai/api/v1",
     doc: "https://openrouter.ai/models",
     env: ["OPENROUTER_API_KEY"],
@@ -32,6 +33,7 @@ const VERCEL_PROVIDERS: SourceProviders = {
   openai: {
     id: "openai",
     name: "OpenAI",
+    aliases: ["openai.responses"],
     api: "https://ai-gateway.vercel.sh/v1",
     doc: "https://vercel.com/docs/ai/ai-gateway",
     env: ["VERCEL_AI_API_KEY"],

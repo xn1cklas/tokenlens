@@ -10,6 +10,9 @@ import {
   getContextHealth as apiGetContextHealth,
   getContextLimits as apiGetContextLimits,
   getModelData as apiGetModelData,
+  listModels as apiListModels,
+  listProviders as apiListProviders,
+  tryGetModelData as apiTryGetModelData,
   createTokenlens,
 } from "../src/index.js";
 import { setSharedTokenlens } from "../src/test-utils.js";
@@ -23,7 +26,9 @@ import {
 // Mock the fetch functions
 vi.mock("@tokenlens/fetch", () => {
   type MockCatalogOptions = {
+    endpointConcurrency?: number;
     fetch?: typeof globalThis.fetch;
+    includeEndpointDetails?: boolean;
     signal?: AbortSignal;
     timeoutMs?: number;
   };
@@ -54,6 +59,9 @@ vi.mock("@tokenlens/fetch", () => {
         | "vercel"
         | MockCatalogSource,
     ) => (typeof source === "string" ? source : (source.cacheKey ?? source.id)),
+    normalizeCatalogId: (
+      source: "auto" | "models.dev" | "openrouter" | "vercel",
+    ) => (source === "auto" ? "openrouter" : source),
     fetchCatalogSource: vi.fn(
       (
         source:
@@ -189,6 +197,30 @@ describe("Tokenlens - Catalog Loading", () => {
 
     expect(modelData?.id).toBe("openai/gpt-4o");
     expect(fetchVercelSpy).toHaveBeenCalled();
+  });
+
+  it("passes Vercel source options to the catalog fetcher", async () => {
+    const mockCatalog = createVercelProvidersFixture();
+    fetchVercelSpy.mockResolvedValue(mockCatalog);
+
+    const client = new Tokenlens({
+      catalog: "vercel",
+      cacheKey: "test-vercel-source-options",
+      sourceOptions: {
+        vercel: {
+          endpointConcurrency: 2,
+          includeEndpointDetails: true,
+        },
+      },
+    });
+
+    await client.getModelData({ modelId: "openai/gpt-4o" });
+
+    expect(fetchVercelSpy).toHaveBeenCalledWith({
+      endpointConcurrency: 2,
+      fetch: globalThis.fetch,
+      includeEndpointDetails: true,
+    });
   });
 
   it("uses custom catalog object without fetching", async () => {
@@ -446,6 +478,11 @@ describe("Tokenlens - Catalog Loading", () => {
           },
         },
       },
+      "metadata-only": {
+        id: "metadata-only",
+        name: "Metadata Only",
+        source: "package",
+      },
     };
 
     const client = new Tokenlens({ catalog: baseCatalog, overrides });
@@ -487,6 +524,11 @@ describe("Tokenlens - Catalog Loading", () => {
           },
         },
       },
+      "metadata-only": {
+        id: "metadata-only",
+        models: {},
+        name: "Metadata Only",
+      },
     });
     await expect(
       client.getModelData({ modelId: "name-only/model" }),
@@ -498,6 +540,152 @@ describe("Tokenlens - Catalog Loading", () => {
       input: 1,
     });
   });
+
+  it("accepts patch-style overrides and validates the merged catalog", async () => {
+    const baseCatalog = createOpenrouterProvidersFixture();
+    const client = new Tokenlens({
+      catalog: baseCatalog,
+      overrides: {
+        openai: {
+          models: {
+            "openai/gpt-4o": {
+              cost: { input: 4 },
+            },
+            "openai/custom": {
+              cost: { input: 1, output: 2 },
+            },
+          },
+        },
+      },
+    });
+
+    await expect(
+      client.getModelData({ modelId: "openai/gpt-4o" }),
+    ).resolves.toMatchObject({
+      cost: { input: 4, output: 60 },
+    });
+    await expect(
+      client.getModelData({ modelId: "openai/custom" }),
+    ).resolves.toMatchObject({
+      id: "openai/custom",
+      canonical_id: "openai/custom",
+      name: "openai/custom",
+      cost: { input: 1, output: 2 },
+    });
+  });
+
+  it("rejects malformed override patches before lookup", async () => {
+    const baseCatalog = createOpenrouterProvidersFixture();
+    const client = new Tokenlens({
+      catalog: baseCatalog,
+      overrides: {
+        openai: {
+          models: {
+            "openai/gpt-4o": {
+              cost: { input: -1 },
+            },
+          },
+        },
+      },
+    });
+
+    await expect(
+      client.getModelData({ modelId: "openai/gpt-4o" }),
+    ).rejects.toMatchObject({
+      code: TokenlensError.InvalidCatalog.code,
+      meta: {
+        catalogId: "overrides",
+        field: "cost.input",
+        modelId: "openai/gpt-4o",
+        providerId: "openai",
+        reason: "INVALID_FIELD",
+      },
+    });
+  });
+
+  it.each([
+    ["root", [], { reason: "INVALID_ROOT" }],
+    [
+      "provider",
+      { openai: null },
+      { providerId: "openai", reason: "INVALID_PROVIDER" },
+    ],
+    [
+      "provider field",
+      { openai: { id: 42, models: {} } },
+      { field: "id", providerId: "openai", reason: "INVALID_FIELD" },
+    ],
+    [
+      "models field",
+      { openai: { models: [] } },
+      { field: "models", providerId: "openai", reason: "INVALID_FIELD" },
+    ],
+    [
+      "model",
+      { openai: { models: { "openai/gpt-4o": null } } },
+      {
+        modelId: "openai/gpt-4o",
+        providerId: "openai",
+        reason: "INVALID_MODEL",
+      },
+    ],
+    [
+      "model field",
+      { openai: { models: { "openai/gpt-4o": { id: 42 } } } },
+      {
+        field: "id",
+        modelId: "openai/gpt-4o",
+        providerId: "openai",
+        reason: "INVALID_FIELD",
+      },
+    ],
+    [
+      "cost field",
+      { openai: { models: { "openai/gpt-4o": { cost: 1 } } } },
+      {
+        field: "cost",
+        modelId: "openai/gpt-4o",
+        providerId: "openai",
+        reason: "INVALID_FIELD",
+      },
+    ],
+    [
+      "limit value",
+      {
+        openai: {
+          models: {
+            "openai/gpt-4o": {
+              limit: { context: Number.POSITIVE_INFINITY },
+            },
+          },
+        },
+      },
+      {
+        field: "limit.context",
+        modelId: "openai/gpt-4o",
+        providerId: "openai",
+        reason: "INVALID_FIELD",
+      },
+    ],
+  ] satisfies Array<[string, unknown, Record<string, unknown>]>)(
+    "rejects malformed override %s shapes",
+    async (_name, overrides, meta) => {
+      const client = new Tokenlens({
+        catalog: createOpenrouterProvidersFixture(),
+        overrides: overrides as never,
+      });
+
+      await expect(
+        client.getModelData({ modelId: "openai/gpt-4o" }),
+      ).rejects.toMatchObject({
+        code: TokenlensError.InvalidCatalog.code,
+        meta: {
+          catalogId: "overrides",
+          ...meta,
+        },
+      });
+    },
+  );
 
   it("reports minimal not-found metadata for object catalogs without providers", async () => {
     const client = new Tokenlens({ catalog: {} });
@@ -519,6 +707,27 @@ describe("Tokenlens - Catalog Loading", () => {
     await client.getModelData({ modelId: "openai/gpt-4o" });
 
     expect(fetchOpenrouterSpy).toHaveBeenCalled();
+  });
+
+  it("passes Vercel source options through standalone helpers", async () => {
+    fetchVercelSpy.mockResolvedValue(createVercelProvidersFixture());
+
+    await apiGetModelData({
+      catalog: "vercel",
+      modelId: "openai/gpt-4o",
+      sourceOptions: {
+        vercel: {
+          endpointConcurrency: 3,
+          includeEndpointDetails: true,
+        },
+      },
+    });
+
+    expect(fetchVercelSpy).toHaveBeenCalledWith({
+      endpointConcurrency: 3,
+      fetch: globalThis.fetch,
+      includeEndpointDetails: true,
+    });
   });
 });
 
@@ -604,6 +813,73 @@ describe("Tokenlens.getModelData()", () => {
       expect(modelData?.name).toBe("GPT-4o");
       expect(modelData?.limit?.context).toBe(128_000);
       expect(modelData?.cost?.input).toBe(30);
+    });
+
+    it("lists providers and models from the active catalog", async () => {
+      const mockCatalog = createOpenrouterProvidersFixture();
+      fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
+
+      const client = new Tokenlens({
+        catalog: "openrouter",
+        cacheKey: "test-list-models",
+      });
+
+      const providers = await client.listProviders();
+      const models = await client.listModels({
+        provider: "openai.responses",
+        search: "gpt-4o",
+      });
+      const allModels = await client.listModels();
+      const providerModels = await client.listModels({
+        provider: "openai.responses",
+      });
+      const searchModels = await client.listModels({
+        search: "gpt-4o",
+      });
+      const missingModels = await client.listModels({
+        provider: "openai.responses",
+        search: "missing",
+      });
+
+      expect(providers.map((provider) => provider.id)).toContain("openai");
+      expect(models.map((model) => model.id)).toContain("openai/gpt-4o");
+      expect(models.every((model) => model.name.includes("GPT"))).toBe(true);
+      expect(allModels.map((model) => model.id)).toContain("openai/gpt-4o");
+      expect(providerModels.map((model) => model.id)).toContain(
+        "openai/gpt-4o",
+      );
+      expect(searchModels.map((model) => model.id)).toContain("openai/gpt-4o");
+      expect(missingModels).toEqual([]);
+    });
+
+    it("returns undefined from tryGetModelData for lookup misses", async () => {
+      const mockCatalog = createOpenrouterProvidersFixture();
+      fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
+
+      const client = new Tokenlens({
+        catalog: "openrouter",
+        cacheKey: "test-try-get-model",
+      });
+
+      await expect(
+        client.tryGetModelData({ modelId: "missing-model" }),
+      ).resolves.toBeUndefined();
+      await expect(
+        client.tryGetModelData({ modelId: "openai/gpt-4o" }),
+      ).resolves.toMatchObject({ id: "openai/gpt-4o" });
+    });
+
+    it("rethrows non-lookup errors from tryGetModelData", async () => {
+      const client = new Tokenlens({
+        catalog: createOpenrouterProvidersFixture(),
+        overrides: [] as never,
+      });
+
+      await expect(
+        client.tryGetModelData({ modelId: "openai/gpt-4o" }),
+      ).rejects.toMatchObject({
+        code: TokenlensError.InvalidCatalog.code,
+      });
     });
 
     it("resolves models with provider specified", async () => {
@@ -747,6 +1023,34 @@ describe("Tokenlens.getModelData()", () => {
       expect(fetchOpenrouterSpy).not.toHaveBeenCalled();
     });
 
+    it("exposes standalone discovery helpers", async () => {
+      const catalog = createOpenrouterProvidersFixture();
+
+      const providers = await apiListProviders({ catalog });
+      const allModels = await apiListModels({ catalog });
+      const models = await apiListModels({
+        catalog,
+        provider: "openai",
+        search: "gpt-4o",
+      });
+      const model = await apiTryGetModelData({
+        catalog,
+        modelId: "gpt-4o",
+        provider: "openai",
+      });
+      const missing = await apiTryGetModelData({
+        catalog,
+        modelId: "missing-model",
+      });
+
+      expect(providers.map((provider) => provider.id)).toContain("openai");
+      expect(allModels.map((model) => model.id)).toContain("openai/gpt-4o");
+      expect(models.map((model) => model.id)).toContain("openai/gpt-4o");
+      expect(model?.id).toBe("openai/gpt-4o");
+      expect(missing).toBeUndefined();
+      expect(fetchOpenrouterSpy).not.toHaveBeenCalled();
+    });
+
     it("forwards standalone helper options into ad hoc clients", async () => {
       const catalog = createOpenrouterProvidersFixture();
       const cache: CacheAdapter = {
@@ -804,6 +1108,23 @@ describe("Tokenlens.getModelData()", () => {
 
       expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(2);
       expect(fetchOpenrouterSpy).toHaveBeenCalledWith({ fetch: fetchImpl });
+    });
+
+    it("reuses primitive standalone clients when Tokenlens cache is disabled", async () => {
+      fetchOpenrouterSpy.mockResolvedValue(createOpenrouterProvidersFixture());
+
+      await apiGetModelData({
+        cache: false,
+        catalog: "openrouter",
+        modelId: "openai/gpt-4o",
+      });
+      await apiGetModelData({
+        cache: false,
+        catalog: "openrouter",
+        modelId: "openai/gpt-4o",
+      });
+
+      expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(2);
     });
   });
 });
@@ -1193,6 +1514,21 @@ describe("Tokenlens.estimateCostUSD()", () => {
 
       expect(result.inputTokens).toBeGreaterThan(0);
       expect(result.totalTokenCostUSD).toBeGreaterThan(0);
+    });
+
+    it("treats undefined tokenizer counts as zero for estimates", async () => {
+      const tokenlens = new Tokenlens({
+        catalog: createOpenrouterProvidersFixture(),
+        tokenizer: () => undefined,
+      });
+
+      const result = await tokenlens.estimateCostUSD({
+        modelId: "openai/gpt-4o",
+        data: "Hello",
+      });
+
+      expect(result.inputTokens).toBe(0);
+      expect(result.totalTokenCostUSD).toBe(0);
     });
   });
 

@@ -3,6 +3,7 @@ import {
   mkdir,
   mkdtemp,
   readdir,
+  readFile,
   rm,
   symlink,
   writeFile,
@@ -114,6 +115,26 @@ async function extractPackedPackage(nodeModules, packageName, tarball) {
   run("tar", ["-xzf", tarball, "-C", destination, "--strip-components=1"]);
 }
 
+async function linkPackageBins(nodeModules, packageName) {
+  const packageDir = packagePath(nodeModules, packageName);
+  const packageJson = JSON.parse(
+    await readFile(join(packageDir, "package.json"), "utf8"),
+  );
+  const bin = packageJson.bin;
+  if (!bin) return;
+
+  const entries =
+    typeof bin === "string"
+      ? [[packageJson.name.split("/").at(-1), bin]]
+      : Object.entries(bin);
+  const binDir = join(nodeModules, ".bin");
+  await mkdir(binDir, { recursive: true });
+
+  for (const [name, target] of entries) {
+    await symlink(join(packageDir, target), join(binDir, name), "file");
+  }
+}
+
 async function linkExternalPackage(nodeModules, packageName) {
   const resolver = externalPackageResolvers.get(packageName) ?? defaultRequire;
   const source = dirname(resolver.resolve(`${packageName}/package.json`));
@@ -128,6 +149,7 @@ async function prepareNodeModules(dir, packages, externalPackages = []) {
 
   for (const [packageName, tarball] of packages) {
     await extractPackedPackage(nodeModules, packageName, tarball);
+    await linkPackageBins(nodeModules, packageName);
   }
 
   for (const packageName of externalPackages) {
@@ -183,10 +205,12 @@ async function main() {
       },
       `
         import { Tokenlens, createTokenlens } from "tokenlens";
+        import { listModels, listProviders, tryGetModelData } from "tokenlens";
         import { computeTokenCostsForModel } from "tokenlens/helpers";
         import { fetchModelsDev } from "tokenlens/fetch";
-        import type { SourceProviders } from "tokenlens/core";
+        import type { SourceProvider, SourceProviders } from "tokenlens/core";
         import type { Usage } from "@tokenlens/core/usage";
+        import type { CatalogOverrides, TokenlensSourceOptions } from "tokenlens";
 
         const catalog: SourceProviders = {
           openai: {
@@ -201,11 +225,25 @@ async function main() {
             },
           },
         };
+        const overrides: CatalogOverrides = {
+          openai: {
+            models: {
+              "openai/gpt-4o-mini": { cost: { input: 3 } },
+            },
+          },
+        };
+        const sourceOptions: TokenlensSourceOptions = {
+          vercel: { includeEndpointDetails: true, endpointConcurrency: 1 },
+        };
         const usage: Usage = { inputTokens: 10, outputTokens: 2 };
-        const client = new Tokenlens({ catalog });
-        createTokenlens({ catalog });
+        const client = new Tokenlens({ catalog, overrides, sourceOptions, cache: false });
+        const providers: SourceProvider[] = await listProviders({ catalog });
+        await listModels({ catalog, provider: "openai", search: "mini" });
+        await tryGetModelData({ catalog, modelId: "missing" });
+        createTokenlens({ catalog, overrides, sourceOptions, cache: false });
         computeTokenCostsForModel({ model: catalog.openai.models["openai/gpt-4o-mini"], usage });
         void client;
+        void providers;
         void fetchModelsDev;
       `,
     );
@@ -277,14 +315,7 @@ async function main() {
     run(
       "node",
       [
-        join(
-          codemodDir,
-          "node_modules",
-          "@tokenlens",
-          "codemod",
-          "dist",
-          "index.js",
-        ),
+        join(codemodDir, "node_modules", ".bin", "tokenlens-codemod"),
         "v2",
         "index.ts",
       ],

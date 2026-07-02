@@ -36,7 +36,7 @@ const testProviders: SourceProviders = {
 export function createTestTokenlens() {
   return createTokenlens({
     catalog: testProviders,
-    ttlMs: 0, // ensure fresh load for each test if needed
+    cache: false, // ensure fresh load for each test if needed
   });
 }
 ```
@@ -114,6 +114,6 @@ await tokenlens.refresh(true);
 
 ## Summary
 - Prefer supplying a custom `SourceProviders` catalog for deterministic fixtures.
-- Disable caching (`ttlMs: 0`) or invalidate as needed to keep tests isolated.
+- Disable caching (`cache: false`) or invalidate as needed to keep tests isolated.
 - Inject configured Tokenlens instances into the code under test to avoid hitting production loaders.
 - Use middleware-friendly helpers when integrating with the Vercel AI SDK.

@@ -1,3 +1,4 @@
+import { assertSourceProviders, type SourceProviders } from "@tokenlens/core";
 import { describe, expect, it, vi } from "vitest";
 import { fetchModelsDev, fetchOpenrouter, fetchVercel } from "../src/index.ts";
 
@@ -11,6 +12,18 @@ const jsonResponse = (body: unknown): Response =>
     statusText: "OK",
     json: async () => body,
   }) as Response;
+
+function allModels(providers: SourceProviders) {
+  return Object.values(providers).flatMap((provider) =>
+    Object.values(provider.models),
+  );
+}
+
+function expectUsefulModel(providers: SourceProviders, search: string) {
+  const model = allModels(providers).find((entry) => entry.id.includes(search));
+  expect(model).toBeDefined();
+  expect(model?.cost ?? model?.limit).toBeDefined();
+}
 
 describe("fetch injection", () => {
   it("fetchOpenrouter uses the provided fetch implementation", async () => {
@@ -86,6 +99,7 @@ describe("fetch injection", () => {
 describeLive("live fetchers", () => {
   it("fetchOpenrouter returns catalog with providers and models", async () => {
     const providers = await fetchOpenrouter();
+    assertSourceProviders(providers, "live OpenRouter");
 
     const providerIds = Object.keys(providers);
     expect(providerIds.length).toBeGreaterThan(0);
@@ -109,6 +123,7 @@ describeLive("live fetchers", () => {
 
   it("fetchModelsDev returns providers and models", async () => {
     const providers = await fetchModelsDev();
+    assertSourceProviders(providers, "live models.dev");
 
     const providerIds = Object.keys(providers);
     expect(providerIds.length).toBeGreaterThan(0);
@@ -131,6 +146,7 @@ describeLive("live fetchers", () => {
 
   it("fetchVercel returns catalog with providers and models", async () => {
     const providers = await fetchVercel();
+    assertSourceProviders(providers, "live Vercel AI Gateway");
 
     const providerIds = Object.keys(providers);
     expect(providerIds.length).toBeGreaterThan(0);
@@ -211,4 +227,31 @@ describeLive("live fetchers", () => {
       }
     }
   }, 60000);
+
+  it("live common model contracts include scalar costs or limits", async () => {
+    const [openrouter, modelsDev, vercel] = await Promise.all([
+      fetchOpenrouter({ provider: "openai", model: "gpt-4o" }),
+      fetchModelsDev({ provider: "openai", model: "gpt-4o" }),
+      fetchVercel({ provider: "openai", model: "gpt-4o" }),
+    ]);
+
+    assertSourceProviders(openrouter, "live OpenRouter filtered");
+    assertSourceProviders(modelsDev, "live models.dev filtered");
+    assertSourceProviders(vercel, "live Vercel filtered");
+    expectUsefulModel(openrouter, "gpt-4o");
+    expectUsefulModel(modelsDev, "gpt-4o");
+    expectUsefulModel(vercel, "gpt-4o");
+  }, 30000);
+
+  it("live Vercel endpoint enrichment remains DTO-compatible", async () => {
+    const providers = await fetchVercel({
+      endpointConcurrency: 1,
+      includeEndpointDetails: true,
+      model: "claude",
+      provider: "anthropic",
+    });
+
+    assertSourceProviders(providers, "live enriched Vercel AI Gateway");
+    expectUsefulModel(providers, "claude");
+  }, 30000);
 });

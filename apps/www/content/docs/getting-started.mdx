@@ -28,6 +28,7 @@ If you just need metadata, cost, or context helpers, import the top-level functi
 ```ts
 import {
   getModelData,
+  listModels,
   computeCostUSD,
   getContextLimits,
 } from "tokenlens";
@@ -37,11 +38,13 @@ const usage = { inputTokens: 2_000, outputTokens: 500 };
 const details = await getModelData({ modelId: "openai/gpt-4o-mini" });
 const costs = await computeCostUSD({ modelId: "openai/gpt-4o-mini", usage });
 const limits = await getContextLimits({ modelId: "openai/gpt-4o-mini" });
+const openaiModels = await listModels({ provider: "openai", search: "gpt-4o" });
 
 console.log(details.id);              // "openai/gpt-4o-mini"
 console.log(details.limit?.context);  // combined token limit
 console.log(costs.totalTokenCostUSD); // USD estimate for provided usage
 console.log(limits?.context);         // context window in tokens
+console.log(openaiModels.length);     // matching models in the active catalog
 ```
 
 ## 3. Create a configured instance
@@ -52,6 +55,7 @@ Use `createTokenlens` when you need to pin a specific catalog, adjust caching, s
 import {
   createTokenlens,
   type TokenlensOptions,
+  type CatalogOverrides,
   type SourceProviders,
 } from "tokenlens";
 
@@ -104,15 +108,10 @@ const sourceTokenlens = createTokenlens({
   tokenizer: ({ data }) => data.trim().split(/\s+/).filter(Boolean).length,
 });
 
-const priceOverrides: SourceProviders = {
+const priceOverrides: CatalogOverrides = {
   demo: {
-    id: "demo",
-    source: "package",
     models: {
       "demo/chat": {
-        id: "demo/chat",
-        canonical_id: "demo/chat",
-        name: "Chat Demo",
         cost: { input: 2 },
       },
     },
@@ -128,7 +127,7 @@ const tokenlensWithOverrides = createTokenlens({
 ### Controlling caching
 - **TTL**: Use `ttlMs` to set how long provider catalogs should live in the cache.
 - **Cache adapters**: supply `cache` with your own `{ get, set, delete }` implementation to back the cache with Redis or another storage.
-- **No caching**: set `ttlMs: 0` to force a reload on every call (useful for tests).
+- **No caching**: set `cache: false` to force a reload on every call and skip stale fallback (useful for tests or framework-owned caches).
 
 ## 4. Standalone vs. custom instance
 
@@ -140,13 +139,20 @@ const tokenlensWithOverrides = createTokenlens({
 | Generated or private registries                   | Pass a `CatalogSource` object via `catalog` and configure cache/fetch controls.     |
 | Existing app-owned token counting                 | Pass a `tokenizer` function when creating the instance.                             |
 | Custom prices or local model corrections          | Use `overrides` with a hosted or custom base catalog.                               |
+| Listing or searching catalog data                 | Use `listProviders`, `listModels`, or `tryGetModelData`.                            |
 
 ## 5. TypeScript types
 
 Tokenlens re-exports the primary DTOs so you can import them from the root package:
 
 ```ts
-import type { Usage, ModelDetails, TokenCosts, TokenlensOptions } from "tokenlens";
+import type {
+  Usage,
+  ModelDetails,
+  TokenCosts,
+  TokenlensOptions,
+  CatalogOverrides,
+} from "tokenlens";
 
 const details = await getModelData({
   modelId: "openai/gpt-4o-mini",

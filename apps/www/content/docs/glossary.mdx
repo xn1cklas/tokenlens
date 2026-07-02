@@ -24,7 +24,7 @@ This file defines canonical terminology used across the TokenLens v2 codebase an
 
 ## SourceModel
 - Raw per-model metadata entry delivered by a loader.
-- Fields include `id`, `name`, `limit`, `cost`, `modalities`, capability flags, and source-specific `extras`.
+- Fields include `id`, `canonical_id`, `name`, `limit`, `cost`, and source-specific `extras`.
 
 ## ModelDetails
 - Alias for the `SourceModel` returned by `getModelData`. Missing models throw `TokenlensError.ModelNotFound`.
@@ -65,12 +65,12 @@ This file defines canonical terminology used across the TokenLens v2 codebase an
 - Approximate USD cost per 1M tokens as supplied by the source catalog (`cost.input`, `cost.output`, etc.).
 - Tokenlens converts these to per-request USD using `computeCostUSD`.
 
-## modalities
-- Supported input/output modalities of a model (`modalities.input`, `modalities.output`).
-- Used to derive hints returned from `getModelData`.
-
 ## computeCostUSD
 - Stand-alone helper (and class method) that resolves a model, normalizes usage, and returns `TokenCosts`.
+
+## listModels / listProviders
+- Async discovery helpers that expose the active cached catalog without reintroducing a bundled static registry.
+- `listModels` supports provider and search filters; `listProviders` returns provider metadata.
 
 ## getContextLimits
 - Stand-alone helper returning `{ context?, input?, output? }` for a resolved model.

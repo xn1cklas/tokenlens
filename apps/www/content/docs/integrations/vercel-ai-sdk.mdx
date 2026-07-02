@@ -100,7 +100,7 @@ const model = withTokenlens(
 // or provide fixture data directly (testProviders: SourceProviders)
 const fixtureTokenlens = createTokenlens({
   catalog: testProviders,
-  ttlMs: 0,
+  cache: false,
 });
 ```
 
@@ -116,7 +116,7 @@ import { testProviders } from "../fixtures/providers";
 
 const tokenlens = createTokenlens({
   catalog: testProviders,
-  ttlMs: 0, // always refresh in tests
+  cache: false, // always refresh in tests
 });
 
 const model = withTokenlens(openai("gpt-5"), tokenlens);

@@ -9,7 +9,7 @@ function primitiveSharedKey(options?: TokenlensOptions): string | undefined {
   if (typeof catalog !== "string") return undefined;
   if (
     options.overrides ||
-    options.cache ||
+    (options.cache !== undefined && options.cache !== false) ||
     options.fetch ||
     options.signal ||
     options.tokenizer
@@ -20,7 +20,9 @@ function primitiveSharedKey(options?: TokenlensOptions): string | undefined {
   return JSON.stringify({
     cacheKey: options.cacheKey,
     catalog,
+    cache: options.cache,
     staleIfError: options.staleIfError,
+    sourceOptions: options.sourceOptions,
     timeoutMs: options.timeoutMs,
     ttlMs: options.ttlMs,
   });

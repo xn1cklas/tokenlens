@@ -32,6 +32,13 @@ type GetModelDataArgs = HelperArgs<Parameters<Tokenlens["getModelData"]>[0]>;
 type GetContextHealthArgs = HelperArgs<
   Parameters<Tokenlens["getContextHealth"]>[0]
 >;
+type ListModelsArgs = HelperArgs<
+  NonNullable<Parameters<Tokenlens["listModels"]>[0]>
+>;
+type ListProvidersArgs = TokenlensOptions & HelperClient;
+type TryGetModelDataArgs = HelperArgs<
+  Parameters<Tokenlens["tryGetModelData"]>[0]
+>;
 
 function optionsFromArgs(args: TokenlensOptions): TokenlensOptions | undefined {
   const options: TokenlensOptions = {};
@@ -46,6 +53,8 @@ function optionsFromArgs(args: TokenlensOptions): TokenlensOptions | undefined {
   if (args.staleIfError !== undefined) {
     options.staleIfError = args.staleIfError;
   }
+  if (args.sourceOptions !== undefined)
+    options.sourceOptions = args.sourceOptions;
   if (args.tokenizer !== undefined) options.tokenizer = args.tokenizer;
   return Object.keys(options).length ? options : undefined;
 }
@@ -179,6 +188,27 @@ export async function getModelData(args: GetModelDataArgs) {
   });
 }
 
+export async function tryGetModelData(args: TryGetModelDataArgs) {
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.tryGetModelData({
+    modelId: args.modelId,
+    ...(args.provider !== undefined ? { provider: args.provider } : {}),
+  });
+}
+
+export async function listModels(args: ListModelsArgs = {}) {
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.listModels({
+    ...(args.provider !== undefined ? { provider: args.provider } : {}),
+    ...(args.search !== undefined ? { search: args.search } : {}),
+  });
+}
+
+export async function listProviders(args: ListProvidersArgs = {}) {
+  const tokenlens = clientFromArgs(args);
+  return tokenlens.listProviders();
+}
+
 /**
  * Calculate context window health metrics for a model and usage.
  *
@@ -215,6 +245,7 @@ export async function getContextHealth(args: GetContextHealthArgs) {
 export type {
   SourceId,
   SourceModel,
+  SourceProvider,
   SourceProviders,
   Usage,
 } from "@tokenlens/core";
@@ -227,4 +258,13 @@ export {
   estimateTokenSavings,
 } from "@tokenlens/helpers";
 export { Tokenlens } from "./client.js";
-export type { Catalog, CatalogId, TokenCounter } from "./types.js";
+export type {
+  Catalog,
+  CatalogId,
+  CatalogModelOverride,
+  CatalogOverrides,
+  CatalogProviderOverride,
+  TokenCounter,
+  TokenlensSourceOptions,
+  VercelSourceOptions,
+} from "./types.js";

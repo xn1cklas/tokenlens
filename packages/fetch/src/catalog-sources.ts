@@ -1,7 +1,7 @@
 import { assertSourceProviders, type SourceProviders } from "@tokenlens/core";
 import { fetchModelsDev } from "./models-dev.js";
 import { fetchOpenrouter } from "./openrouter.js";
-import type { CommonOptions } from "./types.js";
+import type { CommonOptions, VercelOptions } from "./types.js";
 import { fetchVercel } from "./vercel.js";
 
 export const CATALOG_SOURCE_OPTIONS = [
@@ -46,7 +46,7 @@ export function catalogInputCacheKey(source: CatalogInput): string {
 
 export function fetchCatalogSource(
   source: CatalogInput,
-  options?: CommonOptions,
+  options?: CommonOptions | VercelOptions,
 ): Promise<SourceProviders> {
   if (isCatalogSource(source)) {
     return loadAndValidate(source.cacheKey ?? source.id, () =>
