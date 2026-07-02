@@ -50,8 +50,7 @@ export function compactJson(
     try {
       data = JSON.parse(input);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : String(error ?? "unknown");
+      const message = (error as Error).message;
       throw new TokenlensError.InvalidJson(`Invalid JSON string: ${message}`, {
         cause: error,
       });

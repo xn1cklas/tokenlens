@@ -1,12 +1,66 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { fetchModelsDev, fetchOpenrouter, fetchVercel } from "../src/index.ts";
+import {
+  fetchCatalogSource,
+  fetchModelsDev,
+  fetchOpenrouter,
+  fetchVercel,
+  fetchVercelModelEndpoints,
+  isCatalogSourceId,
+  normalizeCatalogGateway,
+} from "../src/index.ts";
 
 type JsonShape = Record<string, unknown> | Array<unknown> | null;
 
 // Mock global fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch as unknown as typeof fetch;
+
+describe("catalog source registry", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  it("normalizes gateway aliases and validates source IDs", () => {
+    expect(normalizeCatalogGateway("auto")).toBe("openrouter");
+    expect(normalizeCatalogGateway("models.dev")).toBe("models.dev");
+    expect(isCatalogSourceId("openrouter")).toBe(true);
+    expect(isCatalogSourceId("models.dev")).toBe(true);
+    expect(isCatalogSourceId("vercel")).toBe(true);
+    expect(isCatalogSourceId("package")).toBe(false);
+  });
+
+  it("dispatches catalog source fetches through the selected adapter", async () => {
+    mockFetch.mockImplementation(async (url: string) => {
+      if (url.includes("openrouter.ai")) {
+        return {
+          ok: true,
+          json: async () => ({ data: [{ id: "openai/gpt-5" }] }),
+        } as Response;
+      }
+      if (url.includes("models.dev")) {
+        return {
+          ok: true,
+          json: async () => ({
+            openai: { models: { "gpt-5": { name: "GPT-5" } } },
+          }),
+        } as Response;
+      }
+      return {
+        ok: true,
+        json: async () => ({ data: [{ id: "openai/gpt-5" }] }),
+      } as Response;
+    });
+
+    await expect(fetchCatalogSource("auto")).resolves.toHaveProperty("openai");
+    await expect(fetchCatalogSource("models.dev")).resolves.toHaveProperty(
+      "openai",
+    );
+    await expect(fetchCatalogSource("vercel")).resolves.toHaveProperty(
+      "openai",
+    );
+  });
+});
 
 describe("fetchModelsDev DTO normalization", () => {
   beforeEach(() => {
@@ -182,6 +236,116 @@ describe("fetchModelsDev DTO normalization", () => {
       input: 1.25,
       output: 10,
       tiers: expect.any(Array),
+    });
+  });
+
+  it("uses provider IDs, docs aliases, fallback names, and tier-over extras", async () => {
+    const raw = {
+      openai: {
+        id: "openai.responses",
+        docs: "https://platform.openai.com/docs",
+        models: {
+          "gpt-5": {
+            cost: {
+              input: 1,
+              output: 2,
+              input_over_200k: { input: 2 },
+            },
+            extras: {
+              mode: "responses",
+            },
+          },
+        },
+      },
+    } satisfies JsonShape;
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => raw,
+    } as Response);
+
+    const catalog = await fetchModelsDev({});
+    const provider = catalog.openai;
+    const model = provider?.models["openai.responses/gpt-5"];
+
+    expect(provider).toMatchObject({
+      id: "openai.responses",
+      name: "openai",
+      doc: "https://platform.openai.com/docs",
+      aliases: ["openai"],
+    });
+    expect(model).toMatchObject({
+      id: "openai.responses/gpt-5",
+      canonical_id: "openai.responses/gpt-5",
+      name: "openai.responses/gpt-5",
+      extras: {
+        mode: "responses",
+        sourceCost: expect.objectContaining({
+          input_over_200k: { input: 2 },
+        }),
+      },
+    });
+    expect(model?.cost).toBeUndefined();
+  });
+
+  it("handles empty models.dev keys and no-match model filters", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        custom: {
+          models: {
+            "": {},
+            "custom/free": {
+              id: "custom/free",
+              cost: {
+                input: -1,
+              },
+            },
+            "custom/other": {
+              id: "custom/other",
+              name: "Other",
+            },
+          },
+        },
+        emptyProvider: {},
+      }),
+    } as Response);
+
+    const catalog = await fetchModelsDev({});
+
+    expect(catalog.custom?.models.custom).toMatchObject({
+      id: "custom",
+      canonical_id: "custom/custom",
+      name: "custom",
+    });
+    expect(catalog.custom?.models["custom/free"]?.cost).toBeUndefined();
+    expect(catalog.emptyProvider?.models).toEqual({});
+    await expect(fetchModelsDev({ model: "missing" })).resolves.toEqual({});
+  });
+
+  it("rejects non-object models.dev payloads", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => null,
+    } as Response);
+
+    await expect(fetchModelsDev({})).rejects.toMatchObject({
+      code: "FETCH_FAILED",
+      meta: { reason: "INVALID_JSON_SHAPE", target: "models.dev" },
+    });
+  });
+
+  it("throws a fetch error for non-OK models.dev responses", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      statusText: "Bad Gateway",
+    } as Response);
+
+    await expect(fetchModelsDev({})).rejects.toMatchObject({
+      code: "FETCH_FAILED",
+      message: "Failed to fetch models.dev: 502 Bad Gateway",
+      meta: { target: "models.dev", status: 502, statusText: "Bad Gateway" },
     });
   });
 });
@@ -390,6 +554,97 @@ describe("fetchOpenrouter DTO mapping", () => {
       },
     });
   });
+
+  it("handles OpenRouter providerless IDs, explicit limits, empty IDs, and fetch failures", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        data: [
+          { id: "", name: "Skipped" },
+          {
+            id: "auto-model",
+            name: "Auto Model",
+            cost: {
+              prompt: "0.000001",
+              completion: "0.000002",
+            },
+            limit: {
+              context: 123,
+              input: 100,
+              output: 23,
+            },
+          },
+        ],
+      }),
+    } as Response);
+
+    const catalog = await fetchOpenrouter({});
+
+    expect(Object.keys(catalog)).toEqual(["openrouter"]);
+    expect(catalog.openrouter?.models["auto-model"]).toMatchObject({
+      id: "auto-model",
+      canonical_id: "auto-model",
+      name: "Auto Model",
+      cost: { input: 1, output: 2 },
+      limit: { context: 123, input: 100, output: 23 },
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      statusText: "Unauthorized",
+    } as Response);
+
+    await expect(fetchOpenrouter({})).rejects.toMatchObject({
+      code: "FETCH_FAILED",
+      message: "Failed to fetch OpenRouter: 401 Unauthorized",
+    });
+  });
+
+  it("maps xAI OpenRouter aliases and rejects non-object OpenRouter payloads", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        data: [
+          { id: "xai/grok-4", name: "Grok 4" },
+          {
+            id: "x-ai/grok-5",
+            top_provider: {
+              max_completion_tokens: 8192,
+            },
+            pricing: {
+              cache_read: "0.0000001",
+            },
+          },
+        ],
+      }),
+    } as Response);
+
+    const catalog = await fetchOpenrouter({});
+
+    expect(catalog.xai?.aliases).toEqual(["x-ai", "xai.chat"]);
+    expect(catalog["x-ai"]?.aliases).toEqual(["xai", "xai.chat"]);
+    expect(catalog["x-ai"]?.models["x-ai/grok-5"]).toMatchObject({
+      id: "x-ai/grok-5",
+      name: "x-ai/grok-5",
+      limit: {
+        output: 8192,
+      },
+    });
+    expect(
+      catalog["x-ai"]?.models["x-ai/grok-5"]?.cost?.cache_read,
+    ).toBeCloseTo(0.1);
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [],
+    } as Response);
+
+    await expect(fetchOpenrouter({})).rejects.toMatchObject({
+      code: "FETCH_FAILED",
+      meta: { reason: "INVALID_JSON_SHAPE", target: "OpenRouter" },
+    });
+  });
 });
 
 describe("fetchVercel DTO mapping", () => {
@@ -414,6 +669,11 @@ describe("fetchVercel DTO mapping", () => {
             input_cache_write: "0.00000375",
           },
         },
+        {
+          id: "standalone-model",
+          name: "Standalone",
+          max_tokens: 4096,
+        },
       ],
     } satisfies JsonShape;
 
@@ -424,7 +684,7 @@ describe("fetchVercel DTO mapping", () => {
 
     const catalog = await fetchVercel({});
 
-    expect(Object.keys(catalog)).toEqual(["anthropic"]);
+    expect(Object.keys(catalog)).toEqual(["anthropic", "vercel"]);
     const provider = catalog.anthropic;
     expect(provider?.source).toBe("vercel");
     expect(provider?.api).toBe("https://ai-gateway.vercel.sh/v1");
@@ -445,6 +705,14 @@ describe("fetchVercel DTO mapping", () => {
         output: 15,
         cache_read: 0.3,
         cache_write: 3.75,
+      },
+    });
+    expect(catalog.vercel?.models["standalone-model"]).toMatchObject({
+      id: "standalone-model",
+      canonical_id: "standalone-model",
+      name: "Standalone",
+      limit: {
+        output: 4096,
       },
     });
   });
@@ -583,6 +851,168 @@ describe("fetchVercel DTO mapping", () => {
         input: 0.15,
         output: 0.6,
       },
+    });
+  });
+
+  it("uses fallback provider IDs and endpoint defaults when provider ownership is absent", async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: [
+            {
+              id: "xai/grok-4",
+              name: "Grok 4",
+              context_window: "128000",
+              max_tokens: "8192",
+              pricing: {
+                prompt: "0.000003",
+                completion: "0.000015",
+              },
+            },
+          ],
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            endpoints: [
+              {
+                provider_name: "fallback-provider",
+                context_length: "256000",
+                max_prompt_tokens: "200000",
+                max_completion_tokens: "16000",
+              },
+            ],
+          },
+        }),
+      } as Response);
+
+    const catalog = await fetchVercel({
+      includeEndpointDetails: true,
+      fetch: mockFetch as unknown as typeof fetch,
+    });
+
+    expect(catalog.xai?.models["xai/grok-4"]).toMatchObject({
+      limit: {
+        context: 256000,
+        input: 200000,
+        output: 16000,
+      },
+      cost: {
+        input: 3,
+        output: 15,
+      },
+    });
+  });
+
+  it("skips empty Vercel model IDs and enriches through global fetch", async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: [
+            {
+              name: "Skipped",
+            },
+            {
+              id: "openai/gpt-5",
+              name: "GPT-5",
+              owned_by: "openai",
+              context_window: 128000,
+              max_tokens: 8192,
+            },
+          ],
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            endpoints: [
+              {
+                provider_name: "other",
+                context_length: 256000,
+                max_completion_tokens: 16000,
+              },
+            ],
+          },
+        }),
+      } as Response);
+
+    const catalog = await fetchVercel({ includeEndpointDetails: true });
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(catalog.openai?.models).toEqual({
+      "openai/gpt-5": expect.objectContaining({
+        id: "openai/gpt-5",
+        limit: {
+          context: 256000,
+          output: 16000,
+        },
+      }),
+    });
+  });
+
+  it("selects matching endpoint tags and handles malformed endpoint payloads", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        data: {
+          endpoints: [
+            { provider_name: "other", context_length: 1000 },
+            { tag: "bedrock", context_length: 2000 },
+          ],
+        },
+      }),
+    } as Response);
+
+    await expect(
+      fetchVercelModelEndpoints("anthropic/claude 4", {
+        fetch: mockFetch as unknown as typeof fetch,
+      }),
+    ).resolves.toEqual({
+      endpoints: [
+        { provider_name: "other", context_length: 1000 },
+        { tag: "bedrock", context_length: 2000 },
+      ],
+    });
+    expect(mockFetch).toHaveBeenLastCalledWith(
+      "https://ai-gateway.vercel.sh/v1/models/anthropic/claude%204/endpoints",
+    );
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: [] }),
+    } as Response);
+
+    await expect(
+      fetchVercelModelEndpoints("openai/gpt-5", {
+        fetch: mockFetch as unknown as typeof fetch,
+      }),
+    ).resolves.toEqual({});
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: { endpoints: [] } }),
+    } as Response);
+
+    await expect(fetchVercelModelEndpoints("openai/gpt-5")).resolves.toEqual({
+      endpoints: [],
+    });
+  });
+
+  it("throws a fetch error for non-OK Vercel Gateway responses", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+    } as Response);
+
+    await expect(fetchVercel({})).rejects.toMatchObject({
+      code: "FETCH_FAILED",
+      message: "Failed to fetch Vercel AI Gateway: 500 Internal Server Error",
     });
   });
 

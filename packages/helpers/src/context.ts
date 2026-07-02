@@ -53,7 +53,7 @@ export function getContextHealth(args: {
   const normalized = normalizeUsage(usage);
   const reasoningTokens =
     normalized.reasoningIncludedInOutput === false
-      ? (normalized.reasoningTokens ?? 0)
+      ? (normalized.reasoningTokens as number)
       : 0;
   const cacheTokens =
     normalized.cacheTokensIncludedInInput === false

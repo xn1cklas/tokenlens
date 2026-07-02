@@ -56,7 +56,7 @@ export function filterCatalog(
   const out: SourceProviders = {};
   for (const [provKey, prov] of Object.entries(catalog)) {
     if (provider && provKey !== provider) continue;
-    const models = prov.models || {};
+    const models = prov.models;
     const filteredModels = model
       ? Object.fromEntries(
           Object.entries(models).filter(([id]) => id.includes(model)),

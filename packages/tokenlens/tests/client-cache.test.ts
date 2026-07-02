@@ -239,4 +239,20 @@ describe("Tokenlens - Client Caching", () => {
     expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
     expect(cache.set).not.toHaveBeenCalled();
   });
+
+  it("rethrows fetch failures when no cached catalog is available", async () => {
+    const cache: CacheAdapter = {
+      get: vi.fn(() => undefined),
+      set: vi.fn(),
+    };
+    fetchOpenrouterSpy.mockRejectedValue(new Error("network failed"));
+    const client = new Tokenlens({
+      catalog: "openrouter",
+      cache,
+      cacheKey: "test-no-cache-error",
+    });
+
+    await expect(client.refresh()).rejects.toThrow("network failed");
+    expect(cache.set).not.toHaveBeenCalled();
+  });
 });

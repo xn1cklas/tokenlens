@@ -7,6 +7,7 @@ import {
   computeCostUSD as apiComputeCostUSD,
   countTokens as apiCountTokens,
   estimateCostUSD as apiEstimateCostUSD,
+  getContextHealth as apiGetContextHealth,
   getContextLimits as apiGetContextLimits,
   getModelData as apiGetModelData,
   createTokenlens,
@@ -293,6 +294,155 @@ describe("Tokenlens - Catalog Loading", () => {
     expect(fetchOpenrouterSpy).not.toHaveBeenCalled();
   });
 
+  it("merges override-only providers, new models, nested fields, and extras", async () => {
+    const baseCatalog: SourceProviders = {
+      openai: {
+        id: "openai",
+        source: "package",
+        env: ["BASE_OPENAI_KEY"],
+        extras: { owner: "base" },
+        models: {
+          "openai/gpt-4o": {
+            id: "openai/gpt-4o",
+            canonical_id: "openai/gpt-4o",
+            name: "GPT-4o",
+            cost: { input: 1 },
+            limit: { context: 128_000 },
+          },
+        },
+      },
+      plain: {
+        id: "plain",
+        source: "package",
+        models: {
+          "plain/model": {
+            id: "plain/model",
+            canonical_id: "plain/model",
+            name: "Plain Model",
+          },
+        },
+      },
+    };
+    const overrides: SourceProviders = {
+      openai: {
+        id: "openai",
+        source: "package",
+        env: ["OVERRIDE_OPENAI_KEY"],
+        extras: { tier: "custom" },
+        models: {
+          "openai/gpt-4o": {
+            id: "openai/gpt-4o",
+            canonical_id: "openai/gpt-4o",
+            name: "GPT-4o Override",
+            cost: { output: 2 },
+            limit: { output: 16_384 },
+          },
+          "openai/gpt-new": {
+            id: "openai/gpt-new",
+            canonical_id: "openai/gpt-new",
+            name: "GPT New",
+            cost: { input: 3 },
+          },
+        },
+      },
+      plain: {
+        id: "plain",
+        source: "package",
+        models: {
+          "plain/model": {
+            id: "plain/model",
+            canonical_id: "plain/model",
+            name: "Plain Model Override",
+          },
+        },
+      },
+      custom: {
+        id: "custom",
+        source: "package",
+        extras: { owner: "override" },
+        models: {
+          "custom/model": {
+            id: "custom/model",
+            canonical_id: "custom/model",
+            name: "Custom Model",
+          },
+        },
+      },
+      "name-only": {
+        id: "name-only",
+        source: "package",
+        models: {
+          "name-only/model": {
+            id: "name-only/model",
+            canonical_id: "name-only/model",
+            name: "Name Only",
+          },
+        },
+      },
+    };
+
+    const client = new Tokenlens({ catalog: baseCatalog, overrides });
+
+    await expect(
+      client.getModelData({ modelId: "openai/gpt-4o" }),
+    ).resolves.toMatchObject({
+      name: "GPT-4o Override",
+      cost: { input: 1, output: 2 },
+      limit: { context: 128_000, output: 16_384 },
+    });
+    await expect(
+      client.getModelData({ modelId: "openai/gpt-new" }),
+    ).resolves.toMatchObject({
+      id: "openai/gpt-new",
+      cost: { input: 3 },
+    });
+    await expect(
+      client.getModelData({ modelId: "custom/model" }),
+    ).resolves.toMatchObject({
+      id: "custom/model",
+    });
+    await expect(
+      client.getModelData({ modelId: "plain/model" }),
+    ).resolves.toMatchObject({
+      id: "plain/model",
+      name: "Plain Model Override",
+    });
+    await expect(client.refresh()).resolves.toMatchObject({
+      openai: {
+        env: ["OVERRIDE_OPENAI_KEY"],
+        extras: { owner: "base", tier: "custom" },
+      },
+      custom: {
+        extras: { owner: "override" },
+        models: {
+          "custom/model": {
+            id: "custom/model",
+          },
+        },
+      },
+    });
+    await expect(
+      client.getModelData({ modelId: "name-only/model" }),
+    ).resolves.toMatchObject({
+      id: "name-only/model",
+      name: "Name Only",
+    });
+    expect(baseCatalog.openai?.models["openai/gpt-4o"]?.cost).toEqual({
+      input: 1,
+    });
+  });
+
+  it("reports minimal not-found metadata for object catalogs without providers", async () => {
+    const client = new Tokenlens({ catalog: {} });
+
+    await expect(client.getModelData({ modelId: "missing" })).rejects.toEqual(
+      expect.objectContaining({
+        code: TokenlensError.ModelNotFound.code,
+        meta: { modelId: "missing" },
+      }),
+    );
+  });
+
   it("defaults to 'auto' catalog when not specified", async () => {
     const mockCatalog = createOpenrouterProvidersFixture();
     fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
@@ -302,6 +452,57 @@ describe("Tokenlens - Catalog Loading", () => {
     await client.getModelData({ modelId: "openai/gpt-4o" });
 
     expect(fetchOpenrouterSpy).toHaveBeenCalled();
+  });
+});
+
+describe("Tokenlens.getContextHealth()", () => {
+  let fetchOpenrouterSpy: Mock;
+
+  beforeEach(async () => {
+    const fetchMocks = await resetFetchMocks();
+    fetchOpenrouterSpy = fetchMocks.fetchOpenrouter;
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    setSharedTokenlens(undefined);
+  });
+
+  it("returns context health from the instance method", async () => {
+    fetchOpenrouterSpy.mockResolvedValue(createOpenrouterProvidersFixture());
+    const client = new Tokenlens({
+      catalog: "openrouter",
+      cacheKey: "test-context-health",
+    });
+
+    const health = await client.getContextHealth({
+      modelId: "openai/gpt-4o",
+      usage: { input_tokens: 100_000, output_tokens: 20_000 },
+    });
+
+    expect(health).toMatchObject({
+      totalTokens: 128_000,
+      usedTokens: 120_000,
+      remainingTokens: 8_000,
+      status: "critical",
+    });
+  });
+
+  it("uses the standalone context-health helper with gateway selection", async () => {
+    fetchOpenrouterSpy.mockResolvedValue(createOpenrouterProvidersFixture());
+
+    const health = await apiGetContextHealth({
+      modelId: "openai/gpt-4o",
+      usage: { input_tokens: 10_000, output_tokens: 5_000 },
+      gateway: "openrouter",
+    });
+
+    expect(health).toMatchObject({
+      totalTokens: 128_000,
+      usedTokens: 15_000,
+      status: "healthy",
+    });
+    expect(fetchOpenrouterSpy).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -369,6 +570,28 @@ describe("Tokenlens.getModelData()", () => {
       await expect(result).rejects.toThrow(TokenlensError.ModelNotFound);
       await expect(result).rejects.toMatchObject({
         code: TokenlensError.ModelNotFound.code,
+      });
+    });
+
+    it("includes normalized model IDs in unknown-model metadata", async () => {
+      const mockCatalog = createOpenrouterProvidersFixture();
+      fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
+      const client = new Tokenlens({
+        catalog: "openrouter",
+        cacheKey: "test-normalized-unknown-model",
+      });
+
+      const result = client.getModelData({
+        modelId: "anthropic/claude-3.5-sonnet-missing",
+      });
+
+      await expect(result).rejects.toMatchObject({
+        code: TokenlensError.ModelNotFound.code,
+        meta: {
+          catalogId: "openrouter",
+          providerId: "anthropic",
+          resolvedModelId: "anthropic/claude-3-5-sonnet-missing",
+        },
       });
     });
   });
@@ -690,6 +913,24 @@ describe("Tokenlens.estimateCostUSD()", () => {
         (costSavings / jsonCost.totalTokenCostUSD) * 100;
 
       expect(costSavingsPercent).toBeGreaterThan(15);
+    });
+
+    it("passes explicit providers when estimating costs", async () => {
+      const mockCatalog = createOpenrouterProvidersFixture();
+      fetchOpenrouterSpy.mockResolvedValue(mockCatalog);
+      const tokenlens = new Tokenlens({
+        catalog: "openrouter",
+        cacheKey: "test-estimate-provider",
+      });
+
+      const result = await tokenlens.estimateCostUSD({
+        modelId: "gpt-4o",
+        provider: "openai",
+        data: "Hello",
+      });
+
+      expect(result.inputTokens).toBeGreaterThan(0);
+      expect(result.totalTokenCostUSD).toBeGreaterThan(0);
     });
   });
 

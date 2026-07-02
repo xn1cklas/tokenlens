@@ -69,12 +69,8 @@ export class Tokenlens {
     }
   }
 
-  private async fetchCatalog(): Promise<SourceProviders> {
-    if (typeof this.catalog === "object") {
-      return Promise.resolve(this.catalog);
-    }
-
-    return fetchCatalogSource(this.catalog, { fetch: this.fetchImpl });
+  private async fetchCatalog(source: GatewayId): Promise<SourceProviders> {
+    return fetchCatalogSource(source, { fetch: this.fetchImpl });
   }
 
   private applyOverrides(catalog: SourceProviders): SourceProviders {
@@ -115,8 +111,9 @@ export class Tokenlens {
     try {
       if (options?.force || !this.inFlightCatalog) {
         const requestVersion = ++this.catalogRequestVersion;
+        const catalogSource = this.catalog;
         this.inFlightCatalog = (async () => {
-          const catalog = await this.fetchCatalog();
+          const catalog = await this.fetchCatalog(catalogSource);
           if (this.catalogRequestVersion === requestVersion) {
             const entry = {
               value: catalog,
@@ -391,15 +388,13 @@ export class Tokenlens {
 
 function mergeCatalogs(
   base: SourceProviders,
-  overrides?: SourceProviders,
+  overrides: SourceProviders,
 ): SourceProviders {
-  if (!overrides) return base;
-
   const merged: SourceProviders = {};
   for (const [providerId, provider] of Object.entries(base)) {
     merged[providerId] = {
       ...provider,
-      models: { ...(provider.models ?? {}) },
+      models: { ...provider.models },
       ...(provider.extras ? { extras: { ...provider.extras } } : {}),
     };
   }
@@ -409,7 +404,7 @@ function mergeCatalogs(
     if (!existingProvider) {
       merged[providerId] = {
         ...providerOverride,
-        models: { ...(providerOverride.models ?? {}) },
+        models: { ...providerOverride.models },
         ...(providerOverride.extras
           ? { extras: { ...providerOverride.extras } }
           : {}),
@@ -417,9 +412,9 @@ function mergeCatalogs(
       continue;
     }
 
-    const nextModels = { ...(existingProvider.models ?? {}) };
+    const nextModels = { ...existingProvider.models };
     for (const [modelId, modelOverride] of Object.entries(
-      providerOverride.models ?? {},
+      providerOverride.models,
     )) {
       const existingModel = nextModels[modelId];
       if (!existingModel) {

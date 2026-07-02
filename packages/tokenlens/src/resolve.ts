@@ -158,7 +158,7 @@ function buildProviderLookup(catalog: SourceProviders): ProviderLookupEntry[] {
     const keys = providerKeys(catalogKey, provider);
     const modelLookup = new Map<string, ModelLookupEntry>();
 
-    for (const [candidateId, model] of Object.entries(provider.models ?? {})) {
+    for (const [candidateId, model] of Object.entries(provider.models)) {
       addCatalogModel({
         lookup: modelLookup,
         providerKeys: keys,
@@ -293,7 +293,8 @@ function resolveWithProviderLookup(
     (explicitProvider ? split?.bareModelId : canonicalSplit?.bareModelId) ??
     canonicalModelId;
   const originalBareModelId = split?.bareModelId ?? modelId;
-  const rawProvider = providerId ?? canonicalSplit?.rawProvider;
+  const rawProvider =
+    explicitProvider !== undefined ? providerId : canonicalSplit?.rawProvider;
   const request = {
     modelId,
     canonicalModelId,

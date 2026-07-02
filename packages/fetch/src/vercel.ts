@@ -40,9 +40,10 @@ type VercelModelEndpointsJson = {
   [key: string]: unknown;
   endpoints?: VercelEndpointJson[];
 };
+type VercelModelWithId = VercelModelJson & { id: string };
 
-function providerIdForVercelModel(model: VercelModelJson): string {
-  const id = String(model.id ?? "");
+function providerIdForVercelModel(model: VercelModelWithId): string {
+  const id = model.id;
   const providerPart = id.includes("/") ? id.split("/")[0] : undefined;
   return typeof model.owned_by === "string" && model.owned_by.length > 0
     ? model.owned_by
@@ -67,7 +68,7 @@ function selectVercelEndpoint(
 }
 
 function mapVercelModel(
-  model: VercelModelJson,
+  model: VercelModelWithId,
   endpointDetails?: VercelModelEndpointsJson,
 ): SourceModel {
   const endpoint = selectVercelEndpoint(model, endpointDetails?.endpoints);
@@ -86,7 +87,7 @@ function mapVercelModel(
           ...(maxTokens !== undefined ? { output: maxTokens } : {}),
         }
       : undefined;
-  const id = String(model.id ?? "");
+  const id = model.id;
   const pricingRaw = endpoint?.pricing ?? model.pricing;
   const cost = costFromPerTokenPricing(pricingRaw);
 
@@ -130,7 +131,7 @@ export async function fetchVercelModelEndpoints(
 }
 
 async function fetchEndpointDetails(
-  models: readonly VercelModelJson[],
+  models: readonly VercelModelWithId[],
   options: VercelOptions,
 ): Promise<Map<string, VercelModelEndpointsJson>> {
   const fetchImpl = options.fetch ?? globalThis.fetch;
@@ -140,13 +141,10 @@ async function fetchEndpointDetails(
     models,
     options.endpointConcurrency ?? DEFAULT_ENDPOINT_CONCURRENCY,
     async (model) => {
-      const id = String(model.id ?? "");
-      if (!id) return;
-
       try {
         endpointDetailsByModel.set(
-          id,
-          await fetchVercelModelEndpoints(id, { fetch: fetchImpl }),
+          model.id,
+          await fetchVercelModelEndpoints(model.id, { fetch: fetchImpl }),
         );
       } catch {
         // Per-model endpoint details are enrichment. Keep the base catalog usable
@@ -176,18 +174,20 @@ export async function fetchVercel(
     "data",
     "Vercel AI Gateway",
   );
-  const endpointCandidateList = list.filter((model) => {
-    if (!model) return false;
-    const id = String(model.id ?? "");
-    if (!id) return false;
-    if (
-      options?.provider &&
-      providerIdForVercelModel(model) !== options.provider
-    ) {
-      return false;
-    }
-    return options?.model ? id.includes(options.model) : true;
-  });
+  const endpointCandidateList = list.filter(
+    (model): model is VercelModelWithId => {
+      if (!model) return false;
+      const id = String(model.id ?? "");
+      if (!id) return false;
+      if (
+        options?.provider &&
+        providerIdForVercelModel({ ...model, id }) !== options.provider
+      ) {
+        return false;
+      }
+      return options?.model ? id.includes(options.model) : true;
+    },
+  );
   const endpointDetailsByModel = options?.includeEndpointDetails
     ? await fetchEndpointDetails(endpointCandidateList, options)
     : new Map<string, VercelModelEndpointsJson>();
@@ -196,7 +196,8 @@ export async function fetchVercel(
   for (const model of list) {
     const id = String(model.id ?? "");
     if (!id) continue;
-    const providerId = providerIdForVercelModel(model);
+    const modelWithId = { ...model, id };
+    const providerId = providerIdForVercelModel(modelWithId);
     const provider = upsertCatalogProvider(catalog, {
       providerKey: providerId,
       api: "https://ai-gateway.vercel.sh/v1",
@@ -204,7 +205,10 @@ export async function fetchVercel(
       env: ["VERCEL_AI_API_KEY"],
       source: "vercel",
     });
-    provider.models[id] = mapVercelModel(model, endpointDetailsByModel.get(id));
+    provider.models[id] = mapVercelModel(
+      modelWithId,
+      endpointDetailsByModel.get(id),
+    );
   }
 
   return filterCatalog(catalog, options?.provider, options?.model);

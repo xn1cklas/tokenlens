@@ -172,6 +172,14 @@ describe("compactJson", () => {
       expect(result).toBe("name\n" + "Alice\n" + "Bob");
     });
 
+    it("should stringify nested objects when they are explicitly selected", () => {
+      const input = [{ address: { city: "NYC", zip: "10001" } }];
+
+      const result = compactJson(input, { fields: ["address"] });
+
+      expect(result).toBe('address\n{"city":"NYC","zip":"10001"}');
+    });
+
     it("should handle objects with different keys", () => {
       const input = [
         { name: "Alice", age: 30 },

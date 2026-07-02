@@ -254,4 +254,133 @@ describe("resolveModel", () => {
     expect(resolved.providerId).toBe("custom.ns.extra");
     expect(resolved.model).toBeUndefined();
   });
+
+  it("returns an empty provider fallback for empty catalogs", () => {
+    const resolved = resolveModel({
+      catalog: {},
+      modelId: "missing-model",
+    });
+
+    expect(resolved).toEqual({
+      providerId: "",
+      modelId: "missing-model",
+      model: undefined,
+    });
+  });
+
+  it("returns the first provider fallback for unknown bare model IDs", () => {
+    const resolved = resolveModel({
+      catalog,
+      modelId: "missing-model",
+    });
+
+    expect(resolved).toEqual({
+      providerId: "openai",
+      modelId: "openai/missing-model",
+      model: undefined,
+    });
+  });
+
+  it("returns the matched provider fallback for unknown scoped model IDs", () => {
+    const resolved = resolveModel({
+      catalog,
+      modelId: "openai/missing-model",
+    });
+
+    expect(resolved).toEqual({
+      providerId: "openai",
+      modelId: "openai/missing-model",
+      model: undefined,
+    });
+  });
+
+  it("returns an empty provider fallback for malformed scoped model IDs", () => {
+    const resolved = resolveModel({
+      catalog,
+      modelId: " /missing-model",
+    });
+
+    expect(resolved).toEqual({
+      providerId: "openai",
+      modelId: "openai//missing-model",
+      model: undefined,
+    });
+  });
+
+  it("handles whitespace provider lookups as unscoped searches", () => {
+    const resolved = resolveModel({
+      catalog,
+      providerId: "   ",
+      modelId: "gpt-4o",
+    });
+
+    expect(resolved.providerId).toBe("openai");
+    expect(resolved.modelId).toBe("openai/gpt-4o");
+    expect(resolved.model?.name).toBe("GPT-4o");
+  });
+
+  it("falls back to candidate IDs when runtime catalogs omit model IDs", () => {
+    const looseCatalog = {
+      fallback: {
+        id: "fallback",
+        models: {
+          bare: {
+            name: "Loose Bare",
+          },
+          "fallback/scoped": {
+            name: "Loose Scoped",
+          },
+        },
+      },
+    } as unknown as SourceProviders;
+
+    expect(
+      resolveModel({
+        catalog: looseCatalog,
+        providerId: "fallback",
+        modelId: "bare",
+      }),
+    ).toMatchObject({
+      providerId: "fallback",
+      modelId: "fallback/bare",
+      model: { name: "Loose Bare" },
+    });
+    expect(
+      resolveModel({
+        catalog: looseCatalog,
+        providerId: "fallback",
+        modelId: "scoped",
+      }),
+    ).toMatchObject({
+      providerId: "fallback",
+      modelId: "fallback/scoped",
+      model: { name: "Loose Scoped" },
+    });
+  });
+
+  it("uses runtime model IDs when canonical IDs are omitted", () => {
+    const looseCatalog = {
+      fallback: {
+        id: "fallback",
+        models: {
+          "fallback/by-id": {
+            id: "fallback/by-id",
+            name: "Loose ID",
+          },
+        },
+      },
+    } as unknown as SourceProviders;
+
+    expect(
+      resolveModel({
+        catalog: looseCatalog,
+        providerId: "fallback",
+        modelId: "by-id",
+      }),
+    ).toMatchObject({
+      providerId: "fallback",
+      modelId: "fallback/by-id",
+      model: { name: "Loose ID" },
+    });
+  });
 });

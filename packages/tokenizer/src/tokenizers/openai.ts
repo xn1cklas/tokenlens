@@ -21,13 +21,7 @@ function getEncodingForModel(modelId: string): EncodingType {
     return "o200k_base";
   }
 
-  // Check cl100k_base models (older models)
-  if (OPENAI_MODELS_CL100K.some((m) => modelId.startsWith(m))) {
-    return "cl100k_base";
-  }
-
-  // Default to o200k_base for unknown models
-  return "o200k_base";
+  return "cl100k_base";
 }
 
 export async function openai(

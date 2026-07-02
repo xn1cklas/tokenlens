@@ -83,9 +83,7 @@ export async function fetchModelsDev(
     ModelsDevProviderJson
   >;
   const catalog: SourceProviders = {};
-  const entries: Array<[string, ModelsDevProviderJson]> = Object.entries(
-    (raw ?? {}) as Record<string, ModelsDevProviderJson>,
-  );
+  const entries: Array<[string, ModelsDevProviderJson]> = Object.entries(raw);
   for (const [provKey, prov] of entries) {
     const providerId = prov.id ?? provKey;
     const models = normalizeModelsDevModels(providerId, prov.models ?? {});

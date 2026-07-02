@@ -29,8 +29,7 @@ type OpenrouterModelJson = Record<string, unknown> & {
   };
 };
 
-function mapOpenrouterModel(m: OpenrouterModelJson): SourceModel {
-  const id = String(m.id ?? "");
+function mapOpenrouterModel(m: OpenrouterModelJson, id: string): SourceModel {
   const pricingRaw = m.pricing ?? m.cost;
   const cost = costFromPerTokenPricing(pricingRaw);
   const limit = m.limit;
@@ -94,7 +93,7 @@ export async function fetchOpenrouter(
       env: ["OPENROUTER_API_KEY"],
       source: "openrouter",
     });
-    existingProvider.models[id] = mapOpenrouterModel(m);
+    existingProvider.models[id] = mapOpenrouterModel(m, id);
   }
 
   return filterCatalog(catalog, options?.provider, options?.model);

@@ -80,6 +80,17 @@ const sampleCosts = {
   totalTokenCostUSD: totalTokenCostUSD * totalTokens,
 };
 
+async function readStreamParts<T>(stream: ReadableStream<T>): Promise<T[]> {
+  const reader = stream.getReader();
+  const parts: T[] = [];
+  while (true) {
+    const result = await reader.read();
+    if (result.done) break;
+    parts.push(result.value);
+  }
+  return parts;
+}
+
 test("wrapVercelLanguageModel", async () => {
   expect(tokenlensMiddlewareV5(tokenlens).middlewareVersion).toBe("v2");
   expect(tokenlensMiddlewareV5(tokenlens).specificationVersion).toBe("v3");
@@ -130,6 +141,199 @@ test("wrapVercelLanguageModel", async () => {
     sampleCosts.totalTokenCostUSD,
   );
 
+  expect(computeCostUSDMock).toHaveBeenCalledTimes(1);
+});
+
+test("middleware leaves generate results without usage untouched", async () => {
+  computeCostUSDMock.mockClear();
+  const middleware = tokenlensMiddlewareV5(tokenlens);
+  const resultWithoutUsage = {
+    finishReason: "stop",
+    content: [{ type: "text" as const, text: "No usage" }],
+    warnings: [],
+  };
+
+  const result = await middleware.wrapGenerate?.({
+    model: mockModel,
+    doGenerate: async () => resultWithoutUsage,
+  } as never);
+
+  expect(result).toBe(resultWithoutUsage);
+  expect(computeCostUSDMock).not.toHaveBeenCalled();
+});
+
+test("middleware handles empty nested AI SDK usage objects", async () => {
+  computeCostUSDMock.mockClear();
+  computeCostUSDMock.mockImplementation(async ({ usage }) => {
+    expect(usage).toEqual({});
+    return {
+      ...sampleCosts,
+      ratesUsed: {
+        inputPerMTokens: inputTokenCostUSD * 1_000_000,
+        outputPerMTokens: outputTokenCostUSD * 1_000_000,
+      },
+    };
+  });
+  const middleware = tokenlensMiddlewareV5(tokenlens);
+
+  const result = await middleware.wrapGenerate?.({
+    model: mockModel,
+    doGenerate: async () => ({
+      finishReason: "stop",
+      usage: {
+        inputTokens: {},
+        outputTokens: {},
+      },
+      content: [{ type: "text" as const, text: "No counters" }],
+      warnings: [],
+    }),
+  } as never);
+
+  expect(result?.providerMetadata?.tokenlens).toBeDefined();
+  expect(computeCostUSDMock).toHaveBeenCalledTimes(1);
+});
+
+test("middleware totals nested usage when only one side is present", async () => {
+  computeCostUSDMock.mockClear();
+  const usages: Array<Parameters<Tokenlens["computeCostUSD"]>[0]["usage"]> = [];
+  computeCostUSDMock.mockImplementation(async ({ usage }) => {
+    usages.push(usage);
+    return {
+      ...sampleCosts,
+      ratesUsed: {
+        inputPerMTokens: inputTokenCostUSD * 1_000_000,
+        outputPerMTokens: outputTokenCostUSD * 1_000_000,
+      },
+    };
+  });
+  const middleware = tokenlensMiddlewareV5(tokenlens);
+
+  await middleware.wrapGenerate?.({
+    model: mockModel,
+    doGenerate: async () => ({
+      finishReason: "stop",
+      usage: {
+        inputTokens: { total: 10 },
+        outputTokens: {},
+      },
+      content: [{ type: "text" as const, text: "Input only" }],
+      warnings: [],
+    }),
+  } as never);
+  await middleware.wrapGenerate?.({
+    model: mockModel,
+    doGenerate: async () => ({
+      finishReason: "stop",
+      usage: {
+        inputTokens: {},
+        outputTokens: { total: 20 },
+      },
+      content: [{ type: "text" as const, text: "Output only" }],
+      warnings: [],
+    }),
+  } as never);
+
+  expect(usages).toEqual([
+    { input_tokens: 10, total_tokens: 10 },
+    { output_tokens: 20, total_tokens: 20 },
+  ]);
+});
+
+test("middleware converts nested AI SDK usage and enriches streamed finish parts", async () => {
+  computeCostUSDMock.mockClear();
+  computeCostUSDMock.mockImplementation(
+    async ({ modelId, provider, usage }) => {
+      expect(modelId).toBe("gpt-5");
+      expect(provider).toBe("gateway");
+      expect(usage).toEqual({
+        input_tokens: 10,
+        output_tokens: 20,
+        total_tokens: 30,
+        reasoning_tokens: 4,
+        cache_read_tokens: 2,
+        cache_write_tokens: 3,
+      });
+      return {
+        ...sampleCosts,
+        ratesUsed: {
+          inputPerMTokens: inputTokenCostUSD * 1_000_000,
+          outputPerMTokens: outputTokenCostUSD * 1_000_000,
+        },
+        debug: {
+          kept: true,
+          skipped: undefined,
+          unsupported: () => "not JSON",
+          values: [1, undefined, () => "not JSON"],
+        },
+      } as never;
+    },
+  );
+  const middleware = tokenlensMiddlewareV5(tokenlens);
+  const textPart = { type: "text-delta", textDelta: "hello" };
+  const finishPart = {
+    type: "finish",
+    usage: {
+      inputTokens: {
+        total: 10,
+        cacheRead: 2,
+        cacheWrite: 3,
+      },
+      outputTokens: {
+        total: 20,
+        reasoning: 4,
+      },
+    },
+    finishReason: "stop",
+    providerMetadata: {
+      existing: {
+        keep: true,
+      },
+    },
+  };
+
+  const result = await middleware.wrapStream?.({
+    model: createMockModel({ provider: "gateway", modelId: "gpt-5" }),
+    doStream: async () => ({
+      stream: new ReadableStream({
+        start(controller) {
+          controller.enqueue(textPart);
+          controller.enqueue(finishPart);
+          controller.close();
+        },
+      }),
+    }),
+  } as never);
+
+  const parts = await readStreamParts(
+    result?.stream as ReadableStream<unknown>,
+  );
+
+  expect(parts[0]).toBe(textPart);
+  expect(parts[1]).toMatchObject({
+    type: "finish",
+    providerMetadata: {
+      existing: { keep: true },
+      tokenlens: {
+        costs: {
+          inputTokenCostUSD: sampleCosts.inputTokenCostUSD,
+          outputTokenCostUSD: sampleCosts.outputTokenCostUSD,
+          totalTokenCostUSD: sampleCosts.totalTokenCostUSD,
+          debug: {
+            kept: true,
+            unsupported: null,
+            values: [1, null, null],
+          },
+        },
+      },
+    },
+  });
+  expect(
+    (
+      parts[1] as {
+        providerMetadata?: { tokenlens?: { costs?: { debug?: object } } };
+      }
+    ).providerMetadata?.tokenlens?.costs?.debug,
+  ).not.toHaveProperty("skipped");
   expect(computeCostUSDMock).toHaveBeenCalledTimes(1);
 });
 

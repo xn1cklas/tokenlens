@@ -43,8 +43,26 @@ export default defineConfig({
   },
   test: {
     coverage: {
+      provider: "v8",
+      include: ["packages/*/src/**/*.ts"],
+      exclude: [
+        "node_modules/**",
+        "dist/**",
+        "coverage/**",
+        "**/.next/**",
+        "**/*.test.ts",
+        "**/*.spec.ts",
+        "packages/*/src/types.ts",
+        "packages/core/src/dto.ts",
+        "packages/core/src/usage.ts",
+      ],
       reporter: ["text", "json", "html"],
-      exclude: ["node_modules/", "dist/"],
+      thresholds: {
+        statements: 98,
+        branches: 98,
+        functions: 98,
+        lines: 98,
+      },
     },
     projects: [
       project("core", "packages/core", ["tests/**/*.test.ts"]),

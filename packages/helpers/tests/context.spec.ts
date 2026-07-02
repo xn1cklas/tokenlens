@@ -186,6 +186,59 @@ describe("getContextHealth", () => {
     expect(health?.status).toBe("warning");
   });
 
+  it("adds reasoning and Anthropic cache counters when they are not included in totals", () => {
+    const model: SourceModel = {
+      id: "claude-sonnet-4-5",
+      canonical_id: "anthropic/claude-sonnet-4-5",
+      name: "Claude Sonnet 4.5",
+      limit: { context: 100000 },
+    };
+
+    const health = getContextHealth({
+      model,
+      usage: {
+        input_tokens: 10_000,
+        output_tokens: 0,
+        reasoning_tokens: 5_000,
+        cache_read_input_tokens: 2_000,
+        cache_creation_input_tokens: 3_000,
+      },
+    });
+
+    expect(health?.usedTokens).toBe(20_000);
+    expect(health?.remainingTokens).toBe(80_000);
+    expect(health?.status).toBe("healthy");
+  });
+
+  it("handles Anthropic cache read-only and write-only counters", () => {
+    const model: SourceModel = {
+      id: "claude-sonnet-4-5",
+      canonical_id: "anthropic/claude-sonnet-4-5",
+      name: "Claude Sonnet 4.5",
+      limit: { context: 100000 },
+    };
+
+    const readOnly = getContextHealth({
+      model,
+      usage: {
+        input_tokens: 10_000,
+        output_tokens: 1_000,
+        cache_read_input_tokens: 2_000,
+      },
+    });
+    const writeOnly = getContextHealth({
+      model,
+      usage: {
+        input_tokens: 10_000,
+        output_tokens: 1_000,
+        cache_creation_input_tokens: 3_000,
+      },
+    });
+
+    expect(readOnly?.usedTokens).toBe(13_000);
+    expect(writeOnly?.usedTokens).toBe(14_000);
+  });
+
   it("uses totalTokens when detailed camelCase counters are absent", () => {
     const model: SourceModel = {
       id: "gpt-4o",

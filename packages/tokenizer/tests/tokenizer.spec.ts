@@ -73,6 +73,21 @@ describe("countTokens", () => {
       expect(openaiMock).toHaveBeenNthCalledWith(2, "gpt-5", "Test");
     });
 
+    it("falls back for unknown provider-prefixed model IDs", async () => {
+      const result = await countTokens("unknown-provider/model", "Test");
+
+      expect(result).toBe(10);
+      expect(vi.mocked(openai)).toHaveBeenCalledWith("gpt-5", "Test");
+    });
+
+    it("rethrows OpenAI tokenizer failures that are not unsupported-model errors", async () => {
+      const openaiMock = vi.mocked(openai);
+      const failure = new Error("encoding failed");
+      openaiMock.mockRejectedValueOnce(failure);
+
+      await expect(countTokens("gpt-4o", "Test")).rejects.toBe(failure);
+    });
+
     it("auto-detects provider from prefixed model ID (anthropic)", async () => {
       const result = await countTokens("anthropic/claude-sonnet-4-5", "Test");
       expect(result).toBe(25);

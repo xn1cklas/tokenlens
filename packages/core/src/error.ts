@@ -69,7 +69,7 @@ export class TokenlensError extends Error {
     options?: TokenlensErrorOptions,
   ) {
     super(message);
-    const className = new.target?.name ?? "TokenlensError";
+    const className = new.target.name;
     this.name = className;
     this.code = code;
 
